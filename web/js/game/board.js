@@ -1,0 +1,628 @@
+// Tabla de joc pe canvas: fotografia tablei, pachetele LOTO/TELEX, marcajele de proprietate,
+// bancnotele jucătorului, pionii animați pas cu pas, zoom (1x–4x) și atingerile.
+// Port din BoardView.kt, PawnView și CashStacks.kt. Coordonatele căsuțelor sunt fracții [0,1].
+
+import { loadImage } from '../ui/dom.js';
+import { PAWN_BY_KEY } from '../core/model.js';
+import { billCounts, MAX_LAYERS } from '../core/rules.js';
+
+const BOARD_W = 1600;
+const BOARD_H = 1131;
+const BOARD_ASPECT = BOARD_W / BOARD_H;
+const STEP_MS = 430;          // durata unui pas pe tablă
+const TILT_SCALE = 0.93;      // înclinarea: tabla e puțin mai mică și ridicată
+const TILT_LIFT = -0.022;     // (fracție din înălțime)
+const ROW_ORDER = [2000, 500, 50, 100, 1000];   // grămezile de bani, de la stânga la dreapta
+const PILE_CX = 0.2;
+const PILE_STEP_X = 0.07;
+const PILE_CY = 0.74;
+const PAWN_ASPECT = 138 / 256;  // sprite-ul pionului (w/h)
+const TILE_SIZE_HALF = { x: 0.034, y: 0.045 };   // elipsa de atingere pentru o căsuță
+const CLUSTER = {
+  1: [[0, 0, 1]],
+  2: [[-0.028, 0, 0.86], [0.028, 0, 0.86]],
+  3: [[-0.025, 0.008, 0.8], [0.025, 0.008, 0.8], [0, -0.022, 0.8]],
+  4: [[-0.024, 0.009, 0.76], [0.024, 0.009, 0.76], [-0.024, -0.019, 0.76], [0.024, -0.019, 0.76]],
+};
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const mod = (a, n) => ((a % n) + n) % n;
+
+/** Interpolare liniară într-un interval de timp; se oprește dacă [alive] devine false. */
+function tween(ms, onFrame, alive = () => true) {
+  return new Promise((resolve) => {
+    const t0 = performance.now();
+    const frame = (now) => {
+      if (!alive()) return resolve();
+      const t = Math.min(1, (now - t0) / ms);
+      onFrame(t);
+      if (t < 1) requestAnimationFrame(frame);
+      else resolve();
+    };
+    requestAnimationFrame(frame);
+  });
+}
+
+class PawnAnim {
+  constructor(id, position) {
+    this.id = id;
+    this.v = position;        // poziția vizuală pe traseu (fracționară, poate trece peste N)
+    this.target = position;   // poziția logică din starea jocului
+    this.token = 0;           // identifică mutarea curentă (o mutare nouă o oprește pe cea veche)
+    this.squash = 0;          // turtire la aterizare (0..1)
+    this.moving = false;
+  }
+}
+
+export class BoardView {
+  /**
+   * @param {HTMLCanvasElement} canvas
+   * @param {object} o
+   * @param {object} o.catalog  din loadCatalog()
+   * @param {(index:number)=>void} o.onTileTap
+   * @param {(kind:string)=>void} o.onDeckTap
+   * @param {(busy:boolean)=>void} o.onBusyChange   true cât un pion se mută
+   * @param {()=>boolean} o.dieBusy                  true cât zarul se rostogolește
+   * @param {(board:BoardView)=>void} [o.onFrame]    apelat la fiecare cadru (pentru zar)
+   * @param {(src:string)=>void} [o.onAsset]
+   */
+  constructor(canvas, o) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.catalog = o.catalog;
+    this.onTileTap = o.onTileTap;
+    this.onDeckTap = o.onDeckTap;
+    this.onBusyChange = o.onBusyChange ?? (() => {});
+    this.dieBusy = o.dieBusy ?? (() => false);
+    this.onFrame = o.onFrame ?? (() => {});
+
+    this.model = {
+      players: [], activePlayerId: null, landedTile: null, highlightColor: '#ffd54f',
+      drawKind: null, cashPlayer: null, cashMoney: 0, propertyTiles: {}, stretch: true, tilt: true,
+      zoomPreset: 1, zoomNonce: 0, focusIndex: null,
+    };
+    this.anims = new Map();
+    this.zoom = { scale: 1, ox: 0, oy: 0 };
+    this.lastZoomNonce = 0;
+    this.layout = { bx: 0, by: 0, bw: 1, bh: 1, cssW: 1, cssH: 1, dpr: 1 };
+    this.pointers = new Map();
+    this.gesture = null;
+    this.dragged = false;
+    this.running = true;
+
+    this.boardImg = null;
+    loadImage('img/tabla_privatizare.webp').then((img) => (this.boardImg = img));
+    this.deckImgs = {
+      loto: null,
+      telex: null,
+    };
+    loadImage('img/deck_back_loto.webp').then((img) => (this.deckImgs.loto = img));
+    loadImage('img/deck_back_telex.webp').then((img) => (this.deckImgs.telex = img));
+    this.pawnImgs = {};
+    for (const c of Object.values(PAWN_BY_KEY)) loadImage(c.img).then((img) => (this.pawnImgs[c.key] = img));
+    this.billImgs = {};
+    for (const v of ROW_ORDER) loadImage(`img/bill_${v}.webp`).then((img) => (this.billImgs[v] = img));
+
+    this.bindPointers();
+    this.resize();
+    this.loop = this.loop.bind(this);
+    requestAnimationFrame(this.loop);
+    window.addEventListener('resize', () => this.resize());
+  }
+
+  destroy() {
+    this.running = false;
+  }
+
+  /** Model nou din starea jocului. Pionii care s-au mutat pornesc animația. */
+  setModel(m) {
+    Object.assign(this.model, m);
+    const seen = new Set();
+    for (const p of this.model.players) {
+      seen.add(p.id);
+      let a = this.anims.get(p.id);
+      if (!a) {
+        a = new PawnAnim(p.id, p.position);
+        this.anims.set(p.id, a);
+      }
+      if (a.target !== p.position) {
+        a.target = p.position;
+        this.animateTo(a, p.position);
+      }
+    }
+    for (const id of [...this.anims.keys()]) if (!seen.has(id)) this.anims.delete(id);
+
+    if (this.model.zoomNonce !== this.lastZoomNonce) {
+      this.lastZoomNonce = this.model.zoomNonce;
+      this.presetZoom();
+    }
+  }
+
+  /* ---------- geometrie ---------- */
+
+  resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+    const cssW = this.canvas.clientWidth || 1;
+    const cssH = this.canvas.clientHeight || 1;
+    if (this.canvas.width !== Math.round(cssW * dpr) || this.canvas.height !== Math.round(cssH * dpr)) {
+      this.canvas.width = Math.round(cssW * dpr);
+      this.canvas.height = Math.round(cssH * dpr);
+    }
+    let bw;
+    let bh;
+    if (this.model.stretch || cssW / cssH > BOARD_ASPECT) {
+      // tabla umple lățimea (sau tot ecranul, când e întinsă)
+      bw = this.model.stretch ? cssW : cssH * BOARD_ASPECT;
+      bh = cssH;
+    } else {
+      bw = cssW;
+      bh = cssW / BOARD_ASPECT;
+    }
+    const bx = (cssW - bw) / 2;
+    const by = (cssH - bh) / 2;
+    this.layout = { bx, by, bw, bh, cssW, cssH, dpr };
+    this.clampZoom();
+  }
+
+  /** Transformarea (zoom ∘ înclinare) ca matrice afină: [A, E, F] cu scalare uniformă A. */
+  transform() {
+    const { bx, by, bw, bh } = this.layout;
+    const S = this.model.tilt ? TILT_SCALE : 1;
+    const lift = this.model.tilt ? TILT_LIFT * bh : 0;
+    const cx = bx + bw / 2;
+    const cy = by + bh / 2;
+    const Z = this.zoom.scale;
+    return {
+      A: Z * S,
+      E: Z * cx * (1 - S) + this.zoom.ox,
+      F: Z * (cy * (1 - S) + lift) + this.zoom.oy,
+      S,
+      lift,
+      cx,
+      cy,
+    };
+  }
+
+  /** Din fracții ale tablei în coordonate ecran (CSS px). */
+  toScreen(fx, fy) {
+    const { bx, by, bw, bh } = this.layout;
+    const t = this.transform();
+    const x = bx + fx * bw;
+    const y = by + fy * bh;
+    return { x: t.A * x + t.E, y: t.A * y + t.F };
+  }
+
+  /** Din coordonate ecran (CSS px) în fracții ale tablei. */
+  fromScreen(px, py) {
+    const { bx, by, bw, bh } = this.layout;
+    const t = this.transform();
+    const x = (px - t.E) / t.A;
+    const y = (py - t.F) / t.A;
+    return { fx: (x - bx) / bw, fy: (y - by) / bh };
+  }
+
+  /* ---------- zoom ---------- */
+
+  clampZoom() {
+    const { cssW, cssH } = this.layout;
+    const z = this.zoom;
+    z.scale = Math.min(4, Math.max(1, z.scale));
+    z.ox = Math.min(0, Math.max(cssW * (1 - z.scale), z.ox));
+    z.oy = Math.min(0, Math.max(cssH * (1 - z.scale), z.oy));
+  }
+
+  presetZoom() {
+    const presetZoom = this.model.zoomPreset;
+    const idx = this.model.focusIndex;
+    const f = idx != null ? this.catalog.positions[idx] : null;
+    const { cssW, cssH } = this.layout;
+    if (presetZoom > 1 && f) {
+      this.zoom = { scale: presetZoom, ox: cssW / 2 - f[0] * cssW * presetZoom, oy: cssH / 2 - f[1] * cssH * presetZoom };
+    } else {
+      this.zoom = { scale: 1, ox: 0, oy: 0 };
+    }
+    this.clampZoom();
+  }
+
+  /* ---------- atingeri ---------- */
+
+  bindPointers() {
+    const c = this.canvas;
+    c.addEventListener('pointerdown', (e) => {
+      c.setPointerCapture?.(e.pointerId);
+      this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, t: performance.now() });
+      this.dragged = false;
+      if (this.pointers.size === 2) this.startPinch();
+    });
+    c.addEventListener('pointermove', (e) => {
+      const p = this.pointers.get(e.pointerId);
+      if (!p) return;
+      const dx = e.clientX - p.x;
+      const dy = e.clientY - p.y;
+      p.x = e.clientX;
+      p.y = e.clientY;
+      if (Math.hypot(e.clientX - p.sx, e.clientY - p.sy) > 8) this.dragged = true;
+      if (this.pointers.size === 1 && this.zoom.scale > 1 && this.dragged) {
+        this.zoom.ox += dx;
+        this.zoom.oy += dy;
+        this.clampZoom();
+      } else if (this.pointers.size === 2 && this.gesture) {
+        const [a, b] = [...this.pointers.values()];
+        const dist = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+        const cx = (a.x + b.x) / 2;
+        const cy = (a.y + b.y) / 2;
+        const ratio = dist / this.gesture.dist;
+        const oldScale = this.zoom.scale;
+        const newScale = Math.min(4, Math.max(1, this.gesture.scale * ratio));
+        const k = newScale / oldScale;
+        this.zoom.ox = cx - (cx - this.zoom.ox) * k;
+        this.zoom.oy = cy - (cy - this.zoom.oy) * k;
+        this.zoom.scale = newScale;
+        this.clampZoom();
+        this.dragged = true;
+      }
+    });
+    const end = (e) => {
+      const p = this.pointers.get(e.pointerId);
+      this.pointers.delete(e.pointerId);
+      if (this.pointers.size < 2) this.gesture = null;
+      if (!p || this.pointers.size > 0 || this.dragged) return;
+      if (performance.now() - p.t > 700) return;
+      this.hitTest(e.clientX - this.canvas.getBoundingClientRect().left, e.clientY - this.canvas.getBoundingClientRect().top);
+    };
+    c.addEventListener('pointerup', end);
+    c.addEventListener('pointercancel', (e) => {
+      this.pointers.delete(e.pointerId);
+      this.gesture = null;
+    });
+    c.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const f = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+      const scale = Math.min(4, Math.max(1, this.zoom.scale * f));
+      const k = scale / this.zoom.scale;
+      const rect = c.getBoundingClientRect();
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+      this.zoom.ox = cx - (cx - this.zoom.ox) * k;
+      this.zoom.oy = cy - (cy - this.zoom.oy) * k;
+      this.zoom.scale = scale;
+      this.clampZoom();
+    }, { passive: false });
+  }
+
+  startPinch() {
+    const [a, b] = [...this.pointers.values()];
+    this.gesture = { dist: Math.hypot(a.x - b.x, a.y - b.y) || 1, scale: this.zoom.scale };
+    this.dragged = true;
+  }
+
+  hitTest(px, py) {
+    const { fx, fy } = this.fromScreen(px, py);
+    // Pachetele au prioritate: un tap pe pachet cere tragerea
+    for (const kind of ['loto', 'telex']) {
+      const d = this.catalog.decks[kind];
+      if (d && fx >= d.x && fx <= d.x + d.w && fy >= d.y && fy <= d.y + d.h) {
+        if (this.model.drawKind === kind) this.onDeckTap(kind);
+        return;
+      }
+    }
+    let best = -1;
+    let bestDist = 1;
+    this.catalog.positions.forEach(([x, y], i) => {
+      const dx = (x - fx) / TILE_SIZE_HALF.x;
+      const dy = (y - fy) / TILE_SIZE_HALF.y;
+      const d = dx * dx + dy * dy;
+      if (d < bestDist) {
+        bestDist = d;
+        best = i;
+      }
+    });
+    if (best >= 0) this.onTileTap(best);
+  }
+
+  /* ---------- animația pionilor ---------- */
+
+  async animateTo(a, target) {
+    const token = ++a.token;
+    this.setMoving(a, true);
+    try {
+      await sleep(90);
+      if (token !== a.token) return;
+      const t0 = performance.now();
+      while (this.dieBusy() && performance.now() - t0 < 5000) {
+        await sleep(60);
+        if (token !== a.token) return;
+      }
+      const N = this.catalog.positions.length;
+      const start = Math.round(a.v);
+      const forward = mod(target - start, N);
+      const backward = mod(start - target, N);
+      if (forward >= 1 && forward <= 12) {
+        for (let i = 1; i <= forward; i++) {
+          if (!(await this.step(a, start + i, token))) return;
+        }
+      } else if (backward >= 1 && backward <= 6) {
+        for (let i = 1; i <= backward; i++) {
+          if (!(await this.step(a, start - i, token))) return;
+        }
+      } else {
+        a.v = target;   // salt (ex. RECHEMAT URGENT): fără animație pe traseu
+      }
+      if (token !== a.token) return;
+      // „pop" la aterizare: pionul se turtește o clipă și revine
+      await tween(70, (t) => (a.squash = t), () => token === a.token);
+      await tween(230, (t) => (a.squash = 1 - t), () => token === a.token);
+      if (token !== a.token) return;
+      a.squash = 0;
+      a.v = target;
+      await sleep(180);   // o pauză pe căsuța de sosire, înainte de ofertă / plată / cartonaș
+    } finally {
+      if (token === a.token) this.setMoving(a, false);
+    }
+  }
+
+  async step(a, to, token) {
+    const from = a.v;
+    if (token !== a.token) return false;
+    this.onStep?.();
+    await tween(STEP_MS, (t) => (a.v = from + (to - from) * t), () => token === a.token);
+    return token === a.token;
+  }
+
+  setMoving(a, flag) {
+    if (a.moving === flag) return;
+    a.moving = flag;
+    const any = [...this.anims.values()].some((x) => x.moving);
+    if (this.lastBusy !== any) {
+      this.lastBusy = any;
+      this.onBusyChange(any);
+    }
+  }
+
+  /* ---------- desenare ---------- */
+
+  loop() {
+    if (!this.running) return;
+    this.draw();
+    this.onFrame(this);
+    requestAnimationFrame(this.loop);
+  }
+
+  draw() {
+    const { ctx, layout } = this;
+    const { dpr, cssW, cssH } = layout;
+    if (this.canvas.clientWidth && (this.canvas.clientWidth !== cssW || this.canvas.clientHeight !== cssH)) this.resize();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#1b1311';
+    ctx.fillRect(0, 0, cssW, cssH);
+
+    const t = this.transform();
+    ctx.setTransform(dpr * t.A, 0, 0, dpr * t.A, dpr * t.E, dpr * t.F);
+    const { bx, by, bw, bh } = layout;
+
+    if (this.boardImg) ctx.drawImage(this.boardImg, bx, by, bw, bh);
+    else {
+      ctx.fillStyle = '#2d4d32';
+      ctx.fillRect(bx, by, bw, bh);
+    }
+
+    this.drawDecks(ctx, bx, by, bw, bh);
+    this.drawHighlight(ctx, bx, by, bw, bh);
+    this.drawMarkers(ctx, bx, by, bw, bh);
+    this.drawCash(ctx, bx, by, bw, bh);
+    this.drawPawns(ctx, bx, by, bw, bh);
+  }
+
+  drawDecks(ctx, bx, by, bw, bh) {
+    const now = performance.now();
+    for (const kind of ['loto', 'telex']) {
+      const r = this.catalog.decks[kind];
+      const img = this.deckImgs[kind];
+      if (!r || !img) continue;
+      const active = this.model.drawKind === kind;
+      const pulse = active ? 1 + 0.07 * (0.5 - 0.5 * Math.cos((2 * Math.PI * (now % 1200)) / 1200)) : 1;
+      const W = bw * r.w;
+      const H = bh * r.h;
+      const X = bx + bw * r.x;
+      const Y = by + bh * r.y;
+      ctx.save();
+      ctx.translate(X + W / 2, Y + H / 2);
+      ctx.scale(pulse, pulse);
+      ctx.translate(-W / 2, -H / 2);
+      for (let layer = 2; layer >= 0; layer--) {
+        const ox = layer * 2;
+        const w = W - 4;
+        const h = H - 4;
+        ctx.drawImage(img, ox, ox, w, h);
+        ctx.lineWidth = active && layer === 0 ? Math.max(2, bh * 0.004) : 1;
+        ctx.strokeStyle = active && layer === 0 ? '#f0d20e' : 'rgba(0,0,0,0.6)';
+        ctx.strokeRect(ox, ox, w, h);
+      }
+      if (active) {
+        const label = 'TRAGE';
+        const fs = Math.max(12, bh * 0.034);
+        ctx.font = `900 ${fs}px system-ui, sans-serif`;
+        const tw = ctx.measureText(label).width + fs;
+        const th = fs * 1.6;
+        ctx.fillStyle = 'rgba(0,0,0,0.65)';
+        roundRect(ctx, W / 2 - tw / 2, H / 2 - th / 2, tw, th, fs * 0.4);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, W / 2, H / 2 + 1);
+      }
+      ctx.restore();
+    }
+  }
+
+  drawHighlight(ctx, bx, by, bw, bh) {
+    const idx = this.model.landedTile;
+    if (idx == null) return;
+    const pos = this.catalog.positions[idx];
+    if (!pos) return;
+    const tt = (performance.now() % 1100) / 1100;
+    const cx = bx + bw * pos[0];
+    const cy = by + bh * pos[1];
+    const W = bw * 0.11;
+    const H = bh * 0.14;
+    const r = Math.min(W, H) / 2 * (0.85 + 0.15 * Math.sin(tt * 2 * Math.PI));
+    const color = this.model.highlightColor;
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+    g.addColorStop(0, withAlpha(color, 0.38 * (1 - tt * 0.6)));
+    g.addColorStop(0.7, withAlpha(color, 0.18 * (1 - tt * 0.6)));
+    g.addColorStop(1, withAlpha(color, 0));
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.lineWidth = Math.max(2, r * 0.09);
+    ctx.strokeStyle = withAlpha(color, 0.85 * (1 - tt * 0.5));
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.82, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  /** Marcajele proprietăților: o căsuță deținută, în culoarea proprietarului. Fără nivel (anexele nu sunt publice). */
+  drawMarkers(ctx, bx, by, bw, bh) {
+    for (const p of this.model.players) {
+      const color = PAWN_BY_KEY[p.color]?.hex ?? '#888';
+      for (const propId of Object.keys(p.ownedProperties)) {
+        const tile = this.model.propertyTiles[propId];
+        const pos = tile != null ? this.catalog.positions[tile] : null;
+        if (!pos) continue;
+        const w = bw * 0.06;
+        const h = bh * 0.075;
+        ctx.beginPath();
+        ctx.ellipse(bx + bw * pos[0], by + bh * pos[1], w / 2, h / 2, 0, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = color;
+        ctx.stroke();
+      }
+    }
+  }
+
+  /** Banii fizici ai jucătorului afișat (grămezi de bancnote). */
+  drawCash(ctx, bx, by, bw, bh) {
+    if (!this.model.cashPlayer) return;
+    const counts = billCounts(this.model.cashMoney);
+    ROW_ORDER.forEach((value, slot) => {
+      const n = counts[value];
+      const img = this.billImgs[value];
+      if (!n || !img) return;
+      const billW = bw * 0.05 * 1.6;
+      const billH = billW * (img.naturalHeight / img.naturalWidth || 0.545);
+      const stepY = billH * 0.18;
+      const layers = Math.min(n, MAX_LAYERS);
+      const cx = bx + bw * (PILE_CX + slot * PILE_STEP_X);
+      const base = by + bh * PILE_CY;
+      for (let i = 0; i < layers; i++) {
+        ctx.drawImage(img, cx - billW / 2, base - billH - i * stepY, billW, billH);
+      }
+    });
+  }
+
+  drawPawns(ctx, bx, by, bw, bh) {
+    const players = this.model.players;
+    const N = this.catalog.positions.length;
+    const byTile = new Map();
+    for (const p of players) {
+      const arr = byTile.get(p.position) ?? [];
+      arr.push(p);
+      byTile.set(p.position, arr);
+    }
+    const phase = (performance.now() / 2600) * 2 * Math.PI;
+    for (const p of players) {
+      const a = this.anims.get(p.id);
+      if (!a) continue;
+      const mates = byTile.get(p.position) ?? [p];
+      const idx = Math.max(0, mates.findIndex((m) => m.id === p.id));
+      const slots = CLUSTER[Math.min(4, mates.length)] ?? CLUSTER[1];
+      const [dx, dy, sizeScale] = slots[Math.min(idx, slots.length - 1)];
+
+      // poziția pe traseu, cu interpolare între căsuțe
+      const v = a.v;
+      let fx0;
+      let fy0;
+      if (v < 0) {
+        const s = this.catalog.startMarker;
+        const t = Math.min(1, Math.max(0, v + 1));
+        fx0 = s[0] + (this.catalog.positions[0][0] - s[0]) * t;
+        fy0 = s[1] + (this.catalog.positions[0][1] - s[1]) * t;
+      } else {
+        const base = Math.floor(v);
+        const frac = v - base;
+        const i0 = mod(base, N);
+        const i1 = (i0 + 1) % N;
+        const q0 = this.catalog.positions[i0];
+        const q1 = this.catalog.positions[i1];
+        fx0 = q0[0] + (q1[0] - q0[0]) * frac;
+        fy0 = q0[1] + (q1[1] - q0[1]) * frac;
+      }
+      const hop = Math.min(1, Math.max(0, Math.sin(Math.PI * (v - Math.floor(v)))));
+      const anchorX = bx + bw * (fx0 + dx);
+      const anchorY = by + bh * (fy0 + dy + 0.008);
+
+      const tileH = bh * 0.045 * sizeScale;
+      const pawnH = tileH * 2.36;
+      const pawnW = pawnH * PAWN_ASPECT;
+      const shadowH = bh * 0.013;
+      const bob = p.id === this.model.activePlayerId ? Math.sin(phase) * 0.0035 : 0;   // fracție din înălțime
+
+      // umbra rămâne pe tablă, se micșorează când pionul e sus
+      ctx.save();
+      ctx.translate(anchorX, anchorY);
+      const sh = 1 - 0.35 * hop;
+      ctx.globalAlpha = Math.max(0.2, 1 - 0.35 * hop);
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, pawnW * 0.62);
+      g.addColorStop(0, 'rgba(0,0,0,0.55)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.save();
+      ctx.scale(sh, 1 - 0.25 * hop);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, pawnW * 0.62, shadowH * 0.9, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      ctx.globalAlpha = 1;
+
+      // pionul: zboară (alungire) și aterizează (turtire)
+      const lift = -bh * (0.03 * hop + bob);
+      const sy = (1 + 0.13 * hop) * (1 - 0.22 * a.squash);
+      const sx = (1 - 0.07 * hop) * (1 + 0.16 * a.squash);
+      ctx.translate(0, lift);
+      ctx.scale(sx, sy);
+      const img = this.pawnImgs[p.color];
+      if (img) {
+        ctx.drawImage(img, -pawnW / 2, -pawnH + shadowH / 3, pawnW, pawnH);
+      } else {
+        ctx.fillStyle = PAWN_BY_KEY[p.color]?.hex ?? '#888';
+        ctx.beginPath();
+        ctx.ellipse(0, -pawnH / 2, pawnW / 2, pawnH / 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+}
+
+function withAlpha(hex, a) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  return `rgba(${r},${g},${b},${Math.max(0, Math.min(1, a))})`;
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+

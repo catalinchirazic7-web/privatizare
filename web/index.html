@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#332522">
+  <meta name="description" content="Privatizare — joc de societate românesc, jucabil din browser (local, cu roboți sau online).">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Privatizare">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Privatizare</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Afișat pe telefon/tabletă în portret: jocul cere orizontală -->
+  <div id="rotate-hint" class="rotate-hint" hidden>
+    <div class="rotate-icon" aria-hidden="true">⟳</div>
+    <p>Rotește telefonul pe orizontală ca să joci.</p>
+  </div>
+
+  <main id="app">
+
+    <!-- INTRO -->
+    <section id="scr-intro" class="screen" data-screen="intro">
+      <video id="intro-video" class="fullvideo" playsinline preload="none" src="media/intro_video.mp4"></video>
+      <button id="intro-skip" class="btn ghost skip-btn" type="button">Sari peste ›</button>
+    </section>
+
+    <!-- HOME -->
+    <section id="scr-home" class="screen" data-screen="home">
+      <header class="topbar">
+        <span class="brand">Privatizare</span>
+        <span class="spacer"></span>
+        <button id="btn-donate" class="btn ghost small" type="button">Donează</button>
+        <button id="btn-about" class="btn ghost small" type="button">Despre</button>
+        <span class="version">v1.01 web</span>
+      </header>
+      <div class="home-layout">
+        <div class="home-logo">
+          <img src="img/logo_privatizare.webp" alt="Logo Privatizare" draggable="false">
+        </div>
+        <nav class="home-menu">
+          <button id="btn-resume" class="btn primary wide" type="button" hidden>Continuă jocul</button>
+          <button id="btn-new" class="btn primary wide" type="button">Joc nou</button>
+          <button id="btn-online" class="btn yellow wide" type="button">JOC ONLINE</button>
+          <button id="btn-rules" class="btn ghost wide" type="button">Regulament</button>
+          <button id="btn-exit" class="btn ghost wide" type="button">Ieșire din joc</button>
+        </nav>
+      </div>
+    </section>
+
+    <!-- SETUP -->
+    <section id="scr-setup" class="screen" data-screen="setup">
+      <header class="subbar">
+        <button class="btn ghost small" type="button" data-back="home">← Înapoi</button>
+        <h2>Configurare partidă</h2>
+      </header>
+      <div class="scroll">
+        <div class="setup-grid">
+          <div class="field">
+            <h3>Jucători</h3>
+            <div class="chips" id="setup-count"></div>
+          </div>
+          <div class="field">
+            <h3>Durata partidei</h3>
+            <div class="chips" id="setup-time"></div>
+          </div>
+          <div class="field wide">
+            <h3>Bani de start (fiecare jucător)</h3>
+            <div class="chips scrollx" id="setup-money"></div>
+          </div>
+        </div>
+        <div id="setup-seats" class="seats"></div>
+        <button id="btn-start-game" class="btn primary wide big" type="button">Începe jocul</button>
+      </div>
+    </section>
+
+    <!-- ONLINE MENU -->
+    <section id="scr-online" class="screen" data-screen="online">
+      <header class="subbar">
+        <button class="btn ghost small" type="button" data-back="home">← Înapoi</button>
+        <h2>JOC ONLINE</h2>
+      </header>
+      <div class="online-layout scroll">
+        <div class="online-form">
+          <label class="field-label">Numele tău
+            <input id="online-name" maxlength="12" autocomplete="off" placeholder="ex. Ana">
+          </label>
+          <button id="btn-create-room" class="btn primary wide" type="button" disabled>CREEAZĂ MASĂ</button>
+          <div class="join-row">
+            <label class="field-label grow">Cod cameră
+              <input id="online-code" maxlength="4" autocomplete="off" placeholder="ABCD" class="code-input">
+            </label>
+            <button id="btn-join-room" class="btn yellow" type="button" disabled>CONECTARE</button>
+          </div>
+          <p id="online-status" class="status" aria-live="polite"></p>
+          <p id="online-error" class="error" role="alert"></p>
+        </div>
+        <div class="online-pawns">
+          <h3>Alege pionul</h3>
+          <div id="online-colors" class="swatches"></div>
+          <p class="hint">Pionii estompați sunt deja luați la această masă.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- LOBBY -->
+    <section id="scr-lobby" class="screen" data-screen="lobby">
+      <div class="lobby scroll">
+        <p class="label">Cod cameră</p>
+        <p id="lobby-code" class="room-code">----</p>
+        <p class="hint">Spune-le prietenilor acest cod ca să intre la masă.</p>
+        <div id="lobby-seats" class="lobby-seats"></div>
+        <div class="lobby-actions">
+          <button id="btn-add-bot" class="btn ghost" type="button">+ ROBOT</button>
+          <button id="btn-start-match" class="btn primary" type="button">PORNEȘTE MECIUL</button>
+        </div>
+        <p id="lobby-hint" class="hint"></p>
+        <p id="lobby-error" class="error" role="alert"></p>
+        <button id="btn-leave-room" class="btn ghost" type="button">Părăsește masa</button>
+      </div>
+    </section>
+
+    <!-- RULES -->
+    <section id="scr-rules" class="screen" data-screen="rules">
+      <header class="subbar">
+        <button class="btn ghost small" type="button" data-back="home">← Înapoi</button>
+        <h2>Regulamentul jocului</h2>
+        <span class="spacer"></span>
+        <button id="rules-reset" class="btn ghost small" type="button">Reset</button>
+      </header>
+      <p class="hint pad">Mărește cu două degete (sau rotița mouse-ului) și trage pagina ca să citești detaliile.</p>
+      <div id="rules-viewport" class="rules-viewport">
+        <img id="rules-img" src="img/regulament.jpg" alt="Regulamentul jocului Privatizare" draggable="false">
+      </div>
+    </section>
+
+    <!-- GAME -->
+    <section id="scr-game" class="screen" data-screen="game">
+      <div id="board-wrap" class="board-wrap">
+        <canvas id="board" aria-label="Tabla de joc Privatizare"></canvas>
+        <div id="die" class="die" aria-label="Zarul">
+          <div class="die-face"></div>
+        </div>
+        <span id="die-badge" class="die-badge" hidden></span>
+      </div>
+
+      <div id="hud" class="hud">
+        <button id="hud-toggle" class="hud-bar" type="button" aria-expanded="false">
+          <span class="turn-dot" id="hud-dot"></span>
+          <span id="hud-turn">LA RÂND: -</span>
+          <span id="hud-money" class="hud-money"></span>
+          <span id="hud-clock" class="clock" hidden></span>
+          <span id="hud-arrow" class="hud-arrow">▼ JUCĂTORI</span>
+        </button>
+        <p id="skip-banner" class="banner" hidden></p>
+        <p id="wait-banner" class="banner" hidden></p>
+        <div id="money-float" class="money-float" aria-hidden="true"></div>
+
+        <div id="drawer" class="drawer" hidden>
+          <div id="drawer-players" class="drawer-players"></div>
+          <div class="drawer-row">
+            <span class="drawer-label">Zoom</span>
+            <button id="zoom-1" class="btn ghost small" type="button">1x</button>
+            <button id="zoom-2" class="btn ghost small" type="button">2x</button>
+            <span class="hint small-hint">sau ciupește pe tablă</span>
+          </div>
+          <div class="drawer-row">
+            <button id="toggle-stretch" class="btn ghost small" type="button">Tablă: pe tot ecranul</button>
+            <button id="toggle-tilt" class="btn ghost small" type="button">Înclinare: pornit</button>
+            <button id="toggle-sound" class="btn ghost small" type="button">Sunet: pornit</button>
+          </div>
+          <div id="drawer-tabs" class="drawer-row tabs"></div>
+          <div id="portfolio" class="portfolio"></div>
+          <p class="drawer-label">Istoric</p>
+          <ul id="history" class="history"></ul>
+          <button id="btn-game-exit" class="btn ghost small" type="button">Ieșire în meniu</button>
+        </div>
+      </div>
+
+      <div id="landing-card" class="landing-card" hidden></div>
+    </section>
+
+    <!-- OUTRO -->
+    <section id="scr-outro" class="screen" data-screen="outro">
+      <video id="outro-video" class="fullvideo" playsinline preload="none" src="media/outro_video.mp4"></video>
+      <button id="outro-done" class="btn ghost skip-btn" type="button">Înapoi în meniu ›</button>
+    </section>
+  </main>
+
+  <!-- Dialoguri de joc și informative -->
+  <div id="modal-root" class="modal-root" hidden></div>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

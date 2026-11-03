@@ -1,0 +1,658 @@
+{
+  "_meta": {
+    "currency": "ECU",
+    "resaleRatioToBank": 0.8,
+    "rules": {
+      "purchase": "La fiecare oprire se cumpara cel mult o actiune, la valoarea inscrisa pe ea (titlu sau anexa). Sursa: regula de joc.",
+      "anexe": "Fiecare titlu are 2, 3 sau 4 anexe. Fiecare anexa se cumpara separat, la pretul ei fix (nu cumulativ). Sursa: regula de joc + cartonase.",
+      "rent": "Intrare pe proprietate ocupata: se platesc taxe dupa toate actiunile detinute de proprietar. Interpretare: titleTax (daca are titlul) + suma profit anexe detinute.",
+      "unitsInterpretation": "Titlurile sunt marcate E pe cartonase, anexele ECU. Presupus ca E = ECU."
+    },
+    "propertyCount": 27,
+    "anexaCount": 71
+  },
+  "properties": [
+    {
+      "id": "poli",
+      "name": "POLI S.R.L.",
+      "titlePrice": 1000,
+      "titleTax": 200,
+      "anexe": [
+        {
+          "id": "poli_a1",
+          "name": "Hală de gimnastică",
+          "price": 2200,
+          "profit": 350
+        },
+        {
+          "id": "poli_a2",
+          "name": "Teren de tenis",
+          "price": 3000,
+          "profit": 800
+        },
+        {
+          "id": "poli_a3",
+          "name": "Teren de fotbal",
+          "price": 5500,
+          "profit": 1250
+        }
+      ]
+    },
+    {
+      "id": "electromotor",
+      "name": "S.C. ELECTROMOTOR",
+      "titlePrice": 1000,
+      "titleTax": 550,
+      "anexe": [
+        {
+          "id": "electromotor_a1",
+          "name": "Secție de rotoare",
+          "price": 2550,
+          "profit": 350
+        },
+        {
+          "id": "electromotor_a2",
+          "name": "Secție de bobinaj",
+          "price": 5100,
+          "profit": 1100
+        },
+        {
+          "id": "electromotor_a3",
+          "name": "Hală montaj automat",
+          "price": 11000,
+          "profit": 2350
+        }
+      ]
+    },
+    {
+      "id": "helicon",
+      "name": "S.C. HELICON",
+      "titlePrice": 3750,
+      "titleTax": 400,
+      "anexe": [
+        {
+          "id": "helicon_a1",
+          "name": "Secția pregătirea formei",
+          "price": 2000,
+          "profit": 500
+        },
+        {
+          "id": "helicon_a2",
+          "name": "Sală tipar ofset",
+          "price": 3250,
+          "profit": 1200
+        },
+        {
+          "id": "helicon_a3",
+          "name": "Rotativă ziare",
+          "price": 5850,
+          "profit": 1300
+        }
+      ]
+    },
+    {
+      "id": "televiziune",
+      "name": "TELEVIZIUNE S.R.L.",
+      "titlePrice": 2000,
+      "titleTax": 450,
+      "anexe": [
+        {
+          "id": "televiziune_a1",
+          "name": "Studio local TV",
+          "price": 1500,
+          "profit": 450
+        },
+        {
+          "id": "televiziune_a2",
+          "name": "Studio teritorial",
+          "price": 2000,
+          "profit": 600
+        },
+        {
+          "id": "televiziune_a3",
+          "name": "Studio cu satelit",
+          "price": 6000,
+          "profit": 1150
+        }
+      ]
+    },
+    {
+      "id": "timisoreana",
+      "name": "S.A. TIMIȘOREANA",
+      "titlePrice": 2000,
+      "titleTax": 250,
+      "anexe": [
+        {
+          "id": "timisoreana_a1",
+          "name": "Sală confecții îmbrăcăminte",
+          "price": 4000,
+          "profit": 600
+        },
+        {
+          "id": "timisoreana_a2",
+          "name": "Sector aparate electrice",
+          "price": 7000,
+          "profit": 1400
+        },
+        {
+          "id": "timisoreana_a3",
+          "name": "Sector bijuterii",
+          "price": 11000,
+          "profit": 2400
+        }
+      ]
+    },
+    {
+      "id": "unirii",
+      "name": "S.C. UNIRII",
+      "titlePrice": 1000,
+      "titleTax": 450,
+      "anexe": [
+        {
+          "id": "unirii_a1",
+          "name": "Farmacie",
+          "price": 4000,
+          "profit": 1050
+        },
+        {
+          "id": "unirii_a2",
+          "name": "Cofetarie",
+          "price": 6000,
+          "profit": 1550
+        }
+      ]
+    },
+    {
+      "id": "padurea_verde",
+      "name": "LA PĂDUREA VERDE S.R.L.",
+      "titlePrice": 1000,
+      "titleTax": 250,
+      "anexe": [
+        {
+          "id": "padurea_verde_a1",
+          "name": "Cabane 2 persoane",
+          "price": 1500,
+          "profit": 250
+        },
+        {
+          "id": "padurea_verde_a2",
+          "name": "Bufet",
+          "price": 2000,
+          "profit": 400
+        },
+        {
+          "id": "padurea_verde_a3",
+          "name": "Băi termale",
+          "price": 4000,
+          "profit": 850
+        }
+      ]
+    },
+    {
+      "id": "lipscani",
+      "name": "S.C. LIPSCANI",
+      "titlePrice": 3100,
+      "titleTax": 450,
+      "anexe": [
+        {
+          "id": "lipscani_a1",
+          "name": "Bar de zi",
+          "price": 4200,
+          "profit": 800
+        },
+        {
+          "id": "lipscani_a2",
+          "name": "Restaurant",
+          "price": 6950,
+          "profit": 1350
+        }
+      ]
+    },
+    {
+      "id": "maria",
+      "name": "S.C. MARIA",
+      "titlePrice": 2500,
+      "titleTax": 450,
+      "anexe": [
+        {
+          "id": "maria_a1",
+          "name": "Bloc locuințe",
+          "price": 3200,
+          "profit": 750
+        },
+        {
+          "id": "maria_a2",
+          "name": "Bloc birouri",
+          "price": 5100,
+          "profit": 1050
+        },
+        {
+          "id": "maria_a3",
+          "name": "Discotecă",
+          "price": 6750,
+          "profit": 1350
+        }
+      ]
+    },
+    {
+      "id": "circumvalatiunii",
+      "name": "S.A. CIRCUMVALAȚIUNII",
+      "titlePrice": 4000,
+      "titleTax": 600,
+      "anexe": [
+        {
+          "id": "circumvalatiunii_a1",
+          "name": "Complex fizioterapie",
+          "price": 4500,
+          "profit": 1050
+        },
+        {
+          "id": "circumvalatiunii_a2",
+          "name": "Hotel",
+          "price": 9500,
+          "profit": 2250
+        }
+      ]
+    },
+    {
+      "id": "ohm",
+      "name": "OHM S.R.L.",
+      "titlePrice": 2100,
+      "titleTax": 200,
+      "anexe": [
+        {
+          "id": "ohm_a1",
+          "name": "Secția micromotoare",
+          "price": 2200,
+          "profit": 350
+        },
+        {
+          "id": "ohm_a2",
+          "name": "Atelier prototipe",
+          "price": 2950,
+          "profit": 850
+        },
+        {
+          "id": "ohm_a3",
+          "name": "Secția aparate măsură",
+          "price": 5700,
+          "profit": 1350
+        }
+      ]
+    },
+    {
+      "id": "atelier_cfr",
+      "name": "S.C. ATELIERE CFR",
+      "titlePrice": 2000,
+      "titleTax": 200,
+      "anexe": [
+        {
+          "id": "atelier_cfr_a1",
+          "name": "Atelier revizii",
+          "price": 3000,
+          "profit": 400
+        },
+        {
+          "id": "atelier_cfr_a2",
+          "name": "Atelier mecanic arcuri",
+          "price": 4000,
+          "profit": 800
+        },
+        {
+          "id": "atelier_cfr_a3",
+          "name": "Atelier osii-boghiuri",
+          "price": 5500,
+          "profit": 1550
+        }
+      ]
+    },
+    {
+      "id": "calea_sagului",
+      "name": "S.A. CALEA ȘAGULUI",
+      "titlePrice": 3500,
+      "titleTax": 450,
+      "anexe": [
+        {
+          "id": "calea_sagului_a1",
+          "name": "Bloc pentru turiști",
+          "price": 5000,
+          "profit": 1300
+        },
+        {
+          "id": "calea_sagului_a2",
+          "name": "Sală patinaj",
+          "price": 8000,
+          "profit": 1650
+        }
+      ]
+    },
+    {
+      "id": "piata_romana",
+      "name": "S.C. PIAȚA ROMÂNĂ",
+      "titlePrice": 4000,
+      "titleTax": 450,
+      "anexe": [
+        {
+          "id": "piata_romana_a1",
+          "name": "Casă locuințe",
+          "price": 2650,
+          "profit": 650
+        },
+        {
+          "id": "piata_romana_a2",
+          "name": "Agenție turism",
+          "price": 5200,
+          "profit": 1100
+        },
+        {
+          "id": "piata_romana_a3",
+          "name": "Croitorie de lux",
+          "price": 7700,
+          "profit": 1550
+        }
+      ]
+    },
+    {
+      "id": "metalo_tim",
+      "name": "METALO-TIM S.R.L.",
+      "titlePrice": 4000,
+      "titleTax": 800,
+      "anexe": [
+        {
+          "id": "metalo_tim_a1",
+          "name": "Construcții sere",
+          "price": 3000,
+          "profit": 800
+        },
+        {
+          "id": "metalo_tim_a2",
+          "name": "Construcții containere",
+          "price": 4000,
+          "profit": 1100
+        }
+      ]
+    },
+    {
+      "id": "piata_victoriei",
+      "name": "S.A. PIAȚA VICTORIEI",
+      "titlePrice": 4000,
+      "titleTax": 400,
+      "anexe": [
+        {
+          "id": "piata_victoriei_a1",
+          "name": "Magazin supermarket",
+          "price": 6000,
+          "profit": 1000
+        },
+        {
+          "id": "piata_victoriei_a2",
+          "name": "Bloc turn hotel",
+          "price": 11000,
+          "profit": 2300
+        }
+      ]
+    },
+    {
+      "id": "taberei",
+      "name": "S.C. TABEREI",
+      "titlePrice": 3100,
+      "titleTax": 350,
+      "anexe": [
+        {
+          "id": "taberei_a1",
+          "name": "Casă cu grădină",
+          "price": 1550,
+          "profit": 350
+        },
+        {
+          "id": "taberei_a2",
+          "name": "Bloc 2 etaje",
+          "price": 4000,
+          "profit": 850
+        },
+        {
+          "id": "taberei_a3",
+          "name": "Casă de odihnă",
+          "price": 7150,
+          "profit": 1400
+        }
+      ]
+    },
+    {
+      "id": "aviatica",
+      "name": "AVIATICA S.R.L.",
+      "titlePrice": 1000,
+      "titleTax": 400,
+      "anexe": [
+        {
+          "id": "aviatica_a1",
+          "name": "Servicii cu helicopter",
+          "price": 2500,
+          "profit": 550
+        },
+        {
+          "id": "aviatica_a2",
+          "name": "Avion particular mic",
+          "price": 3500,
+          "profit": 750
+        },
+        {
+          "id": "aviatica_a3",
+          "name": "Serviciu transport",
+          "price": 4500,
+          "profit": 1050
+        }
+      ]
+    },
+    {
+      "id": "memorii",
+      "name": "MEMORII S.R.L.",
+      "titlePrice": 2000,
+      "titleTax": 500,
+      "anexe": [
+        {
+          "id": "memorii_a1",
+          "name": "Atelier plăci circuite",
+          "price": 2500,
+          "profit": 550
+        },
+        {
+          "id": "memorii_a2",
+          "name": "Blocuri de memorii",
+          "price": 3000,
+          "profit": 900
+        },
+        {
+          "id": "memorii_a3",
+          "name": "Secție microprocesoare",
+          "price": 4000,
+          "profit": 1150
+        }
+      ]
+    },
+    {
+      "id": "prichindel",
+      "name": "PRICHINDEL S.R.L.",
+      "titlePrice": 3000,
+      "titleTax": 400,
+      "anexe": [
+        {
+          "id": "prichindel_a1",
+          "name": "Secție confecții manuale",
+          "price": 3000,
+          "profit": 550
+        },
+        {
+          "id": "prichindel_a2",
+          "name": "Secție mecanizată",
+          "price": 3500,
+          "profit": 850
+        }
+      ]
+    },
+    {
+      "id": "lahovary",
+      "name": "S.C. LAHOVARY",
+      "titlePrice": 3000,
+      "titleTax": 350,
+      "anexe": [
+        {
+          "id": "lahovary_a1",
+          "name": "Pensiune",
+          "price": 4100,
+          "profit": 750
+        },
+        {
+          "id": "lahovary_a2",
+          "name": "Mezelarie",
+          "price": 7250,
+          "profit": 1350
+        }
+      ]
+    },
+    {
+      "id": "guban",
+      "name": "GUBAN S.R.L.",
+      "titlePrice": 1000,
+      "titleTax": 300,
+      "anexe": [
+        {
+          "id": "guban_a1",
+          "name": "Atelier pantofi",
+          "price": 1500,
+          "profit": 750
+        },
+        {
+          "id": "guban_a2",
+          "name": "Atelier cizme",
+          "price": 3000,
+          "profit": 950
+        },
+        {
+          "id": "guban_a3",
+          "name": "Atelier marochinărie",
+          "price": 4100,
+          "profit": 1150
+        }
+      ]
+    },
+    {
+      "id": "telefoane",
+      "name": "S.C. TELEFOANE",
+      "titlePrice": 3000,
+      "titleTax": 400,
+      "anexe": [
+        {
+          "id": "telefoane_a1",
+          "name": "Centrală urbană",
+          "price": 2100,
+          "profit": 800
+        },
+        {
+          "id": "telefoane_a2",
+          "name": "Centrală interurbană",
+          "price": 3250,
+          "profit": 1450
+        }
+      ]
+    },
+    {
+      "id": "continental",
+      "name": "S.A. CONTINENTAL",
+      "titlePrice": 5000,
+      "titleTax": 500,
+      "anexe": [
+        {
+          "id": "continental_a1",
+          "name": "Sală jocuri electronice",
+          "price": 4000,
+          "profit": 1400
+        },
+        {
+          "id": "continental_a2",
+          "name": "Piscină cu bar",
+          "price": 7000,
+          "profit": 2000
+        },
+        {
+          "id": "continental_a3",
+          "name": "Hotel-restaurant",
+          "price": 12000,
+          "profit": 3000
+        }
+      ]
+    },
+    {
+      "id": "celuloza",
+      "name": "S.R.L. CELULOZA",
+      "titlePrice": 4000,
+      "titleTax": 500,
+      "anexe": [
+        {
+          "id": "celuloza_a1",
+          "name": "Secție de hârtie",
+          "price": 4000,
+          "profit": 800
+        },
+        {
+          "id": "celuloza_a2",
+          "name": "Secție de cartoane",
+          "price": 4500,
+          "profit": 1000
+        }
+      ]
+    },
+    {
+      "id": "dura",
+      "name": "S.C. DURA",
+      "titlePrice": 2500,
+      "titleTax": 350,
+      "anexe": [
+        {
+          "id": "dura_a1",
+          "name": "Hală baterii 1,5 V",
+          "price": 2000,
+          "profit": 600
+        },
+        {
+          "id": "dura_a2",
+          "name": "Hală baterii 4,5 V",
+          "price": 3200,
+          "profit": 850
+        },
+        {
+          "id": "dura_a3",
+          "name": "Hală baterii 9 V",
+          "price": 5000,
+          "profit": 1450
+        }
+      ]
+    },
+    {
+      "id": "ambasador",
+      "name": "S.A. AMBASADOR",
+      "titlePrice": 3000,
+      "titleTax": 350,
+      "anexe": [
+        {
+          "id": "ambasador_a1",
+          "name": "Hotel 12 etaje",
+          "price": 4000,
+          "profit": 500
+        },
+        {
+          "id": "ambasador_a2",
+          "name": "Complex restaurant bar",
+          "price": 6000,
+          "profit": 1500
+        },
+        {
+          "id": "ambasador_a3",
+          "name": "Club de noapte",
+          "price": 12000,
+          "profit": 2350
+        }
+      ]
+    }
+  ]
+}
