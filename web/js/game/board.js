@@ -4,7 +4,6 @@
 
 import { loadImage } from '../ui/dom.js';
 import { PAWN_BY_KEY } from '../core/model.js';
-import { billCounts, MAX_LAYERS } from '../core/rules.js';
 
 const BOARD_W = 1600;
 const BOARD_H = 1131;
@@ -12,10 +11,6 @@ const BOARD_ASPECT = BOARD_W / BOARD_H;
 const STEP_MS = 430;          // durata unui pas pe tablă
 const TILT_SCALE = 0.93;      // înclinarea: tabla e puțin mai mică și ridicată
 const TILT_LIFT = -0.022;     // (fracție din înălțime)
-const ROW_ORDER = [2000, 500, 50, 100, 1000];   // grămezile de bani, de la stânga la dreapta
-const PILE_CX = 0.2;
-const PILE_STEP_X = 0.07;
-const PILE_CY = 0.74;
 const PAWN_ASPECT = 138 / 256;  // sprite-ul pionului (w/h)
 const TILE_SIZE_HALF = { x: 0.034, y: 0.045 };   // elipsa de atingere pentru o căsuță
 const CLUSTER = {
@@ -78,7 +73,7 @@ export class BoardView {
 
     this.model = {
       players: [], activePlayerId: null, landedTile: null, highlightColor: '#ffd54f',
-      drawKind: null, cashPlayer: null, cashMoney: 0, propertyTiles: {}, stretch: true, tilt: true,
+      drawKind: null, propertyTiles: {}, stretch: true, tilt: true,
       zoomPreset: 1, zoomNonce: 0, focusIndex: null,
     };
     this.anims = new Map();
@@ -100,8 +95,6 @@ export class BoardView {
     loadImage('img/deck_back_telex.webp').then((img) => (this.deckImgs.telex = img));
     this.pawnImgs = {};
     for (const c of Object.values(PAWN_BY_KEY)) loadImage(c.img).then((img) => (this.pawnImgs[c.key] = img));
-    this.billImgs = {};
-    for (const v of ROW_ORDER) loadImage(`img/bill_${v}.webp`).then((img) => (this.billImgs[v] = img));
 
     this.bindPointers();
     this.resize();
@@ -409,7 +402,6 @@ export class BoardView {
     this.drawDecks(ctx, bx, by, bw, bh);
     this.drawHighlight(ctx, bx, by, bw, bh);
     this.drawMarkers(ctx, bx, by, bw, bh);
-    this.drawCash(ctx, bx, by, bw, bh);
     this.drawPawns(ctx, bx, by, bw, bh);
   }
 
@@ -502,26 +494,6 @@ export class BoardView {
         ctx.stroke();
       }
     }
-  }
-
-  /** Banii fizici ai jucătorului afișat (grămezi de bancnote). */
-  drawCash(ctx, bx, by, bw, bh) {
-    if (!this.model.cashPlayer) return;
-    const counts = billCounts(this.model.cashMoney);
-    ROW_ORDER.forEach((value, slot) => {
-      const n = counts[value];
-      const img = this.billImgs[value];
-      if (!n || !img) return;
-      const billW = bw * 0.05 * 1.6;
-      const billH = billW * (img.naturalHeight / img.naturalWidth || 0.545);
-      const stepY = billH * 0.18;
-      const layers = Math.min(n, MAX_LAYERS);
-      const cx = bx + bw * (PILE_CX + slot * PILE_STEP_X);
-      const base = by + bh * PILE_CY;
-      for (let i = 0; i < layers; i++) {
-        ctx.drawImage(img, cx - billW / 2, base - billH - i * stepY, billW, billH);
-      }
-    });
   }
 
   drawPawns(ctx, bx, by, bw, bh) {

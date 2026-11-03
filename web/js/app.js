@@ -230,5 +230,3 @@ boot().catch((e) => {
   app.screen = 'home';
   app.toast(`Jocul nu a putut porni: ${e.message}`);
 });
-
-

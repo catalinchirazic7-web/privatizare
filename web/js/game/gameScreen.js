@@ -278,15 +278,12 @@ export class GameScreen {
     this.catalog.board.forEach((t, i) => {
       if (t.type === TILE.PROPERTY) propertyTiles[t.propertyId] = i;
     });
-    const cashPlayer = viewed && !viewed.isBot ? viewed : players.find((p) => !p.isBot) ?? null;
     this.board.setModel({
       players,
       activePlayerId: current?.id ?? null,
       landedTile: this.landedTile,
       highlightColor: current ? PAWN_BY_KEY[current.color].hex : '#ffd54f',
       drawKind: dialog?.type === 'DRAW' && myTurn && !current?.isBot ? dialog.kind.toLowerCase() : null,
-      cashPlayer,
-      cashMoney: cashPlayer?.money ?? 0,
       propertyTiles,
       stretch: this.stretch,
       tilt: this.tilt,
@@ -557,7 +554,9 @@ export class GameScreen {
   /* ---------- dialoguri ---------- */
 
   renderDialog(d) {
-    if (!d) {
+    // Tragerea din pachet nu are fereastră: pachetul pulsează pe tablă și se atinge direct.
+    // Un modal gol ar acoperi tabla cu fundalul întunecat și ar bloca atingerea pachetului.
+    if (!d || d.type === 'DRAW') {
       if (this.modalKey && this.modalKey.startsWith('dlg:')) this.closeModal();
       return;
     }
