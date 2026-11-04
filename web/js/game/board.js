@@ -11,6 +11,8 @@ const TILT_SCALE = 0.93;      // înclinarea: tabla e puțin mai mică și ridic
 const TILT_LIFT = -0.022;     // (fracție din înălțime)
 const BOARD_FILTER = 'saturate(1.6) contrast(1.06) brightness(1.06)';   // tabla: verde mai viu (ctx.filter; fără efect pe browserele vechi)
 const PAWN_ASPECT = 0.54;   // lățimea pionului față de înălțime (forma desenată)
+const DECK_LAYERS = 12;        // câte cartonașe are teancul LOTO / TELEX
+const DECK_OFFSET = 0.24;      // fracția din latura mică a cadrului pe care o ocupă decalajul teancului
 const TILE_SIZE_HALF = { x: 0.034, y: 0.045 };   // elipsa de atingere pentru o căsuță
 const CLUSTER = {
   1: [[0, 0, 1]],
@@ -456,15 +458,60 @@ export class BoardView {
       ctx.translate(X + W / 2, Y + H / 2);
       ctx.scale(pulse, pulse);
       ctx.translate(-W / 2, -H / 2);
-      for (let layer = 2; layer >= 0; layer--) {
-        const ox = layer * 2;
-        const w = W - 4;
-        const h = H - 4;
+      // teanc 3D: laturile groase ale cartonașelor, umbră sub teanc și lumină pe cartonașul de sus
+      const off = Math.min(W, H) * DECK_OFFSET;   // cât iese teancul spre dreapta-jos
+      const step = off / (DECK_LAYERS - 1);
+      const w = W - off;
+      const h = H - off;
+      const poly = (pts, fill) => {
+        ctx.beginPath();
+        ctx.moveTo(pts[0][0], pts[0][1]);
+        for (const q of pts.slice(1)) ctx.lineTo(q[0], q[1]);
+        ctx.closePath();
+        ctx.fillStyle = fill;
+        ctx.fill();
+      };
+      // umbra întregului teanc
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.6)';
+      ctx.shadowBlur = bh * 0.04;
+      ctx.shadowOffsetX = bh * 0.02;
+      ctx.shadowOffsetY = bh * 0.03;
+      poly([[w, 0], [w + off, off], [w + off, off + h], [w, h]], '#c4bba3');   // latura dreaptă
+      poly([[0, h], [off, off + h], [w + off, off + h], [w, h]], '#9a917b');   // latura de jos
+      ctx.restore();
+      // liniile dintre cartonașe pe laturi
+      ctx.strokeStyle = 'rgba(60,50,35,0.35)';
+      ctx.lineWidth = Math.max(1, bh * 0.0015);
+      for (let i = 1; i < DECK_LAYERS - 1; i++) {
+        const k = i * step;
+        ctx.beginPath();
+        ctx.moveTo(w + k, k); ctx.lineTo(w + k, k + h);
+        ctx.moveTo(k, h + k); ctx.lineTo(w + k, h + k);
+        ctx.stroke();
+      }
+      // cartonașele, din spate spre față, fiecare cu umbră mică
+      for (let i = 0; i < DECK_LAYERS; i++) {
+        const ox = i * step;
+        const top = i === DECK_LAYERS - 1;
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.45)';
+        ctx.shadowBlur = bh * 0.008;
+        ctx.shadowOffsetX = bh * 0.004;
+        ctx.shadowOffsetY = bh * 0.006;
         ctx.drawImage(img, ox, ox, w, h);
-        ctx.lineWidth = active && layer === 0 ? Math.max(2, bh * 0.004) : 1;
-        ctx.strokeStyle = active && layer === 0 ? '#f0d20e' : 'rgba(0,0,0,0.6)';
+        ctx.restore();
+        ctx.lineWidth = top && active ? Math.max(2, bh * 0.004) : Math.max(1, bh * 0.0012);
+        ctx.strokeStyle = top && active ? '#f0d20e' : 'rgba(0,0,0,0.55)';
         ctx.strokeRect(ox, ox, w, h);
       }
+      // lumină pe cartonașul de sus
+      const gl = ctx.createLinearGradient(off, off, off + w, off + h);
+      gl.addColorStop(0, 'rgba(255,255,255,0.28)');
+      gl.addColorStop(0.45, 'rgba(255,255,255,0)');
+      gl.addColorStop(1, 'rgba(0,0,0,0.18)');
+      ctx.fillStyle = gl;
+      ctx.fillRect(off, off, w, h);
       if (active) {
         const label = 'TRAGE';
         const fs = Math.max(12, bh * 0.034);

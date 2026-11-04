@@ -53,7 +53,6 @@ export function buildCatalog(boardJson, actionsJson, cardsJson, boardNewJson = n
   const telex = parseTelex(cardsJson.telex);
   const catalog = {
     board: parseBoard(boardJson.spaces),
-    decks: parseDecks(boardJson.decks ?? {}),
     actions: parseActions(actionsJson.properties),
     loto,
     telex,
@@ -70,6 +69,7 @@ export function buildCatalog(boardJson, actionsJson, cardsJson, boardNewJson = n
 function layoutOf(json, name) {
   return {
     positions: parsePositions(json.spaces),
+    decks: parseDecks(json.decks ?? {}),
     startMarker: json._meta?.start ? [json._meta.start.x, json._meta.start.y] : [0.125, 0.908],
     ...BOARD_LAYOUTS[name],
   };
@@ -81,6 +81,7 @@ export function applyLayout(catalog, name) {
   const layout = catalog.layouts[L];
   catalog.layout = L;
   catalog.positions = layout.positions;
+  catalog.decks = layout.decks;
   catalog.startMarker = layout.startMarker;
   catalog.boardImage = layout.image;
   catalog.boardAspect = layout.aspect;
