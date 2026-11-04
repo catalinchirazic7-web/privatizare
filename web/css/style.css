@@ -389,6 +389,9 @@ input { -webkit-user-select: text; user-select: text; }
 .card-text-only { background: #f5ecd6; color: #332522; border-radius: 14px; padding: 18px; font-weight: 700; text-align: center; font-size: 1.05rem; }
 .outcome-gain { color: var(--ok); }
 .outcome-loss { color: var(--danger); }
+.card-result { margin: 12px 0 4px; text-align: center; font-size: 1.5rem; font-weight: 900; animation: result-in .45s ease-out .55s both; }
+.card-note { margin: 4px 0; text-align: center; font-size: .92rem; opacity: .9; animation: result-in .45s ease-out .7s both; }
+@keyframes result-in { from { opacity: 0; transform: translateY(10px) scale(.92); } to { opacity: 1; transform: none; } }
 
 /* fișa acțiunii */
 .sheet-pages { position: relative; display: flex; align-items: center; justify-content: center; min-height: 240px; }

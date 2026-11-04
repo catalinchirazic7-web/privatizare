@@ -694,17 +694,19 @@ export class GameScreen {
     const art = card.cardId ? this.catalog.cardArt[card.cardId] : null;
     const amountTxt = card.amount != null ? `${card.outcome === CardOutcome.LOSS ? '−' : '+'}${fmt(card.amount)} ECU` : null;
     const outcomeCls = card.outcome === CardOutcome.GAIN ? 'outcome-gain' : card.outcome === CardOutcome.LOSS ? 'outcome-loss' : '';
+    // cartonașul se întoarce (animația de la afișare); rezultatul și destinația stau SUB el, nu peste text
     const visual = art
       ? el('div', { class: 'card-flip' }, el('div', { class: 'inner' },
           el('img', { class: 'card-img', alt: card.text, src: art }),
-          amountTxt ? el('div', { class: 'card-overlay' }, el('span', { class: 'amount-pill', text: amountTxt })) : null,
-          card.destination ? el('div', { class: 'card-dest', text: card.destination }) : null,
         ))
       : el('div', { class: 'card-text-only', text: card.text });
+    const result = amountTxt ? el('p', { class: `card-result ${outcomeCls}`, text: amountTxt }) : null;
+    const dest = card.destination ? el('p', { class: 'card-note', text: card.destination }) : null;
     return el('div', { class: 'modal wide', role: 'dialog', 'aria-modal': 'true' },
       el('h3', { text: card.kind === 'LOTO' ? 'Cartonaș LOTO' : 'Cartonaș TELEX' }),
       visual,
-      art ? null : el('p', { class: `${outcomeCls}`, text: amountTxt ?? '' }),
+      result,
+      dest,
       el('div', { class: 'actions' }, el('button', { class: 'btn primary', type: 'button', text: 'Am înțeles', onclick: () => this.game.dismissCard() })),
     );
   }
