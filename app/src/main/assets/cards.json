@@ -1,0 +1,1561 @@
+{
+  "_meta": {
+    "note": "Transcriere vizuala din imagini (nu OCR). Diacritice eliminate intentionat. Regulile LOTO si TELEX confirmate de utilizator; pay_owner_or_bank: proprietarul daca e alt jucator, altfel banca.",
+    "counts": {
+      "loto": 36,
+      "telex": 60
+    }
+  },
+  "loto": [
+    {
+      "id": "loto_01_1",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_1.jpg",
+      "kind": "W",
+      "amount": 2000,
+      "text": "Câștigați suma de 2000 ECU",
+      "effects": [
+        {
+          "type": "receive_bank",
+          "amount": 2000
+        }
+      ],
+      "needsReview": false
+    },
+    {
+      "id": "loto_01_2",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_1.jpg",
+      "kind": "W",
+      "amount": 10000,
+      "text": "Câștigați suma de 10000 ECU",
+      "effects": [
+        {
+          "type": "receive_bank",
+          "amount": 10000
+        }
+      ],
+      "needsReview": false
+    },
+    {
+      "id": "loto_01_3",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_1.jpg",
+      "kind": "L",
+      "amount": 2000,
+      "text": "Pierdeți suma de 2000 ECU",
+      "effects": [
+        {
+          "type": "pay_bank",
+          "amount": 2000
+        }
+      ],
+      "needsReview": false
+    },
+    {
+      "id": "loto_01_4",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_1.jpg",
+      "kind": "L",
+      "amount": 3000,
+      "text": "Pierdeți suma de 3000 ECU",
+      "effects": [
+        {
+          "type": "pay_bank",
+          "amount": 3000
+        }
+      ],
+      "needsReview": false
+    },
+    {
+      "id": "loto_02_1",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_2.jpg",
+      "kind": "L",
+      "amount": 5000,
+      "text": "Pierdeți suma de 5000 ECU",
+      "effects": [
+        {
+          "type": "pay_bank",
+          "amount": 5000
+        }
+      ],
+      "needsReview": false
+    },
+    {
+      "id": "loto_02_2",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_2.jpg",
+      "kind": "W",
+      "amount": 500,
+      "text": "Câștigați suma de 500 ECU",
+      "effects": [
+        {
+          "type": "receive_bank",
+          "amount": 500
+        }
+      ],
+      "needsReview": false
+    },
+    {
+      "id": "loto_02_3",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_2.jpg",
+      "kind": "W",
+      "amount": 5000,
+      "text": "Câștigați suma de 5000 ECU",
+      "effects": [
+        {
+          "type": "receive_bank",
+          "amount": 5000
+        }
+      ],
+      "needsReview": false
+    },
+    {
+      "id": "loto_02_4",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_2.jpg",
+      "kind": "L",
+      "amount": 3000,
+      "text": "Pierdeți suma de 3000 ECU",
+      "effects": [
+        {
+          "type": "pay_bank",
+          "amount": 3000
+        }
+      ],
+      "needsReview": false
+    },
+    {
+      "id": "loto_03_1",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_3.jpg",
+      "kind": "W",
+      "amount": 3000,
+      "text": "Câștigați suma de 3000 ECU",
+      "effects": [
+        {
+          "type": "receive_bank",
+          "amount": 3000
+        }
+      ],
+      "needsReview": false
+    },
+    {
+      "id": "loto_03_2",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_3.jpg",
+      "kind": "N",
+      "amount": null,
+      "text": "Nu ați câștigat, dar nici nu ați pierdut",
+      "effects": [],
+      "needsReview": false
+    },
+    {
+      "id": "loto_03_3",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_3.jpg",
+      "kind": "W",
+      "amount": 6000,
+      "text": "Câștigați suma de 6000 ECU",
+      "effects": [
+        {
+          "type": "receive_bank",
+          "amount": 6000
+        }
+      ],
+      "needsReview": false
+    },
+    {
+      "id": "loto_03_4",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_3.jpg",
+      "kind": "N",
+      "amount": null,
+      "text": "Nu ați câștigat, dar nici nu ați pierdut",
+      "effects": [],
+      "needsReview": false
+    },
+    {
+      "id": "loto_04_1",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_4.jpg",
+      "kind": "N",
+      "amount": null,
+      "text": "Nu ați câștigat, dar nici nu ați pierdut",
+      "effects": [],
+      "needsReview": false
+    },
+    {
+      "id": "loto_04_2",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_4.jpg",
+      "kind": "L",
+      "amount": 2000,
+      "text": "Pierdeți suma de 2000 ECU",
+      "effects": [
+        {
+          "type": "pay_bank",
+          "amount": 2000
+        }
+      ],
+      "needsReview": false
+    },
+    {
+      "id": "loto_04_3",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_4.jpg",
+      "kind": "L",
+      "amount": 5000,
+      "text": "Pierdeți suma de 5000 ECU",
+      "effects": [
+        {
+          "type": "pay_bank",
+          "amount": 5000
+        }
+      ],
+      "needsReview": false
+    },
+    {
+      "id": "loto_04_4",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_4.jpg",
+      "kind": "L",
+      "amount": 4000,
+      "text": "Pierdeți suma de 4000 ECU",
+      "effects": [
+        {
+          "type": "pay_bank",
+          "amount": 4000
+        }
+      ],
+      "needsReview": false
+    },
+    {
+      "id": "loto_05_1",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_5.jpg",
+      "kind": "W",
+      "amount": 1000,
+      "text": "Câștigați suma de 1000 ECU",
+      "effects": [
+        {
+          "type": "receive_bank",
+          "amount": 1000
+        }
+      ],
+      "needsReview": false
+    },
+    {
+      "id": "loto_05_2",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_5.jpg",
+      "kind": "N",
+      "amount": null,
+      "text": "Nu ați câștigat, dar nici nu ați pierdut",
+      "effects": [],
+      "needsReview": false
+    },
+    {
+      "id": "loto_05_3",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_5.jpg",
+      "kind": "N",
+      "amount": null,
+      "text": "Nu ați câștigat, dar nici nu ați pierdut",
+      "effects": [],
+      "needsReview": false
+    },
+    {
+      "id": "loto_05_4",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_5.jpg",
+      "kind": "N",
+      "amount": null,
+      "text": "Nu ați câștigat, dar nici nu ați pierdut",
+      "effects": [],
+      "needsReview": false
+    },
+    {
+      "id": "loto_06_1",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_6.jpg",
+      "kind": "W",
+      "amount": 10000,
+      "text": "Câștigați suma de 10000 ECU",
+      "effects": [
+        {
+          "type": "receive_bank",
+          "amount": 10000
+        }
+      ],
+      "needsReview": false
+    },
+    {
+      "id": "loto_06_2",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_6.jpg",
+      "kind": "W",
+      "amount": 4000,
+      "text": "Câștigați suma de 4000 ECU",
+      "effects": [
+        {
+          "type": "receive_bank",
+          "amount": 4000
+        }
+      ],
+      "needsReview": false
+    },
+    {
+      "id": "loto_06_3",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_6.jpg",
+      "kind": "N",
+      "amount": null,
+      "text": "Nu ați câștigat, dar nici nu ați pierdut",
+      "effects": [],
+      "needsReview": false
+    },
+    {
+      "id": "loto_06_4",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_6.jpg",
+      "kind": "L",
+      "amount": 1000,
+      "text": "Pierdeți suma de 1000 ECU",
+      "effects": [
+        {
+          "type": "pay_bank",
+          "amount": 1000
+        }
+      ],
+      "needsReview": false
+    },
+    {
+      "id": "loto_07_1",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_7.jpg",
+      "kind": "N",
+      "amount": null,
+      "text": "Nu ați câștigat, dar nici nu ați pierdut",
+      "effects": [],
+      "needsReview": false
+    },
+    {
+      "id": "loto_07_2",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_7.jpg",
+      "kind": "W",
+      "amount": 2000,
+      "text": "Câștigați suma de 2000 ECU",
+      "effects": [
+        {
+          "type": "receive_bank",
+          "amount": 2000
+        }
+      ],
+      "needsReview": false
+    },
+    {
+      "id": "loto_07_3",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_7.jpg",
+      "kind": "L",
+      "amount": 1000,
+      "text": "Pierdeți suma de 1000 ECU",
+      "effects": [
+        {
+          "type": "pay_bank",
+          "amount": 1000
+        }
+      ],
+      "needsReview": false
+    },
+    {
+      "id": "loto_07_4",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_7.jpg",
+      "kind": "W",
+      "amount": 6000,
+      "text": "Câștigați suma de 6000 ECU",
+      "effects": [
+        {
+          "type": "receive_bank",
+          "amount": 6000
+        }
+      ],
+      "needsReview": false
+    },
+    {
+      "id": "loto_08_1",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_8.jpg",
+      "kind": "N",
+      "amount": null,
+      "text": "Nu ați câștigat, dar nici nu ați pierdut",
+      "effects": [],
+      "needsReview": false
+    },
+    {
+      "id": "loto_08_2",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_8.jpg",
+      "kind": "N",
+      "amount": null,
+      "text": "Nu ați câștigat, dar nici nu ați pierdut",
+      "effects": [],
+      "needsReview": false
+    },
+    {
+      "id": "loto_08_3",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_8.jpg",
+      "kind": "W",
+      "amount": 4000,
+      "text": "Câștigați suma de 4000 ECU",
+      "effects": [
+        {
+          "type": "receive_bank",
+          "amount": 4000
+        }
+      ],
+      "needsReview": false
+    },
+    {
+      "id": "loto_08_4",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_8.jpg",
+      "kind": "W",
+      "amount": 500,
+      "text": "Câștigați suma de 500 ECU",
+      "effects": [
+        {
+          "type": "receive_bank",
+          "amount": 500
+        }
+      ],
+      "needsReview": false
+    },
+    {
+      "id": "loto_09_1",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_9.jpg",
+      "kind": "L",
+      "amount": 4000,
+      "text": "Pierdeți suma de 4000 ECU",
+      "effects": [
+        {
+          "type": "pay_bank",
+          "amount": 4000
+        }
+      ],
+      "needsReview": false
+    },
+    {
+      "id": "loto_09_2",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_9.jpg",
+      "kind": "W",
+      "amount": 3000,
+      "text": "Câștigați suma de 3000 ECU",
+      "effects": [
+        {
+          "type": "receive_bank",
+          "amount": 3000
+        }
+      ],
+      "needsReview": false
+    },
+    {
+      "id": "loto_09_3",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_9.jpg",
+      "kind": "W",
+      "amount": 1000,
+      "text": "Câștigați suma de 1000 ECU",
+      "effects": [
+        {
+          "type": "receive_bank",
+          "amount": 1000
+        }
+      ],
+      "needsReview": false
+    },
+    {
+      "id": "loto_09_4",
+      "sourceFile": "Cartonase LOTO/pic_20261101215848_9.jpg",
+      "kind": "W",
+      "amount": 5000,
+      "text": "Câștigați suma de 5000 ECU",
+      "effects": [
+        {
+          "type": "receive_bank",
+          "amount": 5000
+        }
+      ],
+      "needsReview": false
+    }
+  ],
+  "telex": [
+    {
+      "id": "telex_01_1",
+      "key": "consulting",
+      "amount": 2000,
+      "propertyLabel": "TELEFOANE",
+      "text": "Pentru consulting achitați taxa de 2 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 2000,
+          "propertyId": "telefoane"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "telefoane",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "telefoane",
+      "handwritten": true
+    },
+    {
+      "id": "telex_01_2",
+      "key": "tratament",
+      "amount": 3000,
+      "propertyLabel": null,
+      "text": "Sunteți surmenat și obosit: 2 zile (de 2 ori nu aruncați cu zarul). Plătiți băncii 3 000 ECU.",
+      "effects": [
+        {
+          "type": "skip_turns",
+          "turns": 2
+        },
+        {
+          "type": "pay_bank",
+          "amount": 3000
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "beneficiaryType": "BANK",
+      "targetCompanyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_01_3",
+      "key": "investitie",
+      "amount": 4000,
+      "propertyLabel": null,
+      "text": "Ați amânat o investiție: 4 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_bank",
+          "amount": 4000
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "beneficiaryType": "BANK",
+      "targetCompanyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_01_4",
+      "key": "consum_alcool",
+      "amount": 4000,
+      "propertyLabel": "LIPSCANI",
+      "text": "Consumați prea mult alcool: cură de cel puțin 3 zile. Achitați 4 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 4000,
+          "propertyId": "lipscani"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "lipscani",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "lipscani",
+      "handwritten": true
+    },
+    {
+      "id": "telex_02_1",
+      "key": "grup_sanitar",
+      "amount": 3000,
+      "propertyLabel": "PADUREA VERDE",
+      "text": "Modernizarea grupului sanitar: achitați 3 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 3000,
+          "propertyId": "padurea_verde"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "padurea_verde",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "padurea_verde",
+      "handwritten": true
+    },
+    {
+      "id": "telex_02_2",
+      "key": "reinvestiti",
+      "amount": 2000,
+      "propertyLabel": null,
+      "text": "Ați omis să reinvestiți beneficiile. Virați băncii 2 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_bank",
+          "amount": 2000
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "beneficiaryType": "BANK",
+      "targetCompanyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_02_3",
+      "key": "ceas_florar",
+      "amount": 2000,
+      "propertyLabel": null,
+      "text": "Ați construit un ceas floral: primiți 2 000 ECU de la fiecare jucător.",
+      "effects": [
+        {
+          "type": "receive_from_each_player",
+          "amount": 2000
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_02_4",
+      "key": "cercetare",
+      "amount": 2000,
+      "propertyLabel": "MEMORII",
+      "text": "Pentru cercetare științifică achitați 2 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 2000,
+          "propertyId": "memorii"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "memorii",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "memorii",
+      "handwritten": true
+    },
+    {
+      "id": "telex_03_1",
+      "key": "sponsor_poli",
+      "amount": 6000,
+      "propertyLabel": null,
+      "text": "Sponsorizați clubul POLI: 6 000 ECU (cheltuieli, sau băncii).",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 6000,
+          "propertyId": "poli"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "poli",
+      "handwritten": true
+    },
+    {
+      "id": "telex_03_2",
+      "key": "dobanzi",
+      "amount": 4000,
+      "propertyLabel": null,
+      "text": "Dobânzi la economii: 4 000 ECU se achită acum.",
+      "effects": [
+        {
+          "type": "receive_bank",
+          "amount": 4000
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_03_3",
+      "key": "investitie",
+      "amount": 4000,
+      "propertyLabel": null,
+      "text": "Ați amânat o investiție: 4 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_bank",
+          "amount": 4000
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "beneficiaryType": "BANK",
+      "targetCompanyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_03_4",
+      "key": "pavaj",
+      "amount": 2000,
+      "propertyLabel": "PIATA VICTORIEI",
+      "text": "Repararea pavajului: achitați băncii 2 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 2000,
+          "propertyId": "piata_victoriei"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "piata_victoriei",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "piata_victoriei",
+      "handwritten": true
+    },
+    {
+      "id": "telex_04_1",
+      "key": "garaj",
+      "amount": 3000,
+      "propertyLabel": "CALEA SAGULUI",
+      "text": "Garaj construit: achitați 3 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 3000,
+          "propertyId": "calea_sagului"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "calea_sagului",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "calea_sagului",
+      "handwritten": true
+    },
+    {
+      "id": "telex_04_2",
+      "key": "documentare",
+      "amount": 3000,
+      "propertyLabel": "AVIATICA",
+      "text": "Documentare: achitați agenției AVIATICA (sau băncii) 3 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 3000,
+          "propertyId": "aviatica"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "aviatica",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "aviatica",
+      "handwritten": true
+    },
+    {
+      "id": "telex_04_3",
+      "key": "sponsor_poli",
+      "amount": 6000,
+      "propertyLabel": null,
+      "text": "Sponsorizați clubul POLI: 6 000 ECU (sau băncii).",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 6000,
+          "propertyId": "poli"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "poli",
+      "handwritten": true
+    },
+    {
+      "id": "telex_04_4",
+      "key": "convorbiri",
+      "amount": 3000,
+      "propertyLabel": "TELEFOANE",
+      "text": "Costul convorbirilor societății TELEFOANE: 3 000 ECU (sau băncii).",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 3000,
+          "propertyId": "telefoane"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "telefoane",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "telefoane",
+      "handwritten": true
+    },
+    {
+      "id": "telex_05_1",
+      "key": "grup_sanitar",
+      "amount": 3000,
+      "propertyLabel": "CELULOZA",
+      "text": "Modernizarea grupului sanitar: achitați 3 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 3000,
+          "propertyId": "celuloza"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "celuloza",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "celuloza",
+      "handwritten": true
+    },
+    {
+      "id": "telex_05_2",
+      "key": "semnalizatoare",
+      "amount": 4000,
+      "propertyLabel": "BANCA",
+      "text": "Nu ați folosit semnalizatoare cu alarmă: ați fost prădat cu 4 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_bank",
+          "amount": 4000
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "beneficiaryType": "BANK",
+      "targetCompanyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_05_3",
+      "key": "incendiu",
+      "amount": 5000,
+      "propertyLabel": null,
+      "text": "Banca plătește 5 000 ECU despăgubire pentru incendiul de la proprietatea dvs.",
+      "effects": [
+        {
+          "type": "receive_bank",
+          "amount": 5000
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_05_4",
+      "key": "concurs_frumusete",
+      "amount": 2000,
+      "propertyLabel": "PRICHINDEL",
+      "text": "Sponsorizare concurs de frumusețe: 2 000 ECU la bancă.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 2000,
+          "propertyId": "prichindel"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "prichindel",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "prichindel",
+      "handwritten": true
+    },
+    {
+      "id": "telex_06_1",
+      "key": "pavaj",
+      "amount": 2000,
+      "propertyLabel": "CIRCUMVALATIUNII",
+      "text": "Repararea pavajului: achitați băncii 2 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 2000,
+          "propertyId": "circumvalatiunii"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "circumvalatiunii",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "circumvalatiunii",
+      "handwritten": true
+    },
+    {
+      "id": "telex_06_2",
+      "key": "consulting",
+      "amount": 2000,
+      "propertyLabel": "TELEFOANE",
+      "text": "Pentru consulting achitați taxa de 2 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 2000,
+          "propertyId": "telefoane"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "telefoane",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "telefoane",
+      "handwritten": true
+    },
+    {
+      "id": "telex_06_3",
+      "key": "curs_marketing",
+      "amount": 6000,
+      "propertyLabel": null,
+      "text": "Curs de marketing-management: contravaloarea 6 000 ECU la bancă.",
+      "effects": [
+        {
+          "type": "pay_bank",
+          "amount": 6000
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "beneficiaryType": "BANK",
+      "targetCompanyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_06_4",
+      "key": "nunta_supermarket",
+      "amount": 5000,
+      "propertyLabel": null,
+      "text": "Cadou la nunta fratelui: 5 000 ECU (Supermarket TIMIȘOARA, sau băncii).",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 5000,
+          "propertyId": "timisoreana"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "timisoreana",
+      "handwritten": true
+    },
+    {
+      "id": "telex_07_1",
+      "key": "consum_alcool",
+      "amount": 4000,
+      "propertyLabel": "PADUREA VERDE",
+      "text": "Consumați prea mult alcool: cură. Achitați 4 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 4000,
+          "propertyId": "padurea_verde"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "padurea_verde",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "padurea_verde",
+      "handwritten": true
+    },
+    {
+      "id": "telex_07_2",
+      "key": "sponsor_echipa",
+      "amount": 4000,
+      "propertyLabel": null,
+      "text": "Sponsorizați o echipă sportivă: plătiți băncii 4 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_bank",
+          "amount": 4000
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "beneficiaryType": "BANK",
+      "targetCompanyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_07_3",
+      "key": "documentare",
+      "amount": 3000,
+      "propertyLabel": "AVIATICA",
+      "text": "Documentare: achitați agenției AVIATICA (sau băncii) 3 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 3000,
+          "propertyId": "aviatica"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "aviatica",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "aviatica",
+      "handwritten": true
+    },
+    {
+      "id": "telex_07_4",
+      "key": "sponsor_echipa",
+      "amount": 4000,
+      "propertyLabel": null,
+      "text": "Sponsorizați o echipă sportivă: plătiți băncii 4 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_bank",
+          "amount": 4000
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "beneficiaryType": "BANK",
+      "targetCompanyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_08_1",
+      "key": "convorbiri",
+      "amount": 3000,
+      "propertyLabel": "TELEFOANE",
+      "text": "Costul convorbirilor societății TELEFOANE: 3 000 ECU (sau băncii).",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 3000,
+          "propertyId": "telefoane"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "telefoane",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "telefoane",
+      "handwritten": true
+    },
+    {
+      "id": "telex_08_2",
+      "key": "accident",
+      "amount": 5000,
+      "propertyLabel": "CALEA SAGULUI",
+      "text": "Accident de circulație pe galben: despăgubiri 5 000 ECU la bancă.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 5000,
+          "propertyId": "calea_sagului"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "calea_sagului",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "calea_sagului",
+      "handwritten": true
+    },
+    {
+      "id": "telex_08_3",
+      "key": "vacanta",
+      "amount": 2000,
+      "propertyLabel": "CFR",
+      "text": "Vacanța de vis: virați băncii 2 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 2000,
+          "propertyId": "atelier_cfr"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "atelier_cfr",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "atelier_cfr",
+      "handwritten": true
+    },
+    {
+      "id": "telex_08_4",
+      "key": "surmenat",
+      "amount": 3000,
+      "propertyLabel": null,
+      "text": "Sunteți surmenat și obosit: 2 zile. Plătiți băncii 3 000 ECU.",
+      "effects": [
+        {
+          "type": "skip_turns",
+          "turns": 2
+        },
+        {
+          "type": "pay_bank",
+          "amount": 3000
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "beneficiaryType": "BANK",
+      "targetCompanyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_09_1",
+      "key": "semnalizatoare",
+      "amount": 4000,
+      "propertyLabel": "BANCA PLATESTE",
+      "text": "Nu ați folosit semnalizatoare: ați fost prădat cu 4 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_bank",
+          "amount": 4000
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "beneficiaryType": "BANK",
+      "targetCompanyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_09_2",
+      "key": "tv_reclama",
+      "amount": 5000,
+      "propertyLabel": "TV",
+      "text": "Televiziunea emite o reclamă: achitați patronului TV 5 000 ECU (sau băncii).",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 5000,
+          "propertyId": "televiziune"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "televiziune",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "televiziune",
+      "handwritten": true
+    },
+    {
+      "id": "telex_09_3",
+      "key": "tv_concurs",
+      "amount": 3000,
+      "propertyLabel": "TV",
+      "text": "Concursuri tematice la firmă: alocați 3 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 3000,
+          "propertyId": "televiziune"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "televiziune",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "televiziune",
+      "handwritten": true
+    },
+    {
+      "id": "telex_09_4",
+      "key": "reclama_banca",
+      "amount": 2000,
+      "propertyLabel": "PIATA ROMANA",
+      "text": "Reclamă comercială: achitați 2 000 ECU la bancă.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 2000,
+          "propertyId": "piata_romana"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "piata_romana",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "piata_romana",
+      "handwritten": true
+    },
+    {
+      "id": "telex_10_1",
+      "key": "dobanzi",
+      "amount": 4000,
+      "propertyLabel": null,
+      "text": "Dobânzi la economii: 4 000 ECU se achită acum.",
+      "effects": [
+        {
+          "type": "receive_bank",
+          "amount": 4000
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_10_2",
+      "key": "banca_dividend",
+      "amount": 10000,
+      "propertyLabel": null,
+      "text": "Banca plătește 10 000 ECU dividende suplimentare.",
+      "effects": [
+        {
+          "type": "receive_bank",
+          "amount": 10000
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_10_3",
+      "key": "tv_reclama",
+      "amount": 5000,
+      "propertyLabel": null,
+      "text": "Televiziunea emite o reclamă: achitați patronului TV 5 000 ECU (sau băncii).",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 5000,
+          "propertyId": "televiziune"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "televiziune",
+      "handwritten": true
+    },
+    {
+      "id": "telex_10_4",
+      "key": "reclama_banca",
+      "amount": 2000,
+      "propertyLabel": "TV",
+      "text": "Reclamă comercială: achitați 2 000 ECU la bancă.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 2000,
+          "propertyId": "televiziune"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "televiziune",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "televiziune",
+      "handwritten": true
+    },
+    {
+      "id": "telex_11_1",
+      "key": "pliante",
+      "amount": 3000,
+      "propertyLabel": "HELICON",
+      "text": "Pliante-broșuri: virați S.C. HELICON 3 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 3000,
+          "propertyId": "helicon"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "helicon",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "helicon",
+      "handwritten": true
+    },
+    {
+      "id": "telex_11_2",
+      "key": "garaj",
+      "amount": 3000,
+      "propertyLabel": "SC MARIA",
+      "text": "Garaj construit: achitați 3 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 3000,
+          "propertyId": "maria"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "maria",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "maria",
+      "handwritten": true
+    },
+    {
+      "id": "telex_11_3",
+      "key": "retrage_4",
+      "amount": null,
+      "propertyLabel": null,
+      "text": "Mai aveți timp suficient: mergeți înapoi cu 4 căsuțe.",
+      "effects": [
+        {
+          "type": "move",
+          "steps": -4
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_11_4",
+      "key": "accident",
+      "amount": 5000,
+      "propertyLabel": null,
+      "text": "Accident de circulație pe galben: despăgubiri 5 000 ECU la bancă.",
+      "effects": [
+        {
+          "type": "pay_bank",
+          "amount": 5000
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "beneficiaryType": "BANK",
+      "targetCompanyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_12_1",
+      "key": "curs_marketing",
+      "amount": 6000,
+      "propertyLabel": "OHM SRL",
+      "text": "Curs de marketing-management: contravaloarea 6 000 ECU la bancă.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 6000,
+          "propertyId": "ohm"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "ohm",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "ohm",
+      "handwritten": true
+    },
+    {
+      "id": "telex_12_2",
+      "key": "mostenire",
+      "amount": 10000,
+      "propertyLabel": null,
+      "text": "Încasați de la bancă 10 000 ECU moștenire de la bunica.",
+      "effects": [
+        {
+          "type": "receive_bank",
+          "amount": 10000
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_12_3",
+      "key": "ceas_florar",
+      "amount": 2000,
+      "propertyLabel": null,
+      "text": "Ați construit un ceas floral: primiți 2 000 ECU de la fiecare jucător.",
+      "effects": [
+        {
+          "type": "receive_from_each_player",
+          "amount": 2000
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_12_4",
+      "key": "mostenire",
+      "amount": 10000,
+      "propertyLabel": null,
+      "text": "Încasați de la bancă 10 000 ECU moștenire de la bunica.",
+      "effects": [
+        {
+          "type": "receive_bank",
+          "amount": 10000
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_13_1",
+      "key": "banca_dividend",
+      "amount": 10000,
+      "propertyLabel": null,
+      "text": "Banca plătește 10 000 ECU dividende suplimentare.",
+      "effects": [
+        {
+          "type": "receive_bank",
+          "amount": 10000
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_13_2",
+      "key": "concurs_tematic",
+      "amount": 3000,
+      "propertyLabel": "HELICON",
+      "text": "Concursuri tematice la firmă: alocați 3 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 3000,
+          "propertyId": "helicon"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "helicon",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "helicon",
+      "handwritten": true
+    },
+    {
+      "id": "telex_13_3",
+      "key": "reinvestiti",
+      "amount": 2000,
+      "propertyLabel": null,
+      "text": "Ați omis să reinvestiți beneficiile. Virați băncii 2 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_bank",
+          "amount": 2000
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "beneficiaryType": "BANK",
+      "targetCompanyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_13_4",
+      "key": "incendiu",
+      "amount": 5000,
+      "propertyLabel": null,
+      "text": "Banca plătește 5 000 ECU despăgubire pentru incendiul de la proprietatea dvs.",
+      "effects": [
+        {
+          "type": "receive_bank",
+          "amount": 5000
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_14_1",
+      "key": "pliante",
+      "amount": 3000,
+      "propertyLabel": null,
+      "text": "Pliante-broșuri: virați S.C. HELICON 3 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 3000,
+          "propertyId": "helicon"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "helicon",
+      "handwritten": true
+    },
+    {
+      "id": "telex_14_2",
+      "key": "avanseaza_4",
+      "amount": null,
+      "propertyLabel": null,
+      "text": "Sunteți grăbit: avansați cu 4 căsuțe înainte.",
+      "effects": [
+        {
+          "type": "move",
+          "steps": 4
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_14_3",
+      "key": "concurs_frumusete",
+      "amount": 2000,
+      "propertyLabel": "GUBAN",
+      "text": "Sponsorizare concurs de frumusețe: 2 000 ECU la bancă.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 2000,
+          "propertyId": "guban"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "guban",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "guban",
+      "handwritten": true
+    },
+    {
+      "id": "telex_14_4",
+      "key": "vacanta",
+      "amount": 2000,
+      "propertyLabel": "S.C. TABEREI",
+      "text": "Vacanța de vis: virați băncii 2 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 2000,
+          "propertyId": "taberei"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "taberei",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "taberei",
+      "handwritten": true
+    },
+    {
+      "id": "telex_15_1",
+      "key": "nunta_supermarket",
+      "amount": 5000,
+      "propertyLabel": null,
+      "text": "Cadou la nunta fratelui: 5 000 ECU (Supermarket TIMIȘOARA, sau băncii).",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 5000,
+          "propertyId": "timisoreana"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "timisoreana",
+      "handwritten": true
+    },
+    {
+      "id": "telex_15_2",
+      "key": "avanseaza_4",
+      "amount": null,
+      "propertyLabel": null,
+      "text": "Sunteți grăbit: avansați cu 4 căsuțe înainte.",
+      "effects": [
+        {
+          "type": "move",
+          "steps": 4
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_15_3",
+      "key": "retrage_4",
+      "amount": null,
+      "propertyLabel": null,
+      "text": "Mai aveți timp suficient: mergeți înapoi cu 4 căsuțe.",
+      "effects": [
+        {
+          "type": "move",
+          "steps": -4
+        }
+      ],
+      "needsReview": false,
+      "propertyId": null,
+      "handwritten": false
+    },
+    {
+      "id": "telex_15_4",
+      "key": "cercetare",
+      "amount": 2000,
+      "propertyLabel": "PRICHINDEL",
+      "text": "Pentru cercetare științifică achitați 2 000 ECU.",
+      "effects": [
+        {
+          "type": "pay_owner_or_bank",
+          "amount": 2000,
+          "propertyId": "prichindel"
+        }
+      ],
+      "needsReview": false,
+      "propertyId": "prichindel",
+      "beneficiaryType": "COMPANY_OWNER",
+      "targetCompanyId": "prichindel",
+      "handwritten": true
+    }
+  ]
+}

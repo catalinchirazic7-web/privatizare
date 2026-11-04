@@ -1,0 +1,310 @@
+{
+ "actiuni": {
+  "poli": {
+   "titlu": "act_poli_t.webp",
+   "anexe": [
+    "act_poli_a1.webp",
+    "act_poli_a2.webp",
+    "act_poli_a3.webp"
+   ]
+  },
+  "electromotor": {
+   "titlu": "act_electromotor_t.webp",
+   "anexe": [
+    "act_electromotor_a1.webp",
+    "act_electromotor_a2.webp",
+    "act_electromotor_a3.webp"
+   ]
+  },
+  "helicon": {
+   "titlu": "act_helicon_t.webp",
+   "anexe": [
+    "act_helicon_a1.webp",
+    "act_helicon_a2.webp",
+    "act_helicon_a3.webp"
+   ]
+  },
+  "televiziune": {
+   "titlu": "act_televiziune_t.webp",
+   "anexe": [
+    "act_televiziune_a1.webp",
+    "act_televiziune_a2.webp",
+    "act_televiziune_a3.webp"
+   ]
+  },
+  "timisoreana": {
+   "titlu": "act_timisoreana_t.webp",
+   "anexe": [
+    "act_timisoreana_a1.webp",
+    "act_timisoreana_a2.webp",
+    "act_timisoreana_a3.webp"
+   ]
+  },
+  "unirii": {
+   "titlu": "act_unirii_t.webp",
+   "anexe": [
+    "act_unirii_a1.webp",
+    "act_unirii_a2.webp"
+   ]
+  },
+  "padurea_verde": {
+   "titlu": "act_padurea_verde_t.webp",
+   "anexe": [
+    "act_padurea_verde_a1.webp",
+    "act_padurea_verde_a2.webp",
+    "act_padurea_verde_a3.webp"
+   ]
+  },
+  "lipscani": {
+   "titlu": "act_lipscani_t.webp",
+   "anexe": [
+    "act_lipscani_a1.webp",
+    "act_lipscani_a2.webp"
+   ]
+  },
+  "maria": {
+   "titlu": "act_maria_t.webp",
+   "anexe": [
+    "act_maria_a1.webp",
+    "act_maria_a2.webp",
+    "act_maria_a3.webp"
+   ]
+  },
+  "circumvalatiunii": {
+   "titlu": "act_circumvalatiunii_t.webp",
+   "anexe": [
+    "act_circumvalatiunii_a1.webp",
+    "act_circumvalatiunii_a2.webp"
+   ]
+  },
+  "ohm": {
+   "titlu": "act_ohm_t.webp",
+   "anexe": [
+    "act_ohm_a1.webp",
+    "act_ohm_a2.webp",
+    "act_ohm_a3.webp"
+   ]
+  },
+  "atelier_cfr": {
+   "titlu": "act_atelier_cfr_t.webp",
+   "anexe": [
+    "act_atelier_cfr_a1.webp",
+    "act_atelier_cfr_a2.webp",
+    "act_atelier_cfr_a3.webp"
+   ]
+  },
+  "calea_sagului": {
+   "titlu": "act_calea_sagului_t.webp",
+   "anexe": [
+    "act_calea_sagului_a1.webp",
+    "act_calea_sagului_a2.webp"
+   ]
+  },
+  "piata_romana": {
+   "titlu": "act_piata_romana_t.webp",
+   "anexe": [
+    "act_piata_romana_a1.webp",
+    "act_piata_romana_a2.webp",
+    "act_piata_romana_a3.webp"
+   ]
+  },
+  "metalo_tim": {
+   "titlu": "act_metalo_tim_t.webp",
+   "anexe": [
+    "act_metalo_tim_a1.webp",
+    "act_metalo_tim_a2.webp"
+   ]
+  },
+  "piata_victoriei": {
+   "titlu": "act_piata_victoriei_t.webp",
+   "anexe": [
+    "act_piata_victoriei_a1.webp",
+    "act_piata_victoriei_a2.webp"
+   ]
+  },
+  "taberei": {
+   "titlu": "act_taberei_t.webp",
+   "anexe": [
+    "act_taberei_a1.webp",
+    "act_taberei_a2.webp",
+    "act_taberei_a3.webp"
+   ]
+  },
+  "aviatica": {
+   "titlu": "act_aviatica_t.webp",
+   "anexe": [
+    "act_aviatica_a1.webp",
+    "act_aviatica_a2.webp",
+    "act_aviatica_a3.webp"
+   ]
+  },
+  "memorii": {
+   "titlu": "act_memorii_t.webp",
+   "anexe": [
+    "act_memorii_a1.webp",
+    "act_memorii_a2.webp",
+    "act_memorii_a3.webp"
+   ]
+  },
+  "prichindel": {
+   "titlu": "act_prichindel_t.webp",
+   "anexe": [
+    "act_prichindel_a1.webp",
+    "act_prichindel_a2.webp"
+   ]
+  },
+  "lahovary": {
+   "titlu": "act_lahovary_t.webp",
+   "anexe": [
+    "act_lahovary_a1.webp",
+    "act_lahovary_a2.webp"
+   ]
+  },
+  "guban": {
+   "titlu": "act_guban_t.webp",
+   "anexe": [
+    "act_guban_a1.webp",
+    "act_guban_a2.webp",
+    "act_guban_a3.webp"
+   ]
+  },
+  "telefoane": {
+   "titlu": "act_telefoane_t.webp",
+   "anexe": [
+    "act_telefoane_a1.webp",
+    "act_telefoane_a2.webp"
+   ]
+  },
+  "continental": {
+   "titlu": "act_continental_t.webp",
+   "anexe": [
+    "act_continental_a1.webp",
+    "act_continental_a2.webp",
+    "act_continental_a3.webp"
+   ]
+  },
+  "celuloza": {
+   "titlu": "act_celuloza_t.webp",
+   "anexe": [
+    "act_celuloza_a1.webp",
+    "act_celuloza_a2.webp"
+   ]
+  },
+  "dura": {
+   "titlu": "act_dura_t.webp",
+   "anexe": [
+    "act_dura_a1.webp",
+    "act_dura_a2.webp",
+    "act_dura_a3.webp"
+   ]
+  },
+  "ambasador": {
+   "titlu": "act_ambasador_t.webp",
+   "anexe": [
+    "act_ambasador_a1.webp",
+    "act_ambasador_a2.webp",
+    "act_ambasador_a3.webp"
+   ]
+  }
+ },
+ "loto": {
+  "loto_01_1": "loto_loto_01_1.webp",
+  "loto_01_2": "loto_loto_01_2.webp",
+  "loto_01_3": "loto_loto_01_3.webp",
+  "loto_01_4": "loto_loto_01_4.webp",
+  "loto_02_1": "loto_loto_02_1.webp",
+  "loto_02_2": "loto_loto_02_2.webp",
+  "loto_02_3": "loto_loto_02_3.webp",
+  "loto_02_4": "loto_loto_02_4.webp",
+  "loto_03_1": "loto_loto_03_1.webp",
+  "loto_03_2": "loto_loto_03_2.webp",
+  "loto_03_3": "loto_loto_03_3.webp",
+  "loto_03_4": "loto_loto_03_4.webp",
+  "loto_04_1": "loto_loto_04_1.webp",
+  "loto_04_2": "loto_loto_04_2.webp",
+  "loto_04_3": "loto_loto_04_3.webp",
+  "loto_04_4": "loto_loto_04_4.webp",
+  "loto_05_1": "loto_loto_05_1.webp",
+  "loto_05_2": "loto_loto_05_2.webp",
+  "loto_05_3": "loto_loto_05_3.webp",
+  "loto_05_4": "loto_loto_05_4.webp",
+  "loto_06_1": "loto_loto_06_1.webp",
+  "loto_06_2": "loto_loto_06_2.webp",
+  "loto_06_3": "loto_loto_06_3.webp",
+  "loto_06_4": "loto_loto_06_4.webp",
+  "loto_07_1": "loto_loto_07_1.webp",
+  "loto_07_2": "loto_loto_07_2.webp",
+  "loto_07_3": "loto_loto_07_3.webp",
+  "loto_07_4": "loto_loto_07_4.webp",
+  "loto_08_1": "loto_loto_08_1.webp",
+  "loto_08_2": "loto_loto_08_2.webp",
+  "loto_08_3": "loto_loto_08_3.webp",
+  "loto_08_4": "loto_loto_08_4.webp",
+  "loto_09_1": "loto_loto_09_1.webp",
+  "loto_09_2": "loto_loto_09_2.webp",
+  "loto_09_3": "loto_loto_09_3.webp",
+  "loto_09_4": "loto_loto_09_4.webp"
+ },
+ "telex": {
+  "telex_01_1": "telex_telex_01_1.webp",
+  "telex_01_2": "telex_telex_01_2.webp",
+  "telex_01_3": "telex_telex_01_3.webp",
+  "telex_01_4": "telex_telex_01_4.webp",
+  "telex_02_1": "telex_telex_02_1.webp",
+  "telex_02_2": "telex_telex_02_2.webp",
+  "telex_02_3": "telex_telex_02_3.webp",
+  "telex_02_4": "telex_telex_02_4.webp",
+  "telex_03_1": "telex_telex_03_1.webp",
+  "telex_03_2": "telex_telex_03_2.webp",
+  "telex_03_3": "telex_telex_03_3.webp",
+  "telex_03_4": "telex_telex_03_4.webp",
+  "telex_04_1": "telex_telex_04_1.webp",
+  "telex_04_2": "telex_telex_04_2.webp",
+  "telex_04_3": "telex_telex_04_3.webp",
+  "telex_04_4": "telex_telex_04_4.webp",
+  "telex_05_1": "telex_telex_05_1.webp",
+  "telex_05_2": "telex_telex_05_2.webp",
+  "telex_05_3": "telex_telex_05_3.webp",
+  "telex_05_4": "telex_telex_05_4.webp",
+  "telex_06_1": "telex_telex_06_1.webp",
+  "telex_06_2": "telex_telex_06_2.webp",
+  "telex_06_3": "telex_telex_06_3.webp",
+  "telex_06_4": "telex_telex_06_4.webp",
+  "telex_07_1": "telex_telex_07_1.webp",
+  "telex_07_2": "telex_telex_07_2.webp",
+  "telex_07_3": "telex_telex_07_3.webp",
+  "telex_07_4": "telex_telex_07_4.webp",
+  "telex_08_1": "telex_telex_08_1.webp",
+  "telex_08_2": "telex_telex_08_2.webp",
+  "telex_08_3": "telex_telex_08_3.webp",
+  "telex_08_4": "telex_telex_08_4.webp",
+  "telex_09_1": "telex_telex_09_1.webp",
+  "telex_09_2": "telex_telex_09_2.webp",
+  "telex_09_3": "telex_telex_09_3.webp",
+  "telex_09_4": "telex_telex_09_4.webp",
+  "telex_10_1": "telex_telex_10_1.webp",
+  "telex_10_2": "telex_telex_10_2.webp",
+  "telex_10_3": "telex_telex_10_3.webp",
+  "telex_10_4": "telex_telex_10_4.webp",
+  "telex_11_1": "telex_telex_11_1.webp",
+  "telex_11_2": "telex_telex_11_2.webp",
+  "telex_11_3": "telex_telex_11_3.webp",
+  "telex_11_4": "telex_telex_11_4.webp",
+  "telex_12_1": "telex_telex_12_1.webp",
+  "telex_12_2": "telex_telex_12_2.webp",
+  "telex_12_3": "telex_telex_12_3.webp",
+  "telex_12_4": "telex_telex_12_4.webp",
+  "telex_13_1": "telex_telex_13_1.webp",
+  "telex_13_2": "telex_telex_13_2.webp",
+  "telex_13_3": "telex_telex_13_3.webp",
+  "telex_13_4": "telex_telex_13_4.webp",
+  "telex_14_1": "telex_telex_14_1.webp",
+  "telex_14_2": "telex_telex_14_2.webp",
+  "telex_14_3": "telex_telex_14_3.webp",
+  "telex_14_4": "telex_telex_14_4.webp",
+  "telex_15_1": "telex_telex_15_1.webp",
+  "telex_15_2": "telex_telex_15_2.webp",
+  "telex_15_3": "telex_telex_15_3.webp",
+  "telex_15_4": "telex_telex_15_4.webp"
+ }
+}
