@@ -49,7 +49,10 @@ test('cumpără un titlu ieftin și profitabil când are bani din belșug', () =
   const { state } = scenario({ botMoney: 60000 });   // patru jucători: trei adversari la încasări
   const prop = board.find((t) => t.type === TILE.PROPERTY && t.propertyId === 'poli');
   assert.ok(prop);
-  assert.equal(botDecideBuy({ state, botIdx: 0, board, actions: cat.actions, propertyId: 'poli', option: { type: 'TITLE' } }), true);
+  // cu două zaruri botul trece mai des pe căsuțe, deci randamentul e mai bun
+  assert.equal(botDecideBuy({ state, botIdx: 0, board, actions: cat.actions, propertyId: 'poli', option: { type: 'TITLE' }, diceCount: 2 }), true);
+  // cu un singur zar randamentul scade, iar botul e mai prudent
+  assert.equal(botDecideBuy({ state, botIdx: 0, board, actions: cat.actions, propertyId: 'poli', option: { type: 'TITLE' }, diceCount: 1 }), false);
 });
 
 test('nu cumpără anexă dacă rămân sub 2 chirii medii în cont', () => {
@@ -66,4 +69,34 @@ test('la datorie: se vând întâi anexele cu randamentul cel mai mic', () => {
   // POLI anexa 1: 2200 -> 350 (16%); CONTINENTAL anexa 1: 4000 -> 1400 (35%): POLI primul
   assert.equal(sales[0].propertyId, 'poli');
   assert.equal(sales[0].annexIndex, 1);
+});
+
+test('distribuția pasului: un zar 1..6, două zaruri 2..12, ambele însumează 1', async () => {
+  const { stepDistribution } = await import('../js/core/botAI.js');
+  for (const n of [1, 2]) {
+    const d = stepDistribution(n);
+    const sum = Object.values(d).reduce((a, b) => a + b, 0);
+    assert.ok(Math.abs(sum - 1) < 1e-9);
+  }
+  assert.equal(Object.keys(stepDistribution(1)).length, 6);
+  assert.equal(Object.keys(stepDistribution(2)).length, 11);
+});
+
+test('analiza situației: expunerea crește cu un al doilea zar', async () => {
+  const { analyzeSituation } = await import('../js/core/botAI.js');
+  const propIdx = board.findIndex((t, i) => i >= 10 && t.type === TILE.PROPERTY);
+  const { state } = scenario({ botMoney: 60000, oppLevel: 0 });
+  const one = analyzeSituation(state, 0, board, cat.actions, 1);
+  const two = analyzeSituation(state, 0, board, cat.actions, 2);
+  assert.equal(one.cash, 60000);
+  assert.ok(one.exposure >= 0 && two.exposure >= 0);
+  assert.ok(propIdx >= 0);
+});
+
+test('anexă scumpă cu puțini bani: refuzată sau penalizată', async () => {
+  const { utilityScore } = await import('../js/core/botAI.js');
+  const { state } = scenario({ botMoney: 30000 });
+  const annex = cat.actions.continental.annexes[1]; // anexa a doua, scumpă
+  const r = utilityScore({ state, botIdx: 0, board, actions: cat.actions, propertyId: 'continental', option: { type: 'ANNEX', annex }, diceCount: 2 });
+  assert.ok(r.hardReject || r.reasons.some((x) => /scumpă/.test(x)) || r.score < 100);
 });

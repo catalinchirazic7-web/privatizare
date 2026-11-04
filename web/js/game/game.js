@@ -541,7 +541,7 @@ export class Game {
         const opt = d.offer.option;
         const accept = botDecideBuy({
           state: this.game, botIdx: this.game.players.indexOf(p), board: this.catalog.board,
-          actions: this.catalog.actions, propertyId: d.offer.propertyId, option: opt,
+          actions: this.catalog.actions, propertyId: d.offer.propertyId, option: opt, diceCount: this.diceCount,
         });
         if (accept) this.acceptOffer();
         else this.refuseOffer();
