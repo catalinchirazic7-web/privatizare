@@ -196,6 +196,11 @@ async function boot() {
   $('intro-skip').addEventListener('click', () => app.show('home'));
   $('outro-done').addEventListener('click', () => app.show('home'));
 
+  // butoanele „← Înapoi” (configurare, JOC ONLINE, regulament) merg la ecranul indicat în data-back
+  document.querySelectorAll('[data-back]').forEach((btn) => {
+    btn.addEventListener('click', () => app.show(btn.dataset.back));
+  });
+
   // Butonul Înapoi al telefonului: în joc ne întoarce în meniu (ca în aplicația Android)
   window.addEventListener('popstate', () => {
     if (app.screen === 'game') {
