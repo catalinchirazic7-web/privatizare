@@ -223,7 +223,8 @@ async function boot() {
   }
   window.addEventListener('resize', () => app.updateRotateHint());
 
-  document.addEventListener('pointerdown', () => sound.unlock(), { once: true });
+  // fiecare atingere reia sunetul, dacă browserul l-a oprit între timp
+  document.addEventListener('pointerdown', () => sound.unlock());
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('service-worker.js').catch((e) => console.warn('Service worker indisponibil', e));

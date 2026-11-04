@@ -21,7 +21,8 @@ function context() {
     if (!AC) return null;
     ctx = new AC();
   }
-  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+  // „suspended” (iOS, fundal) sau „interrupted” (apel, altă aplicație): reluăm ori de câte ori nu rulează
+  if (ctx.state !== 'running') ctx.resume().catch(() => {});
   return ctx;
 }
 
