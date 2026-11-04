@@ -458,12 +458,14 @@ export class BoardView {
       ctx.translate(X + W / 2, Y + H / 2);
       ctx.scale(pulse, pulse);
       ctx.translate(-W / 2, -H / 2);
-      // teanc 3D, întins în SUS-DREAPTA: cartonașul din spate e jos-stânga, cel de sus sus-dreapta
-      const off = Math.min(W, H) * DECK_OFFSET;   // cât iese teancul pe orizontală și pe verticală
+      // teanc 3D: cartonașul de sus acoperă exact cadrul negru (fără colțuri rămase);
+      // cele de dedesubt ies în sus-dreapta, cu marginile lor vizibile
+      const off = Math.min(W, H) * DECK_OFFSET;   // cât ies cartonașele de dedesubt
       const step = off / (DECK_LAYERS - 1);
-      const w = W - off;
-      const h = H - off;
-      const cardAt = (i) => [i * step, off - i * step];   // colțul stânga-sus al cartonașului i
+      const cardAt = (i) => {
+        const k = DECK_LAYERS - 1 - i;             // 0 pentru cartonașul de sus
+        return [k * step, -k * step];
+      };
       const poly = (pts, fill) => {
         ctx.beginPath();
         ctx.moveTo(pts[0][0], pts[0][1]);
@@ -472,21 +474,16 @@ export class BoardView {
         ctx.fillStyle = fill;
         ctx.fill();
       };
-      const [bx0, by0] = cardAt(0);
-      const [fx0, fy0] = cardAt(DECK_LAYERS - 1);
-      // umbra teancului pe masă
+      // umbra teancului pe masă și marginile vizibile (sus și dreapta)
       ctx.save();
       ctx.shadowColor = 'rgba(0,0,0,0.55)';
       ctx.shadowBlur = bh * 0.06;
       ctx.shadowOffsetX = bh * 0.03;
       ctx.shadowOffsetY = bh * 0.04;
-      poly([[bx0 + w, by0], [fx0 + w, fy0], [fx0 + w, fy0 + h], [bx0 + w, by0 + h]], '#e2d9bf');   // latura dreaptă
-      poly([[bx0, by0 + h], [bx0 + w, by0 + h], [fx0 + w, fy0 + h], [fx0, fy0 + h]], '#bdb292');   // latura de jos
+      poly([[0, 0], [off, -off], [off + W, -off], [W, 0]], '#bdb292');        // latura de sus
+      poly([[W, 0], [off + W, -off], [off + W, H - off], [W, H]], '#e2d9bf');  // latura dreaptă
       ctx.restore();
-      // colțurile cadrului negru nepuse de teanc (stânga-sus și dreapta-jos)
-      poly([[-1, -1], [off + 1, -1], [-1, off + 1]], '#e2d9bf');
-      poly([[w, H + 1], [W + 1, h], [W + 1, H + 1]], '#bdb292');
-      // cartonașele, din spate spre față, fiecare cu umbră mică
+      // cartonașele, din spate spre față
       for (let i = 0; i < DECK_LAYERS; i++) {
         const [ox, oy] = cardAt(i);
         const top = i === DECK_LAYERS - 1;
@@ -495,19 +492,19 @@ export class BoardView {
         ctx.shadowBlur = bh * 0.008;
         ctx.shadowOffsetX = bh * 0.004;
         ctx.shadowOffsetY = bh * 0.006;
-        ctx.drawImage(img, ox, oy, w, h);
+        ctx.drawImage(img, ox, oy, W, H);
         ctx.restore();
         ctx.lineWidth = top && active ? Math.max(2, bh * 0.004) : Math.max(1, bh * 0.0012);
         ctx.strokeStyle = top && active ? '#f0d20e' : 'rgba(40,30,20,0.6)';
-        ctx.strokeRect(ox, oy, w, h);
+        ctx.strokeRect(ox, oy, W, H);
       }
       // lumină pe cartonașul de sus
-      const gl = ctx.createLinearGradient(fx0, fy0, fx0 + w, fy0 + h);
+      const gl = ctx.createLinearGradient(0, 0, W, H);
       gl.addColorStop(0, 'rgba(255,255,255,0.28)');
       gl.addColorStop(0.45, 'rgba(255,255,255,0)');
       gl.addColorStop(1, 'rgba(0,0,0,0.18)');
       ctx.fillStyle = gl;
-      ctx.fillRect(fx0, fy0, w, h);
+      ctx.fillRect(0, 0, W, H);
       if (active) {
         const label = 'TRAGE';
         const fs = Math.max(12, bh * 0.034);
