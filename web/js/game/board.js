@@ -3,7 +3,7 @@
 // Port din BoardView.kt, PawnView și CashStacks.kt. Coordonatele căsuțelor sunt fracții [0,1].
 
 import { loadImage } from '../ui/dom.js';
-import { PAWN_BY_KEY, TILE, propertyIconPath } from '../core/model.js';
+import { PAWN_BY_KEY } from '../core/model.js';
 
 const BOARD_W = 1600;
 const BOARD_H = 1131;
@@ -12,14 +12,8 @@ const STEP_MS = 430;          // durata unui pas pe tablă
 const WALK_MS = 240;          // un pas din mersul forțat (RECHEMAT URGENT), mai rapid
 const TILT_SCALE = 0.93;      // înclinarea: tabla e puțin mai mică și ridicată
 const TILT_LIFT = -0.022;     // (fracție din înălțime)
-const PAWN_ASPECT = 138 / 256;  // rezervă (w/h), până se încarcă sprite-ul; altfel se citește din imagine
 const BOARD_FILTER = 'saturate(1.6) contrast(1.06) brightness(1.06)';   // tabla: verde mai viu (ctx.filter; fără efect pe browserele vechi)
-// Etichetele proprietăților, desenate peste textul mic din fotografie (în unități de tablă, fracții din lățime/înălțime).
-// Pe laturile lungi tablei (sus/jos) etichetele sunt înguste: distanța dintre căsuțe e ~0.062 din lățime.
-const LABEL_ROW = { w: 0.06, h: 0.092, off: 0.092 };
-const LABEL_SIDE = { w: 0.092, h: 0.056, off: 0.07 };
-const LABEL_INK = '#2a1a12';
-const LABEL_PAPER = '#fbf6e8';
+const PAWN_ASPECT = 0.54;   // lățimea pionului față de înălțime (forma desenată)
 const TILE_SIZE_HALF = { x: 0.034, y: 0.045 };   // elipsa de atingere pentru o căsuță
 const CLUSTER = {
   1: [[0, 0, 1]],
@@ -103,14 +97,6 @@ export class BoardView {
     };
     loadImage('img/deck_back_loto.webp').then((img) => (this.deckImgs.loto = img));
     loadImage('img/deck_back_telex.webp').then((img) => (this.deckImgs.telex = img));
-    this.pawnImgs = {};
-    for (const c of Object.values(PAWN_BY_KEY)) loadImage(c.img).then((img) => (this.pawnImgs[c.key] = img));
-    this.iconImgs = {};
-    for (const t of this.catalog.board) {
-      if (t.type !== TILE.PROPERTY) continue;
-      loadImage(propertyIconPath(t.propertyId)).then((img) => (this.iconImgs[t.propertyId] = img));
-    }
-
     this.bindPointers();
     this.resize();
     this.loop = this.loop.bind(this);
@@ -436,34 +422,7 @@ export class BoardView {
     this.drawDecks(ctx, bx, by, bw, bh);
     this.drawHighlight(ctx, bx, by, bw, bh);
     this.drawMarkers(ctx, bx, by, bw, bh);
-    this.drawPropertyLabels(ctx, bx, by, bw, bh);
     this.drawPawns(ctx, bx, by, bw, bh);
-  }
-
-  /** Numele și pictograma fiecărei firme, lizibile; acoperă textul mic din fotografie. */
-  drawPropertyLabels(ctx, bx, by, bw, bh) {
-    this.catalog.board.forEach((tile, i) => {
-      if (tile.type !== TILE.PROPERTY) return;
-      const pos = this.catalog.positions[i];
-      const prop = this.catalog.actions[tile.propertyId];
-      if (!pos || !prop) return;
-      // etichetele stau spre interiorul tablei, în fața ovalului de pe margine
-      const side = pos[0] < 0.15 ? 'left' : pos[0] > 0.85 ? 'right' : pos[1] < 0.5 ? 'top' : 'bottom';
-      let cx = bx + bw * pos[0];
-      let cy = by + bh * pos[1];
-      let w;
-      let h;
-      if (side === 'left' || side === 'right') {
-        cx += (side === 'left' ? LABEL_SIDE.off : -LABEL_SIDE.off) * bw;
-        w = LABEL_SIDE.w * bw;
-        h = LABEL_SIDE.h * bh;
-      } else {
-        cy += (side === 'top' ? LABEL_ROW.off : -LABEL_ROW.off) * bh;
-        w = LABEL_ROW.w * bw;
-        h = LABEL_ROW.h * bh;
-      }
-      drawPropertyLabel(ctx, { x: cx - w / 2, y: cy - h / 2, w, h, horizontal: side === 'left' || side === 'right' }, prop.name, this.iconImgs[tile.propertyId], bw);
-    });
   }
 
   drawDecks(ctx, bx, by, bw, bh) {
@@ -600,10 +559,7 @@ export class BoardView {
 
       const tileH = bh * 0.045 * sizeScale;
       const pawnH = tileH * 2.36;
-      // raportul real al sprite-ului: fiecare pion are altă lățime, nu se mai întinde pe una fixă
-      const sprite = this.pawnImgs[p.color];
-      const aspect = sprite?.naturalWidth ? sprite.naturalWidth / sprite.naturalHeight : PAWN_ASPECT;
-      const pawnW = pawnH * aspect;
+      const pawnW = pawnH * PAWN_ASPECT;
       const shadowH = bh * 0.013;
       const bob = p.id === this.model.activePlayerId ? Math.sin(phase) * 0.0035 : 0;   // fracție din înălțime
 
@@ -630,14 +586,7 @@ export class BoardView {
       const sx = (1 - 0.03 * hop) * (1 + 0.07 * a.squash);
       ctx.translate(0, lift);
       ctx.scale(sx, sy);
-      if (sprite) {
-        ctx.drawImage(sprite, -pawnW / 2, -pawnH + shadowH / 3, pawnW, pawnH);
-      } else {
-        ctx.fillStyle = PAWN_BY_KEY[p.color]?.hex ?? '#888';
-        ctx.beginPath();
-        ctx.ellipse(0, -pawnH / 2, pawnW / 2, pawnH / 2, 0, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      drawPawnShape(ctx, pawnW, pawnH, PAWN_BY_KEY[p.color]?.hex ?? '#888');
       ctx.restore();
     }
   }
@@ -661,68 +610,47 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-
-/** Cutia unei etichete: pictograma și numele firmei, cu textul cât mai mare care încape. */
-function drawPropertyLabel(ctx, r, name, icon, bw) {
-  ctx.save();
-  roundRect(ctx, r.x, r.y, r.w, r.h, Math.min(r.w, r.h) * 0.14);
-  ctx.fillStyle = LABEL_PAPER;
+/** Pionul desenat simetric, cu baza în (0,0) și vârful la -H. Nu depinde de fotografii, deci nu se strâmbă. */
+function drawPawnShape(ctx, W, H, hex) {
+  const dark = shade(hex, -0.35);
+  const light = shade(hex, 0.3);
+  ctx.beginPath();
+  ctx.moveTo(-0.5 * W, 0);
+  ctx.lineTo(0.5 * W, 0);
+  ctx.bezierCurveTo(0.5 * W, -0.3 * H, 0.16 * W, -0.36 * H, 0.16 * W, -0.6 * H);
+  ctx.lineTo(-0.16 * W, -0.6 * H);
+  ctx.bezierCurveTo(-0.16 * W, -0.36 * H, -0.5 * W, -0.3 * H, -0.5 * W, 0);
+  ctx.closePath();
+  const grad = ctx.createLinearGradient(-0.5 * W, 0, 0.5 * W, 0);
+  grad.addColorStop(0, light);
+  grad.addColorStop(0.55, hex);
+  grad.addColorStop(1, dark);
+  ctx.fillStyle = grad;
+  ctx.strokeStyle = dark;
+  ctx.lineWidth = Math.max(1, H * 0.018);
+  ctx.lineJoin = 'round';
   ctx.fill();
-  ctx.lineWidth = Math.max(1, bw * 0.0013);
-  ctx.strokeStyle = LABEL_INK;
   ctx.stroke();
 
-  const pad = Math.min(r.w, r.h) * 0.1;
-  let icoBox;
-  let txtBox;
-  if (r.horizontal) {
-    const s = r.h - pad * 2;
-    icoBox = { x: r.x + pad, y: r.y + pad, s };
-    txtBox = { x: r.x + pad * 2 + s, y: r.y + pad, w: r.w - s - pad * 3, h: r.h - pad * 2 };
-  } else {
-    const s = Math.min(r.w * 0.55, r.h * 0.4);
-    icoBox = { x: r.x + (r.w - s) / 2, y: r.y + pad, s };
-    txtBox = { x: r.x + pad, y: r.y + pad * 2 + s, w: r.w - pad * 2, h: r.h - pad * 3 - s };
-  }
-  if (icon) ctx.drawImage(icon, icoBox.x, icoBox.y, icoBox.s, icoBox.s);
+  ctx.beginPath();
+  ctx.arc(0, -0.78 * H, 0.27 * W, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.stroke();
 
-  const fit = fitLabelText(ctx, name, txtBox.w, txtBox.h, bw);
-  ctx.font = `800 ${fit.fs}px "Segoe UI", system-ui, sans-serif`;
-  ctx.fillStyle = LABEL_INK;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  const lh = fit.fs * 1.12;
-  const top = txtBox.y + txtBox.h / 2 - ((fit.lines.length - 1) * lh) / 2;
-  fit.lines.forEach((line, k) => ctx.fillText(line, txtBox.x + txtBox.w / 2, top + k * lh));
-  ctx.restore();
+  // reflexie pe cap, în stânga-sus
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.beginPath();
+  ctx.ellipse(-0.09 * W, -0.86 * H, 0.09 * W, 0.05 * H, -0.5, 0, Math.PI * 2);
+  ctx.fill();
 }
 
-/** Cea mai mare dimensiune cu care textul ajunge în cel mult două rânduri și încape în cutie. */
-function fitLabelText(ctx, text, maxW, maxH, bw) {
-  const words = text.split(' ');
-  const setFont = (fs) => { ctx.font = `800 ${fs}px "Segoe UI", system-ui, sans-serif`; };
-  for (let fs = bw * 0.0125; fs >= bw * 0.0055; fs -= 0.4) {
-    setFont(fs);
-    const lines = wrapLabelWords(ctx, words, maxW);
-    const fits = lines.length <= 2 && lines.length * fs * 1.12 <= maxH && lines.every((l) => ctx.measureText(l).width <= maxW);
-    if (fits) return { fs, lines };
-  }
-  const fs = bw * 0.0055;
-  setFont(fs);
-  return { fs, lines: wrapLabelWords(ctx, words, maxW).slice(0, 2) };
-}
-
-function wrapLabelWords(ctx, words, maxW) {
-  const lines = [];
-  let cur = '';
-  for (const w of words) {
-    const test = cur ? `${cur} ${w}` : w;
-    if (!cur || ctx.measureText(test).width <= maxW) cur = test;
-    else {
-      lines.push(cur);
-      cur = w;
-    }
-  }
-  if (cur) lines.push(cur);
-  return lines;
+/** Culoarea amestecată cu alb (amount > 0) sau cu negru (amount < 0). */
+function shade(hex, amount) {
+  const n = parseInt(hex.slice(1), 16);
+  const mix = (c) => (amount >= 0 ? c + (255 - c) * amount : c * (1 + amount));
+  const r = Math.round(mix((n >> 16) & 255));
+  const g = Math.round(mix((n >> 8) & 255));
+  const b = Math.round(mix(n & 255));
+  return `rgb(${r},${g},${b})`;
 }
