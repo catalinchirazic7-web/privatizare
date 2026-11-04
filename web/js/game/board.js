@@ -458,7 +458,7 @@ export class BoardView {
       ctx.translate(X + W / 2, Y + H / 2);
       ctx.scale(pulse, pulse);
       ctx.translate(-W / 2, -H / 2);
-      // teanc 3D: laturile groase ale cartonașelor, umbră sub teanc și lumină pe cartonașul de sus
+      // teanc 3D: umbră pe masă, laturile de carton (hârtie crem) și lumină pe cartonașul de sus
       const off = Math.min(W, H) * DECK_OFFSET;   // cât iese teancul spre dreapta-jos
       const step = off / (DECK_LAYERS - 1);
       const w = W - off;
@@ -471,17 +471,17 @@ export class BoardView {
         ctx.fillStyle = fill;
         ctx.fill();
       };
-      // umbra întregului teanc
+      // umbra teancului pe masă (moale, în dreapta-jos)
       ctx.save();
-      ctx.shadowColor = 'rgba(0,0,0,0.6)';
-      ctx.shadowBlur = bh * 0.04;
-      ctx.shadowOffsetX = bh * 0.02;
-      ctx.shadowOffsetY = bh * 0.03;
-      poly([[w, 0], [w + off, off], [w + off, off + h], [w, h]], '#c4bba3');   // latura dreaptă
-      poly([[0, h], [off, off + h], [w + off, off + h], [w, h]], '#9a917b');   // latura de jos
+      ctx.shadowColor = 'rgba(0,0,0,0.55)';
+      ctx.shadowBlur = bh * 0.06;
+      ctx.shadowOffsetX = bh * 0.03;
+      ctx.shadowOffsetY = bh * 0.04;
+      poly([[w, 0], [w + off, off], [w + off, off + h], [w, h]], '#e2d9bf');
+      poly([[0, h], [off, off + h], [w + off, off + h], [w, h]], '#bdb292');
       ctx.restore();
-      // liniile dintre cartonașe pe laturi
-      ctx.strokeStyle = 'rgba(60,50,35,0.35)';
+      // marginile cartonașelor: linii deschise, ca hârtia
+      ctx.strokeStyle = 'rgba(255,250,235,0.55)';
       ctx.lineWidth = Math.max(1, bh * 0.0015);
       for (let i = 1; i < DECK_LAYERS - 1; i++) {
         const k = i * step;
@@ -502,7 +502,7 @@ export class BoardView {
         ctx.drawImage(img, ox, ox, w, h);
         ctx.restore();
         ctx.lineWidth = top && active ? Math.max(2, bh * 0.004) : Math.max(1, bh * 0.0012);
-        ctx.strokeStyle = top && active ? '#f0d20e' : 'rgba(0,0,0,0.55)';
+        ctx.strokeStyle = top && active ? '#f0d20e' : 'rgba(40,30,20,0.6)';
         ctx.strokeRect(ox, ox, w, h);
       }
       // lumină pe cartonașul de sus
