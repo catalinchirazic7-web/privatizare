@@ -162,8 +162,8 @@ fun AppRoot(
             LobbyScreen(c, onLeave = { c.leave(); screen = Screen.HOME })
         }
         Screen.SETUP -> SetupScreen(
-            onStart = { setup, money, minutes ->
-                vm.startGame(setup, money, minutes)
+            onStart = { setup, money, minutes, dice, layout ->
+                vm.startGame(setup, money, minutes, dice, layout)
                 screen = Screen.GAME
             },
             onBack = { screen = Screen.HOME },
@@ -184,7 +184,7 @@ fun AppRoot(
 
 /** Configurare: 2–4 jucători, nume și culoare unică din paleta de 8. */
 @Composable
-fun SetupScreen(onStart: (List<PlayerSetup>, Long?, Int?) -> Unit, onBack: () -> Unit = {}) {
+fun SetupScreen(onStart: (List<PlayerSetup>, Long?, Int?, Int, String) -> Unit, onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val saved = remember { SetupMemory.load(context) }
     var count by remember { mutableIntStateOf(saved?.count ?: 2) }
@@ -192,6 +192,9 @@ fun SetupScreen(onStart: (List<PlayerSetup>, Long?, Int?) -> Unit, onBack: () ->
     var startMoney by remember { mutableStateOf(saved?.money) }
     // null = fără limită de timp; altfel, minute
     var timeMinutes by remember { mutableStateOf(saved?.timeMinutes) }
+    // 1 zar (implicit) sau 2 zaruri (doar local); tabla veche (implicit) sau nouă
+    var dice by remember { mutableIntStateOf(saved?.dice ?: 1) }
+    var layout by remember { mutableStateOf(saved?.layout ?: "old") }
     val names = remember { mutableStateListOf(*(saved?.names ?: listOf("Jucător 1", "Jucător 2", "Jucător 3", "Jucător 4")).toTypedArray()) }
     // Fiecare loc începe cu alt pion; poți schimba oricând (dacă alegi pionul altui loc, se fac schimb)
     val colors = remember {
@@ -243,6 +246,24 @@ fun SetupScreen(onStart: (List<PlayerSetup>, Long?, Int?) -> Unit, onBack: () ->
             }
         }
         Spacer(Modifier.height(12.dp))
+        Text("Zaruri:", style = MaterialTheme.typography.bodyLarge)
+        Row {
+            listOf(1 to "1 zar", 2 to "2 zaruri").forEach { (n, label) ->
+                if (n == dice) Button(onClick = { dice = n }) { Text(label) }
+                else OutlinedButton(onClick = { dice = n }) { Text(label) }
+                Spacer(Modifier.width(6.dp))
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        Text("Tabla:", style = MaterialTheme.typography.bodyLarge)
+        Row {
+            listOf("old" to "Tablă veche", "new" to "Tablă nouă").forEach { (key, label) ->
+                if (key == layout) Button(onClick = { layout = key }) { Text(label) }
+                else OutlinedButton(onClick = { layout = key }) { Text(label) }
+                Spacer(Modifier.width(6.dp))
+            }
+        }
+        Spacer(Modifier.height(12.dp))
         active.forEach { i ->
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Locul ${i + 1}: ")
@@ -279,9 +300,11 @@ fun SetupScreen(onStart: (List<PlayerSetup>, Long?, Int?) -> Unit, onBack: () ->
                         bots = isBot.toList(),
                         money = startMoney,
                         timeMinutes = timeMinutes,
+                        dice = dice,
+                        layout = layout,
                     ),
                 )
-                onStart(active.map { PlayerSetup(names[it].trim(), colors[it]!!, isBot[it]) }, startMoney, timeMinutes)
+                onStart(active.map { PlayerSetup(names[it].trim(), colors[it]!!, isBot[it]) }, startMoney, timeMinutes, dice, layout)
             },
             enabled = valid,
             modifier = Modifier.fillMaxWidth(),
@@ -309,7 +332,14 @@ fun GameScreen(vm: GameViewModel, catalog: GameRepository.Catalog, onExit: () ->
     // Robotul acționează după o întârziere de o secundă; online doar gazda rulează roboții
     LaunchedEffect(vm.game, vm.activeDialog, vm.turnAwaitingEnd, vm.currentIndex, vm.winnerName, pawnsBusy) {
         if (!pawnsBusy && !vm.isGuest && vm.winnerName == null && vm.currentPlayer?.isBot == true) {
-            delay(1000)
+            // ca în web: cartonașul tras de robot stă 3.5 s, bannerul de staționare 2.5 s, altfel 1 s
+            delay(
+                when {
+                    vm.activeDialog is TurnDialog.CardPending -> 3500L
+                    vm.skipBanner != null -> 2500L
+                    else -> 1000L
+                },
+            )
             vm.botNextAction()
         }
     }
@@ -417,10 +447,16 @@ fun GameScreen(vm: GameViewModel, catalog: GameRepository.Catalog, onExit: () ->
     }
     // Zarul se animă doar la o aruncare reală (nu la fiecare mesaj din istoric)
     val dieKey = vm.rollNonce
+    // al doilea zar atinge primul: amândouă pornesc aceeași aruncare
+    var dieTrigger by remember { mutableIntStateOf(0) }
+    // tabla aleasă în configurare: pozițiile, pachetele și săgeata de start
+    val boardLayout = catalog.layouts[vm.boardLayout]
+        ?: GameRepository.Layout(catalog.positions, catalog.decks, catalog.startMarker)
+    val boardIsNew = vm.boardLayout == "new"
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val screenH = maxHeight
-        val boardRatio = 1600f / 1131f
+        val boardRatio = if (boardIsNew) BOARD_ASPECT_NEW else BOARD_ASPECT_OLD
         val boardModifier = when {
             stretchBoard -> Modifier.fillMaxSize()
             maxWidth / maxHeight > boardRatio -> Modifier.fillMaxHeight()
@@ -453,10 +489,12 @@ fun GameScreen(vm: GameViewModel, catalog: GameRepository.Catalog, onExit: () ->
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             BoardView(
                 players = game.players,
-                positions = catalog.positions,
+                positions = boardLayout.positions,
                 propertyTiles = propertyTiles,
                 modifier = boardModifier,
-                decks = catalog.decks,
+                decks = boardLayout.decks,
+                boardImage = if (boardIsNew) R.drawable.tabla_noua else R.drawable.tabla_privatizare,
+                boardAspect = if (boardIsNew) BOARD_ASPECT_NEW else BOARD_ASPECT_OLD,
                 drawKind = (dialog as? TurnDialog.DrawPending)?.kind?.lowercase().takeIf { myTurn && current?.isBot != true },
                 onDeckTap = { vm.drawCard() },
                 dieBusy = { dieBusy },
@@ -468,7 +506,7 @@ fun GameScreen(vm: GameViewModel, catalog: GameRepository.Catalog, onExit: () ->
                 activePlayerId = current?.id,
                 highlightTile = landedTile,
                 highlightColor = Color(current?.color?.hex ?: 0xFFFFD54F),
-                startMarker = catalog.startMarker,
+                startMarker = boardLayout.startMarker,
                 tilt = tiltBoard,
                 onTileTap = { idx ->
                     val prop = catalog.board.getOrNull(idx) as? Tile.Property
@@ -480,16 +518,32 @@ fun GameScreen(vm: GameViewModel, catalog: GameRepository.Catalog, onExit: () ->
                         CashStacks(owner.money, bw, bh, flight)
                     }
                     // zarul în zona liberă din centrul careului
+                    val twoDice = vm.diceCount == 2 && !vm.isGuest
                     BoardDie(
                         enabled = !busy,
-                        onRolled = { vm.roll(it) },
+                        // primul zar: cu două zaruri, celălalt se aruncă odată cu el (suma e pasul)
+                        onRolled = { first -> if (twoDice) vm.rollDice(listOf(first, (1..6).random())) else vm.roll(first) },
                         remote = vm.isGuest,   // doar oaspetele așteaptă zarul oficial; gazda aruncă local, aleatoriu
                         resultKey = dieKey,
                         resultValue = vm.lastDice.firstOrNull(),
                         onRollingChange = { dieBusy = it },
                         dieSize = 96.dp,
+                        triggerNonce = dieTrigger,
+                        badgeText = if (twoDice && vm.lastDice.size == 2) vm.lastDice.sum().toString() else null,
                         modifier = Modifier.offset(x = bw * 0.63f - 48.dp, y = bh * 0.34f - 48.dp),
                     )
+                    if (vm.diceCount == 2) {
+                        // al doilea zar: arată valoarea lui; atingerea lui aruncă amândouă
+                        BoardDie(
+                            enabled = !busy,
+                            onRolled = {},
+                            resultKey = dieKey,
+                            resultValue = vm.lastDice.getOrNull(1),
+                            dieSize = 96.dp,
+                            onTap = { dieTrigger++ },
+                            modifier = Modifier.offset(x = bw * (0.63f + 0.075f) - 48.dp, y = bh * 0.34f - 48.dp),
+                        )
+                    }
                 },
             )
         }

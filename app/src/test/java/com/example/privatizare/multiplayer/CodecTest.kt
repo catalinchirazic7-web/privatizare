@@ -3,6 +3,7 @@ package com.example.privatizare.multiplayer
 import com.example.privatizare.data.model.GameState
 import com.example.privatizare.data.model.PawnColor
 import com.example.privatizare.data.model.Player
+import com.example.privatizare.data.model.PropertyStats
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -44,6 +45,21 @@ class CodecTest {
             rentDue = RentSnap("p1", "p0", "poli", 550),
             debt = DebtSnap("p1", 550, null, "chirie"),
             card = CardSnap("TELEX", "text cu diacritice: ăîșțâ"),
+        )
+        assertEquals(snap, SnapshotCodec.decode(SnapshotCodec.encode(snap)))
+    }
+
+    @Test
+    fun statisticileDoiZaruriSiTablaSeSerializeazaFaraPierderi() {
+        val players = listOf(Player("p0", "Ana", PawnColor.ROSU, 100, 7, mapOf("poli" to 1)), Player("p1", "B", PawnColor.NEGRU, 50, 3))
+        val snap = GameSnapshot(
+            state = GameState(
+                turn = 9, players = players, bankMoney = 1_000,
+                stats = mapOf("poli" to PropertyStats(mapOf("p1" to 4, "p0" to 1), 1_800)),
+            ),
+            currentIndex = 0, lastDice = listOf(3, 5), winnerName = null, turnAwaitingEnd = false,
+            skipBanner = null, offer = null, feeOffer = null, rentDue = null, debt = null, card = null,
+            diceCount = 2, boardLayout = "new",
         )
         assertEquals(snap, SnapshotCodec.decode(SnapshotCodec.encode(snap)))
     }

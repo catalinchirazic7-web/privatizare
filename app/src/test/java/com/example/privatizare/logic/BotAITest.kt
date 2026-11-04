@@ -104,4 +104,20 @@ class BotAITest {
         val paid = engine.payRent(r.state, due!!)
         assertEquals(poli.titleTax, paid.state.stats["poli"]!!.collected)
     }
+
+    @Test
+    fun douaZaruriMutaPionulCuSuma() {
+        val engine = TurnEngine(
+            board = board,
+            actions = actions,
+            loto = listOf(LotoCard("l1", LotoKind.NOTHING, 0, "nimic")),
+            telex = listOf(TelexCard("t0", "test", emptyList())),
+            random = Random(1),
+        )
+        val s = state(player("bot", 50_000, position = 0), player("ana", 50_000))
+        // 1 + 1 = 2: pionul ajunge pe POLI, care e liber, deci apare oferta de cumpărare
+        val r = engine.playTurn(s, 0, listOf(1, 1))
+        assertEquals(2, r.state.players[0].position)
+        assertTrue(r.offer != null)
+    }
 }

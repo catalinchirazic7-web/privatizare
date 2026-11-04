@@ -28,6 +28,15 @@ class GameRepository(private val context: Context) {
         val cardArt: Map<String, String> = emptyMap(),
         /** Coordonatele săgeții de START: locul de unde pleacă toți pionii (nu e căsuță de traseu). */
         val startMarker: Pair<Float, Float> = 0.125f to 0.908f,
+        /** Cele două table: "old" (veche) și "new" (nouă), cu poziții, pachete și start proprii. */
+        val layouts: Map<String, Layout> = emptyMap(),
+    )
+
+    /** O tablă: pozițiile căsuțelor, pachetele LOTO/TELEX și săgeata de START. Căsuțele sunt aceleași. */
+    data class Layout(
+        val positions: List<Pair<Float, Float>>,
+        val decks: Map<String, DeckRect>,
+        val startMarker: Pair<Float, Float>,
     )
 
     data class DeckRect(val x: Float, val y: Float, val w: Float, val h: Float)
@@ -35,6 +44,7 @@ class GameRepository(private val context: Context) {
     fun load(): Catalog {
         val cards = JSONObject(read("cards.json"))
         val boardJson = read("board.json")
+        val boardNewJson = read("board_new.json")
         val loto = parseLoto(cards.getJSONArray("loto"))
         val telex = parseTelex(cards.getJSONArray("telex"))
         return Catalog(
@@ -48,6 +58,10 @@ class GameRepository(private val context: Context) {
             // (textul nu e unic: mai multe cartonașe au același text).
             cardArt = cardArtMap(loto, telex),
             startMarker = parseStart(boardJson),
+            layouts = mapOf(
+                "old" to Layout(parsePositions(boardJson), parseDecks(boardJson), parseStart(boardJson)),
+                "new" to Layout(parsePositions(boardNewJson), parseDecks(boardNewJson), parseStart(boardNewJson)),
+            ),
         )
     }
 

@@ -1,139 +1,107 @@
 package com.example.privatizare.ui.game
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
+import android.graphics.Paint
+import android.graphics.Typeface
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.nativeCanvas
 import com.example.privatizare.data.model.PawnColor
-import kotlin.math.sin
+import kotlin.math.max
+
+/** Lățimea pionului față de înălțime (forma desenată din web). */
+const val PAWN_ASPECT = 0.54f
 
 private fun Color.lighten(f: Float) = lerp(this, Color.White, f)
 private fun Color.darken(f: Float) = lerp(this, Color.Black, f)
 
 /**
- * Pion 3D desenat în Canvas: cap sferic, corp conic simetric, degradeu pe lățime pentru volum,
- * reflexii de lumină și o bază mai închisă. Raport lățime:înălțime = 1:1.75.
- *
- * Pionul e dimensionat la cota părintelui căsuței: ~1.18x înălțimea căsuței (*0.045 boardHeight),
- * deci numele jucătorului se citește clar pe tablă, chiar și la zoom mic.
+ * Pionul desenat simetric, ca în web (board.js, drawPawnShape): baza în partea de jos a
+ * casetei, vârful la înălțime; corp conic cu degradeu pe lățime (luminos, culoarea, umbră),
+ * cap rotund cu reflexie și numele jucătorului scris orizontal pe corp.
  */
 @Composable
 fun PawnShape(color: PawnColor, modifier: Modifier = Modifier, label: String? = null) {
-    val base = Color(color.hex)
-    // Pionul alb are nevoie de umbre mai puternice ca să nu se piardă pe tablă
-    val shadeAmt = if (color == PawnColor.ALB_ARGINTIU) 0.45f else 0.38f
-    val dark = base.darken(shadeAmt)
-    val mid = base.darken(0.08f)
-    val light = base.lighten(if (color == PawnColor.NEGRU) 0.35f else 0.40f)
+    val hex = Color(color.hex)
+    val dark = hex.darken(0.35f)
+    val light = hex.lighten(0.3f)
 
-    Canvas(modifier = modifier.aspectRatio(1f / 1.75f)) {
+    Canvas(modifier = modifier.aspectRatio(PAWN_ASPECT)) {
         val w = size.width
         val h = size.height
-        val r = w * 0.27f                       // raza capului
         val cx = w / 2f
-        val headCy = r + h * 0.02f
-        val neckY = headCy + r * 0.80f
-        val neckHalf = w * 0.15f
-        val baseY = h * 0.92f
-        val baseHalf = w * 0.47f
+        val stroke = max(1f, h * 0.018f)
+        val grad = Brush.horizontalGradient(
+            0f to light, 0.55f to hex, 1f to dark,
+            startX = cx - 0.5f * w, endX = cx + 0.5f * w,
+        )
 
-        // corpul (simetric), cu bază rotunjită
+        // corpul: baza lată în jos, gâtul îngust sus
         val body = Path().apply {
-            moveTo(cx - neckHalf, neckY)
-            cubicTo(cx - neckHalf * 1.1f, h * 0.50f, cx - baseHalf, h * 0.62f, cx - baseHalf, baseY)
-            cubicTo(cx - baseHalf, h * 1.02f, cx + baseHalf, h * 1.02f, cx + baseHalf, baseY)
-            cubicTo(cx + baseHalf, h * 0.62f, cx + neckHalf * 1.1f, h * 0.50f, cx + neckHalf, neckY)
+            moveTo(cx - 0.5f * w, h)
+            lineTo(cx + 0.5f * w, h)
+            cubicTo(cx + 0.5f * w, h - 0.3f * h, cx + 0.16f * w, h - 0.36f * h, cx + 0.16f * w, h - 0.6f * h)
+            lineTo(cx - 0.16f * w, h - 0.6f * h)
+            cubicTo(cx - 0.16f * w, h - 0.36f * h, cx - 0.5f * w, h - 0.3f * h, cx - 0.5f * w, h)
             close()
         }
-        // volum: întuneric la margini, lumină puțin spre stânga
-        drawPath(
-            body,
-            Brush.horizontalGradient(
-                0f to dark, 0.22f to mid, 0.38f to light, 0.62f to mid, 1f to dark.darken(0.15f),
-                startX = cx - baseHalf, endX = cx + baseHalf,
-            ),
-        )
-        // întunecare spre bază și o linie fină de contur jos
-        drawPath(
-            body,
-            Brush.verticalGradient(
-                0f to Color.Transparent, 0.70f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.30f),
-                startY = neckY, endY = h,
-            ),
-        )
-        // reflexie alungită pe corp
-        clipPath(body) {
-            drawOval(
-                Color.White.copy(alpha = if (color == PawnColor.NEGRU) 0.18f else 0.30f),
-                topLeft = Offset(cx - baseHalf * 0.62f, h * 0.58f),
-                size = Size(baseHalf * 0.24f, h * 0.26f),
-            )
-        }
-        // cap sferic cu lumina din stânga-sus
-        drawCircle(
-            brush = Brush.radialGradient(
-                0f to light.lighten(0.15f), 0.45f to base, 1f to dark,
-                center = Offset(cx - r * 0.35f, headCy - r * 0.40f),
-                radius = r * 1.75f,
-            ),
-            radius = r,
-            center = Offset(cx, headCy),
-        )
-        // reflexia mică, strălucitoare, de pe cap
-        drawOval(
-            Color.White.copy(alpha = 0.75f),
-            topLeft = Offset(cx - r * 0.55f, headCy - r * 0.62f),
-            size = Size(r * 0.42f, r * 0.26f),
-        )
-        // numele jucătorului pe corp, vertical, de jos în sus
+        drawPath(body, grad)
+        drawPath(body, dark, style = Stroke(width = stroke, join = StrokeJoin.Round))
+
+        // numele jucătorului, orizontal, pe corp (se micșorează ca să încapă)
         if (!label.isNullOrBlank()) {
-            val maxLen = (baseY - neckY) * 0.88f          // lungimea disponibilă pe corp
-            val maxThick = w * 0.34f                      // grosimea textului (peste lățimea corpului)
-            val fill = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 this.color = android.graphics.Color.WHITE
-                textAlign = android.graphics.Paint.Align.CENTER
-                isFakeBoldText = true
+                textAlign = Paint.Align.CENTER
+                typeface = Typeface.DEFAULT_BOLD
             }
-            val stroke = android.graphics.Paint(fill).apply {
-                this.color = android.graphics.Color.BLACK
-                style = android.graphics.Paint.Style.STROKE
+            val outline = Paint(fill).apply {
+                this.color = android.graphics.Color.argb(153, 0, 0, 0)
+                style = Paint.Style.STROKE
+                strokeJoin = Paint.Join.ROUND
             }
-            var text: String = label
-            var size = maxThick
-            fill.textSize = size
-            while (fill.measureText(text) > maxLen && size > maxThick * 0.55f) {
-                size *= 0.92f
-                fill.textSize = size
+            var fs = h * 0.13f
+            fill.textSize = fs
+            while (fs > h * 0.04f && fill.measureText(label) > w * 0.62f) {
+                fs -= h * 0.005f
+                fill.textSize = fs
             }
-            while (fill.measureText(text) > maxLen && text.length > 2) text = text.dropLast(1)
-            stroke.textSize = fill.textSize
-            stroke.strokeWidth = fill.textSize * 0.22f
-            val centerY = (neckY + baseY) / 2f + h * 0.04f
+            outline.textSize = fs
+            outline.strokeWidth = max(1f, fs * 0.25f)
+            val fm = fill.fontMetrics
+            val baseline = h * 0.70f - (fm.ascent + fm.descent) / 2f
             drawIntoCanvas { c ->
-                val n = c.nativeCanvas
-                n.save()
-                n.rotate(-90f, cx, centerY)
-                val baseline = centerY + fill.textSize * 0.35f
-                n.drawText(text, cx, baseline, stroke)
-                n.drawText(text, cx, baseline, fill)
-                n.restore()
+                c.nativeCanvas.drawText(label, cx, baseline, outline)
+                c.nativeCanvas.drawText(label, cx, baseline, fill)
             }
+        }
+
+        // capul rotund
+        val headCy = h * 0.22f
+        val headR = 0.27f * w
+        drawCircle(grad, radius = headR, center = Offset(cx, headCy))
+        drawCircle(dark, radius = headR, center = Offset(cx, headCy), style = Stroke(width = stroke))
+
+        // reflexia de pe cap, în stânga-sus
+        val ex = cx - 0.09f * w
+        val ey = h * 0.14f
+        rotate(degrees = -28.65f, pivot = Offset(ex, ey)) {
+            drawOval(
+                color = Color.White.copy(alpha = 0.35f),
+                topLeft = Offset(ex - 0.09f * w, ey - 0.05f * h),
+                size = Size(0.18f * w, 0.10f * h),
+            )
         }
     }
 }

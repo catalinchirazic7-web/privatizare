@@ -130,6 +130,8 @@ class GameViewModel(
             debt = debt?.let { DebtSnap(it.debtorId, it.amount, it.creditorId, it.reason) },
             card = shownCard?.let { CardSnap(it.kind, it.text, it.outcome.name, it.amount, it.destination, it.cardId) },
             pendingDraw = pendingDraw,
+            diceCount = diceCount,
+            boardLayout = boardLayout,
         )
     }
 
@@ -145,6 +147,8 @@ class GameViewModel(
             BuyOffer(it.playerId, it.propertyId, option)
         }
         game = s.state
+        diceCount = s.diceCount
+        boardLayout = s.boardLayout
         currentIndex = s.currentIndex
         if (s.lastDice != lastDice) rollNonce++
         lastDice = s.lastDice
@@ -172,6 +176,11 @@ class GameViewModel(
     var currentIndex by mutableIntStateOf(0)
         private set
     var lastDice by mutableStateOf<List<Int>>(emptyList())
+    /** Un zar (implicit) sau două zaruri: modul de joc ales în configurare. */
+    var diceCount by mutableStateOf(1)
+        private set
+    /** Tabla partidei: "old" (veche) sau "new" (nouă). */
+    var boardLayout by mutableStateOf("old")
         private set
 
     /**
@@ -288,7 +297,16 @@ class GameViewModel(
     fun timeLeftMs(): Long? = deadlineMs?.let { (it - System.currentTimeMillis()).coerceAtLeast(0L) }
 
     /** [moneyPerPlayer] = suma de start aleasă în configurare; null = împărțire egală a tirajului (maxim). */
-    fun startGame(setup: List<PlayerSetup>, moneyPerPlayer: Long? = null, timeLimitMinutes: Int? = null) {
+    fun startGame(
+        setup: List<PlayerSetup>,
+        moneyPerPlayer: Long? = null,
+        timeLimitMinutes: Int? = null,
+        dice: Int = 1,
+        layout: String = "old",
+    ) {
+        require(dice == 1 || dice == 2) { "Un zar sau două" }
+        diceCount = dice
+        boardLayout = if (layout == "new") "new" else "old"
         deadlineMs = timeLimitMinutes?.let { System.currentTimeMillis() + it * 60_000L }
         finalRanking = emptyList()
         require(setup.size in 2..4) { "Între 2 și 4 jucători" }
@@ -356,13 +374,16 @@ class GameViewModel(
     }
 
     /** Aruncă zarul și mută pionul. Blocat cât timp există un dialog activ. */
-    fun roll(die: Int) {
-        if (guestSend { GameEvent.RollDiceEvent(it, die) }) return
+    fun roll(die: Int) = rollDice(listOf(die))
+
+    /** Aruncă unul sau două zaruri (suma lor e pasul); online rămâne la un zar. */
+    fun rollDice(dice: List<Int>) {
+        if (guestSend { GameEvent.RollDiceEvent(it, dice.first()) }) return
         val g = game ?: return
         if (activeDialog != null || turnAwaitingEnd || winnerName != null) return
-        val result = engine.playTurn(g, currentIndex, listOf(die))
+        val result = engine.playTurn(g, currentIndex, dice)
         game = result.state
-        lastDice = listOf(die)
+        lastDice = dice
         rollNonce++
         offer = result.offer
         rentDue = result.rentDue
@@ -452,7 +473,7 @@ class GameViewModel(
             is TurnDialog.RentDuePending -> payRent()
             is TurnDialog.CardPending -> dismissCard()
             is TurnDialog.DrawPending -> drawCard()
-            null -> if (turnAwaitingEnd) endTurn() else roll(botDie())
+            null -> if (turnAwaitingEnd) endTurn() else rollDice(List(diceCount) { botDie() })
         }
         return true
     }

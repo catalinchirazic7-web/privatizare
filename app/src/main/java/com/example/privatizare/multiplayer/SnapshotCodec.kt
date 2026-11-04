@@ -35,6 +35,9 @@ data class GameSnapshot(
     val card: CardSnap?,
     /** Pachetul din care jucătorul la rând trebuie să tragă, dacă există. */
     val pendingDraw: String? = null,
+    /** Un zar sau două (modul de joc) și tabla partidei. */
+    val diceCount: Int = 1,
+    val boardLayout: String = "old",
 )
 
 /** Serializare JSON a [GameSnapshot]. Istoricul se limitează la ultimele [MAX_HISTORY] mesaje. */
@@ -60,6 +63,8 @@ object SnapshotCodec {
             JSONObject().put("de", it.debtorId).put("am", it.amount).put("cr", it.creditorId ?: JSONObject.NULL).put("re", it.reason)
         } ?: JSONObject.NULL)
         put("draw", s.pendingDraw ?: JSONObject.NULL)
+        put("dc", s.diceCount)
+        put("bl", s.boardLayout)
         put("st", JSONObject().apply {
             s.state.stats.forEach { (pid, st) ->
                 put(pid, JSONObject().put("v", JSONObject().apply { st.visits.forEach { (k, v) -> put(k, v) } }).put("c", st.collected))
@@ -101,6 +106,8 @@ object SnapshotCodec {
                 DebtSnap(it.getString("de"), it.getLong("am"), it.optString("cr").takeIf { _ -> !it.isNull("cr") }, it.getString("re"))
             },
             pendingDraw = o.optString("draw").takeIf { !o.isNull("draw") && it.isNotEmpty() },
+            diceCount = o.optInt("dc", 1),
+            boardLayout = o.optString("bl", "old"),
             card = o.optJSONObject("card")?.let {
                 CardSnap(
                     it.getString("k"), it.getString("t"), it.optString("o", "NEUTRAL"),

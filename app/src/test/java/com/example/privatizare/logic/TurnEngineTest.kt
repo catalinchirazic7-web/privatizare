@@ -66,12 +66,14 @@ class TurnEngineTest {
     fun unSingurZarIntervalul1La6() {
         val e = engine()
         val s = game(player("A"))
-        for (bad in listOf(listOf(2, 3), listOf(7), listOf(0), emptyList<Int>())) {
+        // un zar sau două (fiecare 1..6); altceva nu
+        for (bad in listOf(listOf(1, 2, 3), listOf(7), listOf(0), listOf(2, 9), emptyList<Int>())) {
             assertThrows(IllegalArgumentException::class.java) { e.playTurn(s, 0, bad) }
         }
         for (ok in 1..6) {
             e.playTurn(s, 0, listOf(ok)) // nu aruncă
         }
+        e.playTurn(s, 0, listOf(1, 6)) // nu aruncă
     }
 
     @Test

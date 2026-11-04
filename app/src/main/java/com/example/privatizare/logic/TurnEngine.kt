@@ -76,7 +76,7 @@ class TurnEngine(
     private val telexDeck = CardDeck(telex, random)
 
     fun playTurn(state: GameState, playerIndex: Int, dice: List<Int>): TurnResult {
-        require(dice.size == 1 && dice[0] in 1..6) { "Un singur zar, valoare 1..6: $dice" }
+        require(dice.size in 1..2 && dice.all { it in 1..6 }) { "Unul sau două zaruri, valori 1..6: $dice" }
         val ctx = Ctx(state)
         val player = ctx.players[playerIndex]
 

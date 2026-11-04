@@ -50,6 +50,10 @@ object SetupMemory {
         val bots: List<Boolean>,
         val money: Long?,
         val timeMinutes: Int?,
+        /** 1 zar (implicit) sau 2 zaruri (mod nou, doar local). */
+        val dice: Int = 1,
+        /** "old" (tabla veche, implicit) sau "new" (tabla nouă). */
+        val layout: String = "old",
     )
 
     fun load(context: Context): Config? = runCatching {
@@ -62,6 +66,8 @@ object SetupMemory {
             bots = (0 until 4).map { p.getBoolean("bot$it", false) },
             money = p.getLong("money", -1L).takeIf { it > 0 },
             timeMinutes = p.getInt("time", -1).takeIf { it > 0 },
+            dice = if (p.getInt("dice", 1) == 2) 2 else 1,
+            layout = if (p.getString("layout", "old") == "new") "new" else "old",
         )
     }.getOrNull()
 
@@ -74,6 +80,8 @@ object SetupMemory {
             c.bots.forEachIndexed { i, b -> e.putBoolean("bot$i", b) }
             e.putLong("money", c.money ?: -1L)
             e.putInt("time", c.timeMinutes ?: -1)
+            e.putInt("dice", c.dice)
+            e.putString("layout", c.layout)
             e.apply()
         }
     }

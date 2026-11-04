@@ -37,6 +37,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
@@ -58,14 +60,35 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.PI
 import kotlin.math.floor
+import kotlin.math.max
 import kotlin.math.roundToInt
 import kotlin.math.sin
 
+/** Raportul lățime:înălțime al celor două fotografii de tablă (1600 px pe lat). */
+const val BOARD_ASPECT_OLD = 1600f / 1131f
+const val BOARD_ASPECT_NEW = 1600f / 1073f
+
 /**
- * Dimensiunile imaginii tabla_privatizare.webp (1600x1131 px, pe lat).
+ * Filtrul tablei din web (saturate 1.6, contrast 1.06, brightness 1.06): tabla e mai vie.
+ * Coeficienții de luminanță Rec.709 ca în CSS; contrastul și luminozitatea se compun într-o singură scară.
  */
-private const val BOARD_WIDTH_PX = 1600f
-private const val BOARD_HEIGHT_PX = 1131f
+private val BOARD_COLOR_MATRIX: ColorMatrix by lazy {
+    val s = 1.6f
+    val r = 0.2126f; val g = 0.7152f; val b = 0.0722f
+    val sat = floatArrayOf(
+        r + (1 - r) * s, g - g * s, b - b * s,
+        r - r * s, g + (1 - g) * s, b - b * s,
+        r - r * s, g - g * s, b + (1 - b) * s,
+    )
+    val k = 1.06f * 1.06f                      // contrast × luminozitate
+    val offset = (0.5f - 0.5f * 1.06f) * 1.06f * 255f   // contrastul ridică în jurul gri-ului, în unități 0..255
+    ColorMatrix(floatArrayOf(
+        k * sat[0], k * sat[1], k * sat[2], 0f, offset,
+        k * sat[3], k * sat[4], k * sat[5], 0f, offset,
+        k * sat[6], k * sat[7], k * sat[8], 0f, offset,
+        0f, 0f, 0f, 1f, 0f,
+    ))
+}
 
 /** Scara și deplasarea tablei după un gest de zoom. */
 data class ZoomState(val scale: Float, val offset: Offset)
@@ -133,11 +156,14 @@ fun BoardView(
     onTileTap: (Int) -> Unit = {},
     /** Înclinare 3D a tablei. */
     tilt: Boolean = true,
+    /** Fotografia tablei (veche sau nouă) și raportul ei. */
+    boardImage: Int = R.drawable.tabla_privatizare,
+    boardAspect: Float = BOARD_ASPECT_OLD,
     /** Conținut desenat pe tablă (zarul), poziționat cu fracții din dimensiunea tablei. */
     overlay: @Composable (boardWidth: Dp, boardHeight: Dp) -> Unit = { _, _ -> },
 ) {
     BoxWithConstraints(
-        modifier = (if (stretch) modifier else modifier.aspectRatio(BOARD_WIDTH_PX / BOARD_HEIGHT_PX)).clipToBounds(),
+        modifier = (if (stretch) modifier else modifier.aspectRatio(boardAspect)).clipToBounds(),
     ) {
         val viewW = maxWidth
         val viewH = maxHeight
@@ -215,9 +241,10 @@ fun BoardView(
                     },
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.tabla_privatizare),
+                    painter = painterResource(id = boardImage),
                     contentDescription = "Tabla de joc",
                     contentScale = ContentScale.FillBounds,
+                    colorFilter = ColorFilter.colorMatrix(BOARD_COLOR_MATRIX),
                     modifier = Modifier.fillMaxSize(),
                 )
                 decks["loto"]?.let { DeckStack(it, R.drawable.deck_back_loto, "Pachet LOTO", viewW, viewH, drawKind == "loto", onDeckTap) }
@@ -341,10 +368,9 @@ private fun PawnView(
     // iar bonusul de vizualizare e ~2.36x, deci numele jucătorului se citește de pe tablă,
     // chiar și la zoom mic.
     val tileH = boardHeight * 0.045f * sizeScale
-    // Pe tabletă (lățime utilă >= 600 dp) pionii sunt mai scurți și mai subțiri, ca să nu ocupe prea mult din tablă.
-    val isTablet = LocalConfiguration.current.smallestScreenWidthDp >= 600
-    val pawnH = tileH * 2.36f * (if (isTablet) 0.8f else 1f)
-    val pawnW = tileH * 2.36f * 0.78f * (if (isTablet) 0.6f else 1f)
+    // Aceleași proporții ca în web: lățimea pionului e 0.54 din înălțime (PAWN_ASPECT)
+    val pawnH = tileH * 2.36f
+    val pawnW = pawnH * PAWN_ASPECT
     val boxW = pawnW * 1.42f
     val shadowH = boardHeight * 0.013f
     val boxH = pawnH + shadowH
@@ -395,9 +421,9 @@ private fun PawnView(
                 .size(width = pawnW * 1.25f, height = shadowH)
                 .graphicsLayer {
                     val hop = hopNow()
-                    scaleX = 1f - 0.35f * hop
+                    scaleX = 1f - 0.2f * hop
                     scaleY = 1f - 0.25f * hop
-                    alpha = 1f - 0.35f * hop
+                    alpha = max(0.2f, 1f - 0.35f * hop)
                 }
                 .background(
                     Brush.radialGradient(listOf(Color.Black.copy(alpha = 0.55f), Color.Transparent)),
@@ -416,9 +442,9 @@ private fun PawnView(
                     val bob = if (active) sin(phase.value) * 0.0035f else 0f
                     transformOrigin = TransformOrigin(0.5f, 1f)
                     translationY = -boardHeight.toPx() * (0.030f * hop + bob)
-                    // alungire la zbor, turtire la aterizare
-                    scaleY = (1f + 0.13f * hop) * (1f - 0.22f * squash)
-                    scaleX = (1f - 0.07f * hop) * (1f + 0.16f * squash)
+                    // alungire la zbor, turtire la aterizare (ca în web)
+                    scaleY = (1f + 0.06f * hop) * (1f - 0.1f * squash)
+                    scaleX = (1f - 0.03f * hop) * (1f + 0.07f * squash)
                 },
             label = player.name,
         )

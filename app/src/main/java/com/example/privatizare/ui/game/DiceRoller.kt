@@ -64,6 +64,12 @@ fun BoardDie(
     resultValue: Int? = null,
     /** Anunță când zarul începe/încetează să se rostogolească (pionii așteaptă oprirea lui). */
     onRollingChange: (Boolean) -> Unit = {},
+    /** Când se schimbă, zarul pornește o aruncare locală (al doilea zar atinge primul ca să arunce amândouă). */
+    triggerNonce: Int = 0,
+    /** Text în insignă în locul feței (la două zaruri: suma). */
+    badgeText: String? = null,
+    /** Atingerea zarului trimite aruncarea în altă parte (în loc să pornească una locală). */
+    onTap: (() -> Unit)? = null,
 ) {
     val haptics = LocalHapticFeedback.current
     var face by remember { mutableIntStateOf(resultValue ?: 1) }
@@ -86,6 +92,11 @@ fun BoardDie(
     )
 
     LaunchedEffect(rolling) { onRollingChange(rolling) }
+
+    // Aruncarea cerută de celălalt zar: pornește ca o atingere locală
+    LaunchedEffect(triggerNonce) {
+        if (triggerNonce > 0 && enabled && !rolling) localRoll = true
+    }
 
     // Pulsul invitației: conturul auriu „respiră" cât timp poți arunca
     ForcedLaunchedEffect(enabled, rolling) {
@@ -179,7 +190,7 @@ fun BoardDie(
                 scaleY = s * pop.value
                 rotationZ = wobble.value
             }
-            .clickable(enabled = canTap) { localRoll = true },
+            .clickable(enabled = canTap) { if (onTap != null) onTap() else localRoll = true },
         contentAlignment = Alignment.Center,
     ) {
         // umbra de sub zar, ca să se desprindă de tablă
@@ -235,7 +246,7 @@ fun BoardDie(
                 .background(DieGold, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            Text("$face", color = Color(0xFF1A1A1A), fontWeight = FontWeight.Black, fontSize = 17.sp)
+            Text(badgeText ?: "$face", color = Color(0xFF1A1A1A), fontWeight = FontWeight.Black, fontSize = 17.sp)
         }
     }
 }
