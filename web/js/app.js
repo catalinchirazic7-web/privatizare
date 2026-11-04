@@ -225,6 +225,10 @@ async function boot() {
 
   // fiecare atingere reia sunetul, dacă browserul l-a oprit între timp
   document.addEventListener('pointerdown', () => sound.unlock());
+  // la întoarcerea în aplicație (alt tab, telefon deblocat) reluăm sunetul, fără să mai așteptăm o atingere
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) sound.unlock();
+  });
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('service-worker.js').catch((e) => console.warn('Service worker indisponibil', e));
