@@ -301,6 +301,11 @@ export class GameScreen {
       if (t.type === TILE.PROPERTY) propertyTiles[t.propertyId] = i;
     });
     this.board.setLayout(g.boardLayout ?? 'old');   // tabla partidei (salvată în joc)
+    // căsuța unde urmează să ajungă pionul pulsează din clipa în care s-a aruncat zarul
+    const moving = current ? this.board.anims.get(current.id) : null;
+    if (current && moving && moving.target !== current.position) {
+      this.landedTile = current.position >= 0 ? current.position : this.rechematTile();
+    }
     this.board.setModel({
       players,
       activePlayerId: current?.id ?? null,
@@ -524,11 +529,16 @@ export class GameScreen {
     this.render();
   }
 
+  /** Căsuța RECHEMAT URGENT (unde ajunge pionul înainte să fie trimis la START). */
+  rechematTile() {
+    return this.catalog.board.findIndex((t) => t.type === TILE.RECHEMAT);
+  }
+
   /** Pionul a ajuns pe o căsuță: cartonașul de aterizare apare o vreme. */
   onPawnsSettled() {
     const p = this.game.currentPlayer;
     if (!p) return;
-    this.landedTile = p.position;
+    this.landedTile = p.position >= 0 ? p.position : this.rechematTile();
     const tile = this.catalog.board[p.position];
     if (!tile || p.position < 0) {
       this.hideLanding();

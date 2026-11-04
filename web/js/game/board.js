@@ -641,7 +641,7 @@ export class BoardView {
       const sx = (1 - 0.03 * hop) * (1 + 0.07 * a.squash);
       ctx.translate(0, lift);
       ctx.scale(sx, sy);
-      drawPawnShape(ctx, pawnW, pawnH, PAWN_BY_KEY[p.color]?.hex ?? '#888');
+      drawPawnShape(ctx, pawnW, pawnH, PAWN_BY_KEY[p.color]?.hex ?? '#888', p.name);
       ctx.restore();
     }
   }
@@ -666,7 +666,7 @@ function roundRect(ctx, x, y, w, h, r) {
 }
 
 /** Pionul desenat simetric, cu baza în (0,0) și vârful la -H. Nu depinde de fotografii, deci nu se strâmbă. */
-function drawPawnShape(ctx, W, H, hex) {
+function drawPawnShape(ctx, W, H, hex, name = '') {
   const dark = shade(hex, -0.35);
   const light = shade(hex, 0.3);
   ctx.beginPath();
@@ -686,6 +686,25 @@ function drawPawnShape(ctx, W, H, hex) {
   ctx.lineJoin = 'round';
   ctx.fill();
   ctx.stroke();
+
+  // numele jucătorului, scris pe corpul pionului (se micșorează ca să încapă)
+  if (name) {
+    let fs = H * 0.13;
+    const font = (size) => { ctx.font = `800 ${size}px "Segoe UI", system-ui, sans-serif`; };
+    font(fs);
+    while (fs > H * 0.04 && ctx.measureText(name).width > W * 0.62) {
+      fs -= H * 0.005;
+      font(fs);
+    }
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = Math.max(1, fs * 0.25);
+    ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+    ctx.strokeText(name, 0, -0.3 * H);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(name, 0, -0.3 * H);
+  }
 
   ctx.beginPath();
   ctx.arc(0, -0.78 * H, 0.27 * W, 0, Math.PI * 2);
