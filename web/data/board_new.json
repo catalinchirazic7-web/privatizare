@@ -1,0 +1,399 @@
+{
+  "_meta": {
+    "note": "Pozitii pentru tabla noua (tabla noua corectata.png, 2528x1696), citite automat din imagine. Aceleasi nume si tipuri ca in board.json.",
+    "spaceCount": 37,
+    "propertyCount": 27,
+    "direction": "arrow",
+    "coordinates": "x,y = fractii [0,1] din latimea/inaltimea imaginii tablei (rotita 90 grade, pe lat); origine stanga-sus",
+    "start": {
+      "x": 0.137,
+      "y": 0.884
+    }
+  },
+  "spaces": [
+    {
+      "index": 0,
+      "type": "PROPRIETATE",
+      "name": "CONTINENTAL S.A.",
+      "price": 5000,
+      "propertyId": "continental",
+      "side": "stanga",
+      "x": 0.2294,
+      "y": 0.8761
+    },
+    {
+      "index": 1,
+      "type": "LOTO",
+      "name": "LOTO",
+      "price": null,
+      "propertyId": null,
+      "side": "stanga",
+      "x": 0.3064,
+      "y": 0.8924
+    },
+    {
+      "index": 2,
+      "type": "PROPRIETATE",
+      "name": "S.C. DURA",
+      "price": 2500,
+      "propertyId": "dura",
+      "side": "stanga",
+      "x": 0.3845,
+      "y": 0.8952
+    },
+    {
+      "index": 3,
+      "type": "PROPRIETATE",
+      "name": "ATELIERE CFR S.C.",
+      "price": 2000,
+      "propertyId": "atelier_cfr",
+      "side": "stanga",
+      "x": 0.4439,
+      "y": 0.8957
+    },
+    {
+      "index": 4,
+      "type": "PROPRIETATE",
+      "name": "TELEFOANE S.C.",
+      "price": 3000,
+      "propertyId": "telefoane",
+      "side": "stanga",
+      "x": 0.5033,
+      "y": 0.8963
+    },
+    {
+      "index": 5,
+      "type": "PROPRIETATE",
+      "name": "S.C. HELICON",
+      "price": 3750,
+      "propertyId": "helicon",
+      "side": "stanga",
+      "x": 0.5642,
+      "y": 0.8966
+    },
+    {
+      "index": 6,
+      "type": "PROPRIETATE",
+      "name": "LAHOVARY S.C.",
+      "price": 3000,
+      "propertyId": "lahovary",
+      "side": "stanga",
+      "x": 0.6246,
+      "y": 0.8968
+    },
+    {
+      "index": 7,
+      "type": "TELEX",
+      "name": "TELEX",
+      "price": null,
+      "propertyId": null,
+      "side": "stanga",
+      "x": 0.6878,
+      "y": 0.8959
+    },
+    {
+      "index": 8,
+      "type": "PROPRIETATE",
+      "name": "S.C. UNIRII",
+      "price": 1000,
+      "propertyId": "unirii",
+      "side": "stanga",
+      "x": 0.7521,
+      "y": 0.8959
+    },
+    {
+      "index": 9,
+      "type": "PROPRIETATE",
+      "name": "TIMISOREANA S.A.",
+      "price": 2000,
+      "propertyId": "timisoreana",
+      "side": "stanga",
+      "x": 0.8169,
+      "y": 0.8956
+    },
+    {
+      "index": 10,
+      "type": "COLT",
+      "name": "SALA CONSFATUIRI",
+      "price": null,
+      "propertyId": null,
+      "side": "stanga_jos",
+      "x": 0.9004,
+      "y": 0.8716
+    },
+    {
+      "index": 11,
+      "type": "PROPRIETATE",
+      "name": "AMBASADOR S.A.",
+      "price": 3000,
+      "propertyId": "ambasador",
+      "side": "jos",
+      "x": 0.9153,
+      "y": 0.7499
+    },
+    {
+      "index": 12,
+      "type": "PROPRIETATE",
+      "name": "S.C. TABEREI",
+      "price": 3100,
+      "propertyId": "taberei",
+      "side": "jos",
+      "x": 0.9149,
+      "y": 0.662
+    },
+    {
+      "index": 13,
+      "type": "PROPRIETATE",
+      "name": "S.C. LIPSCANI",
+      "price": 3100,
+      "propertyId": "lipscani",
+      "side": "jos",
+      "x": 0.9149,
+      "y": 0.5741
+    },
+    {
+      "index": 14,
+      "type": "BANCA",
+      "name": "BANCA",
+      "price": null,
+      "propertyId": null,
+      "side": "jos",
+      "x": 0.9148,
+      "y": 0.4558
+    },
+    {
+      "index": 15,
+      "type": "PROPRIETATE",
+      "name": "S.C. MARIA",
+      "price": 2500,
+      "propertyId": "maria",
+      "side": "jos",
+      "x": 0.9141,
+      "y": 0.3403
+    },
+    {
+      "index": 16,
+      "type": "PROPRIETATE",
+      "name": "PIATA VICTORIEI S.A.",
+      "price": 4000,
+      "propertyId": "piata_victoriei",
+      "side": "jos",
+      "x": 0.9137,
+      "y": 0.2529
+    },
+    {
+      "index": 17,
+      "type": "COLT",
+      "name": "RECHEMAT URGENT (la START)",
+      "price": null,
+      "propertyId": null,
+      "side": "dreapta_jos",
+      "x": 0.9005,
+      "y": 0.1247
+    },
+    {
+      "index": 18,
+      "type": "PROPRIETATE",
+      "name": "ELECTROMOTOR S.C.",
+      "price": 1000,
+      "propertyId": "electromotor",
+      "side": "dreapta",
+      "x": 0.8196,
+      "y": 0.0995
+    },
+    {
+      "index": 19,
+      "type": "PROPRIETATE",
+      "name": "PIATA ROMANA S.C.",
+      "price": 4000,
+      "propertyId": "piata_romana",
+      "side": "dreapta",
+      "x": 0.7579,
+      "y": 0.1
+    },
+    {
+      "index": 20,
+      "type": "LOTO",
+      "name": "LOTO",
+      "price": null,
+      "propertyId": null,
+      "side": "dreapta",
+      "x": 0.6809,
+      "y": 0.0996
+    },
+    {
+      "index": 21,
+      "type": "PROPRIETATE",
+      "name": "GUBAN S.R.L.",
+      "price": 1000,
+      "propertyId": "guban",
+      "side": "dreapta",
+      "x": 0.6024,
+      "y": 0.0994
+    },
+    {
+      "index": 22,
+      "type": "PROPRIETATE",
+      "name": "METALO-TIM S.R.L.",
+      "price": 4000,
+      "propertyId": "metalo_tim",
+      "side": "dreapta",
+      "x": 0.5417,
+      "y": 0.0993
+    },
+    {
+      "index": 23,
+      "type": "PROPRIETATE",
+      "name": "CELULOZA S.R.L.",
+      "price": 4000,
+      "propertyId": "celuloza",
+      "side": "dreapta",
+      "x": 0.4822,
+      "y": 0.0987
+    },
+    {
+      "index": 24,
+      "type": "PROPRIETATE",
+      "name": "PRICHINDEL S.R.L.",
+      "price": 3000,
+      "propertyId": "prichindel",
+      "side": "dreapta",
+      "x": 0.4229,
+      "y": 0.0988
+    },
+    {
+      "index": 25,
+      "type": "TELEX",
+      "name": "TELEX",
+      "price": null,
+      "propertyId": null,
+      "side": "dreapta",
+      "x": 0.3609,
+      "y": 0.0984
+    },
+    {
+      "index": 26,
+      "type": "PROPRIETATE",
+      "name": "LA PADUREA VERDE S.R.L.",
+      "price": 1000,
+      "propertyId": "padurea_verde",
+      "side": "dreapta",
+      "x": 0.2995,
+      "y": 0.0988
+    },
+    {
+      "index": 27,
+      "type": "PROPRIETATE",
+      "name": "MEMORII S.R.L.",
+      "price": 2000,
+      "propertyId": "memorii",
+      "side": "dreapta",
+      "x": 0.2419,
+      "y": 0.0988
+    },
+    {
+      "index": 28,
+      "type": "PROPRIETATE",
+      "name": "CALEA SAGULUI S.A.",
+      "price": 3500,
+      "propertyId": "calea_sagului",
+      "side": "dreapta",
+      "x": 0.1816,
+      "y": 0.0985
+    },
+    {
+      "index": 29,
+      "type": "COLT",
+      "name": "CASA DE ODIHNA",
+      "price": null,
+      "propertyId": null,
+      "side": "dreapta_sus",
+      "x": 0.1034,
+      "y": 0.1209
+    },
+    {
+      "index": 30,
+      "type": "PROPRIETATE",
+      "name": "CIRCUMVALATIUNII S.A.",
+      "price": 4000,
+      "propertyId": "circumvalatiunii",
+      "side": "sus",
+      "x": 0.0866,
+      "y": 0.2446
+    },
+    {
+      "index": 31,
+      "type": "PROPRIETATE",
+      "name": "AVIATICA S.R.L.",
+      "price": 1000,
+      "propertyId": "aviatica",
+      "side": "sus",
+      "x": 0.0867,
+      "y": 0.33
+    },
+    {
+      "index": 32,
+      "type": "PROPRIETATE",
+      "name": "TELEVIZIUNE S.R.L.",
+      "price": 2000,
+      "propertyId": "televiziune",
+      "side": "sus",
+      "x": 0.0865,
+      "y": 0.4163
+    },
+    {
+      "index": 33,
+      "type": "PROPRIETATE",
+      "name": "POLI S.R.L.",
+      "price": 1000,
+      "propertyId": "poli",
+      "side": "sus",
+      "x": 0.0866,
+      "y": 0.5018
+    },
+    {
+      "index": 34,
+      "type": "TELEX",
+      "name": "TELEX",
+      "price": null,
+      "propertyId": null,
+      "side": "sus",
+      "x": 0.0863,
+      "y": 0.589
+    },
+    {
+      "index": 35,
+      "type": "PROPRIETATE",
+      "name": "OHM S.R.L.",
+      "price": 2100,
+      "propertyId": "ohm",
+      "side": "sus",
+      "x": 0.0959,
+      "y": 0.6871
+    },
+    {
+      "index": 36,
+      "type": "BANCA_DIVIDEND",
+      "name": "BANCA ACHITA 2000 ECU DIVIDENDE",
+      "price": 2000,
+      "propertyId": null,
+      "side": "stanga_sus",
+      "x": 0.1464,
+      "y": 0.7748
+    }
+  ],
+  "decks": {
+    "loto": {
+      "x": 0.2185,
+      "y": 0.3267,
+      "w": 0.228,
+      "h": 0.1881
+    },
+    "telex": {
+      "x": 0.5285,
+      "y": 0.5339,
+      "w": 0.233,
+      "h": 0.1888
+    }
+  }
+}

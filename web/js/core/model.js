@@ -31,29 +31,60 @@ export const TILE = Object.freeze({
  * Încarcă cele trei fișiere JSON și le transformă în structuri folosite de motor.
  * @returns {Promise<{board, positions, decks, startMarker, actions, loto, telex, cardArt}>}
  */
+/** Cele două table: aceleași căsuțe și reguli, altă fotografie și alte poziții. */
+export const BOARD_LAYOUTS = Object.freeze({
+  old: { image: 'img/tabla_privatizare.webp', aspect: 1600 / 1131 },
+  new: { image: 'img/tabla_noua.webp', aspect: 1600 / 1073 },
+});
+
 export async function loadCatalog(baseUrl = './data/') {
-  const [boardJson, actionsJson, cardsJson] = await Promise.all([
+  const [boardJson, boardNewJson, actionsJson, cardsJson] = await Promise.all([
     fetchJson(`${baseUrl}board.json`),
+    fetchJson(`${baseUrl}board_new.json`),
     fetchJson(`${baseUrl}actions.json`),
     fetchJson(`${baseUrl}cards.json`),
   ]);
-  return buildCatalog(boardJson, actionsJson, cardsJson);
+  return buildCatalog(boardJson, actionsJson, cardsJson, boardNewJson);
 }
 
-/** Transformă cele trei JSON-uri (deja citite) în catalogul folosit de motor. Funcție pură. */
-export function buildCatalog(boardJson, actionsJson, cardsJson) {
+/** Transformă JSON-urile (deja citite) în catalogul folosit de motor. Funcție pură. */
+export function buildCatalog(boardJson, actionsJson, cardsJson, boardNewJson = null) {
   const loto = parseLoto(cardsJson.loto);
   const telex = parseTelex(cardsJson.telex);
-  return {
+  const catalog = {
     board: parseBoard(boardJson.spaces),
-    positions: parsePositions(boardJson.spaces),
     decks: parseDecks(boardJson.decks ?? {}),
-    startMarker: boardJson._meta?.start ? [boardJson._meta.start.x, boardJson._meta.start.y] : [0.125, 0.908],
     actions: parseActions(actionsJson.properties),
     loto,
     telex,
     cardArt: cardArtMap(loto, telex),
+    layouts: {
+      old: layoutOf(boardJson, 'old'),
+      new: boardNewJson ? layoutOf(boardNewJson, 'new') : layoutOf(boardJson, 'old'),
+    },
   };
+  applyLayout(catalog, 'old');
+  return catalog;
+}
+
+function layoutOf(json, name) {
+  return {
+    positions: parsePositions(json.spaces),
+    startMarker: json._meta?.start ? [json._meta.start.x, json._meta.start.y] : [0.125, 0.908],
+    ...BOARD_LAYOUTS[name],
+  };
+}
+
+/** Pune în catalog pozițiile și fotografia unei table ('old' sau 'new'). */
+export function applyLayout(catalog, name) {
+  const L = catalog.layouts[name] ? name : 'old';
+  const layout = catalog.layouts[L];
+  catalog.layout = L;
+  catalog.positions = layout.positions;
+  catalog.startMarker = layout.startMarker;
+  catalog.boardImage = layout.image;
+  catalog.boardAspect = layout.aspect;
+  return catalog;
 }
 
 async function fetchJson(url) {

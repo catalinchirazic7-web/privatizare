@@ -284,6 +284,7 @@ export class GameScreen {
     this.catalog.board.forEach((t, i) => {
       if (t.type === TILE.PROPERTY) propertyTiles[t.propertyId] = i;
     });
+    this.board.setLayout(g.boardLayout ?? 'old');   // tabla partidei (salvată în joc)
     this.board.setModel({
       players,
       activePlayerId: current?.id ?? null,
@@ -487,6 +488,11 @@ export class GameScreen {
     if (!tile || tile.type !== TILE.PROPERTY) return;
     if (this.visibleDialog() || this.game.winnerName) return;
     this.openSheet(tile.propertyId);
+  }
+
+  /** Tabla pentru partida care începe ('old' sau 'new'). */
+  setLayout(name) {
+    this.board.setLayout(name);
   }
 
   setZoom(preset) {

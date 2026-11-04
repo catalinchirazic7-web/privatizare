@@ -96,10 +96,11 @@ const app = {
 
   /* ---------- partide ---------- */
 
-  startLocal(setup, money, time, diceCount = 1) {
+  startLocal(setup, money, time, diceCount = 1, boardLayout = 'old') {
     sound.unlock();
     this.requestLandscape();
-    this.game.startGame(setup, money, time, diceCount);
+    this.gameScreen.setLayout(boardLayout);
+    this.game.startGame(setup, money, time, diceCount, boardLayout);
     this.enterGame(false);
   },
 

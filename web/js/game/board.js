@@ -3,11 +3,8 @@
 // Port din BoardView.kt, PawnView și CashStacks.kt. Coordonatele căsuțelor sunt fracții [0,1].
 
 import { loadImage } from '../ui/dom.js';
-import { PAWN_BY_KEY } from '../core/model.js';
+import { PAWN_BY_KEY, applyLayout } from '../core/model.js';
 
-const BOARD_W = 1600;
-const BOARD_H = 1131;
-const BOARD_ASPECT = BOARD_W / BOARD_H;
 const STEP_MS = 430;          // durata unui pas pe tablă
 const WALK_MS = 240;          // un pas din mersul forțat (RECHEMAT URGENT), mai rapid
 const TILT_SCALE = 0.93;      // înclinarea: tabla e puțin mai mică și ridicată
@@ -90,7 +87,7 @@ export class BoardView {
     this.running = true;
 
     this.boardImg = null;
-    loadImage('img/tabla_privatizare.webp').then((img) => (this.boardImg = img));
+    this.loadBoardImage();
     this.deckImgs = {
       loto: null,
       telex: null,
@@ -106,6 +103,23 @@ export class BoardView {
 
   destroy() {
     this.running = false;
+  }
+
+  /** Fotografia tablei din catalogul curent (veche sau nouă). */
+  loadBoardImage() {
+    const src = this.catalog.boardImage;
+    loadImage(src).then((img) => {
+      if (this.catalog.boardImage === src) this.boardImg = img;
+    });
+  }
+
+  /** Schimbă tabla ('old' sau 'new'): pozițiile și fotografia. Pionii rămân pe căsuțele lor. */
+  setLayout(name) {
+    if (this.catalog.layout === name) return;
+    applyLayout(this.catalog, name);
+    this.boardImg = null;
+    this.loadBoardImage();
+    this.resize();   // raportul tablei s-a schimbat
   }
 
   /** Model nou din starea jocului. Pionii care s-au mutat pornesc animația. */
@@ -144,6 +158,7 @@ export class BoardView {
     }
     let bw;
     let bh;
+    const BOARD_ASPECT = this.catalog.boardAspect;
     if (this.model.stretch || cssW / cssH > BOARD_ASPECT) {
       // tabla umple lățimea (sau tot ecranul, când e întinsă)
       bw = this.model.stretch ? cssW : cssH * BOARD_ASPECT;

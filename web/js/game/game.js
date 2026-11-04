@@ -28,6 +28,7 @@ export class Game {
     this.lastDice = [];
     this.rollNonce = 0;
     this.diceCount = 1;       // 1 sau 2 zaruri (doar jocul local)
+    this.boardLayout = 'old';  // tabla: 'old' (veche) sau 'new' (nouă)
     this.winnerName = null;
 
     this.offer = null;           // { playerId, propertyId, option }
@@ -182,6 +183,7 @@ export class Game {
       state: { turn: g.turn, players: g.players, bankMoney: g.bankMoney, history: g.history },
       currentIndex: this.currentIndex,
       diceCount: this.diceCount,
+      boardLayout: this.boardLayout,
       lastDice: this.lastDice,
       winnerName: this.winnerName,
       turnAwaitingEnd: this.turnAwaitingEnd,
@@ -211,6 +213,7 @@ export class Game {
     this.game = s.state;
     this.currentIndex = s.currentIndex;
     this.diceCount = s.diceCount === 2 ? 2 : 1;   // salvările vechi au un singur zar
+    this.boardLayout = s.boardLayout === 'new' ? 'new' : 'old';   // salvările vechi sunt pe tabla veche
     if (!sameDice(s.lastDice, this.lastDice)) this.rollNonce++;
     this.lastDice = s.lastDice;
     this.winnerName = s.winnerName;
@@ -254,9 +257,10 @@ export class Game {
    * @param {number|null} moneyPerPlayer  null = împărțire egală a tirajului
    * @param {number|null} timeLimitMinutes
    */
-  startGame(setup, moneyPerPlayer = null, timeLimitMinutes = null, diceCount = 1) {
+  startGame(setup, moneyPerPlayer = null, timeLimitMinutes = null, diceCount = 1, boardLayout = 'old') {
     if (diceCount !== 1 && diceCount !== 2) throw new Error('Un zar sau două');
     this.diceCount = diceCount;
+    this.boardLayout = boardLayout === 'new' ? 'new' : 'old';
     this.deadlineMs = timeLimitMinutes ? Date.now() + timeLimitMinutes * 60_000 : null;
     this.finalRanking = [];
     if (!(setup.length >= 2 && setup.length <= 4)) throw new Error('Între 2 și 4 jucători');

@@ -85,6 +85,7 @@ export class SetupView {
     this.money = saved?.money ?? null;          // null = „Maxim”
     this.time = saved?.time ?? null;            // null = fără limită
     this.dice = saved?.dice === 2 ? 2 : 1;      // 1 zar (implicit) sau 2 zaruri (mod nou, doar local)
+    this.layout = saved?.layout === 'new' ? 'new' : 'old';   // tabla veche (implicit) sau tabla nouă
     const defaults = PAWN_COLORS.slice(0, 4).map((c) => c.key);
     this.seats = [0, 1, 2, 3].map((i) => ({
       name: saved?.seats?.[i]?.name ?? `Jucător ${i + 1}`,
@@ -127,6 +128,15 @@ export class SetupView {
       dice.append(el('button', {
         class: `btn chip ${n === this.dice ? 'chip-on' : ''}`, type: 'button', text: n === 1 ? '1 zar' : '2 zaruri',
         onclick: () => { this.dice = n; this.render(); },
+      }));
+    }
+
+    const board = $('setup-board');
+    clear(board);
+    for (const [key, label] of [['old', 'Tablă veche'], ['new', 'Tablă nouă']]) {
+      board.append(el('button', {
+        class: `btn chip ${key === this.layout ? 'chip-on' : ''}`, type: 'button', text: label,
+        onclick: () => { this.layout = key; this.render(); },
       }));
     }
 
@@ -190,10 +200,10 @@ export class SetupView {
 
   start() {
     if (!this.valid()) return;
-    const config = { count: this.count, money: this.money, time: this.time, dice: this.dice, seats: this.seats.map((s) => ({ ...s })) };
+    const config = { count: this.count, money: this.money, time: this.time, dice: this.dice, layout: this.layout, seats: this.seats.map((s) => ({ ...s })) };
     storage.saveSetup(config);
     const setup = this.active().map((s) => ({ name: s.name.trim(), colorKey: s.colorKey, isBot: s.isBot }));
-    this.app.startLocal(setup, this.money, this.time, this.dice);
+    this.app.startLocal(setup, this.money, this.time, this.dice, this.layout);
   }
 }
 
