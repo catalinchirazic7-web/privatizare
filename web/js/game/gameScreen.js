@@ -22,6 +22,7 @@ const DIE_PIPS = {
   6: [0, 2, 3, 5, 6, 8],
 };
 const DIE_POS = { fx: 0.63, fy: 0.34 };   // zarul stă în zona liberă din centrul tablei
+const DIE2_DX = 0.075;                     // al doilea zar (mod cu două zaruri), lângă primul
 const LANDING_MS = 3800;
 const BOT_DELAY_MS = 1000;
 const END_DELAY_MS = 900;
@@ -57,11 +58,12 @@ class DieView {
     if (this.rolling) return;
     this.rolling = true;
     this.root.classList.add('is-rolling');
-    this.badge.hidden = true;
+    if (this.badge) this.badge.hidden = true;
     this.iv = setInterval(() => this.setFace(1 + Math.floor(Math.random() * 6)), 70);
   }
 
-  stopRolling(value) {
+  /** @param {string|null} badgeText  ce scrie insigna; null = zarul nu are insignă (al doilea zar) */
+  stopRolling(value, badgeText = String(value)) {
     clearInterval(this.iv);
     this.iv = null;
     this.rolling = false;
@@ -71,7 +73,8 @@ class DieView {
     void this.root.offsetWidth;   // repornește animația
     this.root.classList.add('is-pop', 'is-flash');
     setTimeout(() => this.root.classList.remove('is-flash'), 320);
-    this.badge.textContent = String(value);
+    if (!this.badge || badgeText == null) return;
+    this.badge.textContent = badgeText;
     this.badge.hidden = false;
     clearTimeout(this.hideBadge);
     this.hideBadge = setTimeout(() => (this.badge.hidden = true), 2000);
@@ -116,6 +119,7 @@ export class GameScreen {
     this.modalKey = null;
     this.lastShownNonce = 0;
     this.prevMoney = new Map();
+    this.shownMoney = new Map();
     this.botKey = null;
     this.endKey = null;
     this.botTimer = null;
@@ -135,6 +139,9 @@ export class GameScreen {
     this.dieBadge = $('die-badge');
     this.die = new DieView(this.dieEl, this.dieBadge);
     this.dieEl.addEventListener('click', () => this.onDieTap());
+    this.die2El = $('die2');
+    this.die2 = new DieView(this.die2El, null);
+    this.die2El.addEventListener('click', () => this.onDieTap());
 
     this.board = new BoardView(this.canvas, {
       catalog: this.catalog,
@@ -143,6 +150,7 @@ export class GameScreen {
       onBusyChange: (busy) => this.setPawnsBusy(busy),
       dieBusy: () => this.die.busy,
       onFrame: (b) => this.placeDie(b),
+      onArrive: () => this.render(),
     });
     this.board.onStep = () => sound.step();
 
@@ -174,6 +182,7 @@ export class GameScreen {
     this.online = online;
     this.lastShownNonce = this.game.rollNonce;
     this.prevMoney = new Map((this.game.game?.players ?? []).map((p) => [p.id, p.money]));
+    this.shownMoney = new Map(this.prevMoney);
     this.unsubs.push(this.game.onChange(() => this.render()));
     if (online) this.unsubs.push(online.onChange(() => this.render()));
     this.clockTimer = setInterval(() => this.tickClock(), 1000);
@@ -244,11 +253,6 @@ export class GameScreen {
     const dot = this.$('hud-dot');
     dot.style.background = current ? PAWN_BY_KEY[current.color].hex : '#888';
     this.$('hud-turn').textContent = `LA RÂND: ${current?.name ?? '-'}`;
-    const money = this.$('hud-money');
-    clear(money);
-    for (const p of players) {
-      money.append(el('span', {}, el('i', { style: { background: PAWN_BY_KEY[p.color].hex } }), `${fmt(p.money)}`));
-    }
     this.$('hud-arrow').textContent = this.drawerOpen ? '▲ ÎNCHIDE' : '▼ JUCĂTORI';
     this.$('hud-toggle').setAttribute('aria-expanded', String(!!this.drawerOpen));
 
@@ -267,9 +271,11 @@ export class GameScreen {
     // --- zarul ---
     const busyDie = !!dialog || !!g.winnerName || g.turnAwaitingEnd || !!current?.isBot || !myTurn || this.die.busy;
     this.die.setReady(!busyDie, !busyDie);
+    this.die2El.hidden = g.diceCount !== 2;
+    this.die2.setReady(!busyDie, !busyDie);
     if (g.rollNonce !== this.lastShownNonce) {
       this.lastShownNonce = g.rollNonce;
-      this.showRoll(g.lastDice[0]);
+      this.showRoll(g.lastDice);
     }
 
     // --- tabla ---
@@ -292,6 +298,14 @@ export class GameScreen {
       focusIndex,
     });
 
+    // --- bani: după tabla de mai sus, care știe dacă pionul e încă în drum ---
+    const shown = this.syncShownMoney(players);
+    const money = this.$('hud-money');
+    clear(money);
+    for (const p of players) {
+      money.append(el('span', {}, el('i', { style: { background: PAWN_BY_KEY[p.color].hex } }), `${fmt(shown.get(p.id))}`));
+    }
+
     // --- drawer ---
     this.renderDrawer(viewed, me, current, dialog);
     this.renderDialog(dialog);
@@ -309,7 +323,7 @@ export class GameScreen {
     const dp = this.$('drawer-players');
     clear(dp);
     for (const p of players) {
-      dp.append(el('span', {}, el('i', { style: { background: PAWN_BY_KEY[p.color].hex } }), `${p.name}: ${ecu(p.money)}, ${Object.keys(p.ownedProperties).length} firme`));
+      dp.append(el('span', {}, el('i', { style: { background: PAWN_BY_KEY[p.color].hex } }), `${p.name}: ${ecu(this.shownMoney.get(p.id) ?? p.money)}, ${Object.keys(p.ownedProperties).length} firme`));
     }
     this.$('toggle-stretch').textContent = this.stretch ? 'Tablă: pe tot ecranul' : 'Tablă: proporțională';
     this.$('toggle-tilt').textContent = this.tilt ? 'Înclinare: pornit' : 'Înclinare: oprit';
@@ -405,17 +419,28 @@ export class GameScreen {
     this.dieEl.style.top = `${p.y}px`;
     this.dieBadge.style.left = `${p.x}px`;
     this.dieBadge.style.top = `${p.y}px`;
+    const p2 = b.toScreen(DIE_POS.fx + DIE2_DX, DIE_POS.fy);
+    this.die2El.style.left = `${p2.x}px`;
+    this.die2El.style.top = `${p2.y}px`;
   }
 
-  /** Arată o aruncare: zarul se rostogolește și se oprește pe valoarea oficială. */
-  showRoll(value) {
-    if (value == null) return;
+  /** Oprește zarele pe valorile oficiale; la două zaruri, insigna arată suma. */
+  settleDice(values) {
+    const [v1, v2] = values;
+    this.die.stopRolling(v1, v2 == null ? String(v1) : String(v1 + v2));
+    if (v2 != null) this.die2.stopRolling(v2, null);
+  }
+
+  /** Arată o aruncare: zarele se rostogolesc și se opresc pe valorile oficiale. */
+  showRoll(values) {
+    if (!values?.length) return;
     sound.dice();
     if (this.die.busy) {
-      this.die.stopRolling(value);
+      this.settleDice(values);
     } else {
       this.die.startRolling();
-      setTimeout(() => this.die.stopRolling(value), ROLL_ANIM_MS);
+      if (values[1] != null) this.die2.startRolling();
+      setTimeout(() => this.settleDice(values), ROLL_ANIM_MS);
     }
     this.pump();
   }
@@ -426,22 +451,24 @@ export class GameScreen {
     sound.unlock();
     sound.dice();
     this.die.startRolling();
-    const value = 1 + Math.floor(Math.random() * 6);
+    const two = g.diceCount === 2 && !g.isGuest;   // online rămâne la un singur zar
+    if (two) this.die2.startRolling();
+    const values = Array.from({ length: two ? 2 : 1 }, () => 1 + Math.floor(Math.random() * 6));
     if (g.isGuest) {
       // oaspetele așteaptă zarul oficial de la gazdă: rostogolirea ține până sosește starea
-      g.roll(value);
+      g.roll(values[0]);
       setTimeout(() => {
         if (this.die.busy && g.rollNonce === this.lastShownNonce) {
-          this.die.stopRolling(g.lastDice[0] ?? value);
+          this.settleDice([g.lastDice[0] ?? values[0]]);
           this.pump();
         }
       }, 6000);
       return;
     }
     setTimeout(() => {
-      this.die.stopRolling(value);
+      this.settleDice(values);
       this.lastShownNonce = g.rollNonce + 1;   // aruncarea locală nu se mai animă a doua oară
-      setTimeout(() => g.roll(value), 300);
+      setTimeout(() => g.roll(values), 300);
     }, ROLL_ANIM_MS);
     this.pump();
   }
@@ -842,13 +869,31 @@ export class GameScreen {
     clear(this.modalRoot);
   }
 
+  /**
+   * Banii afișați. O creștere (bancă, START, cartonaș) apare abia când pionul ajunge pe căsuță;
+   * o scădere apare imediat. Motorul și starea jocului nu se schimbă: doar afișarea.
+   */
+  syncShownMoney(players) {
+    const out = new Map();
+    for (const p of players) {
+      const anim = this.board.anims.get(p.id);
+      const holding = !!anim && anim.moving && !anim.arrived;
+      const before = this.shownMoney.get(p.id);
+      const shown = before === undefined || !holding || p.money < before ? p.money : before;
+      out.set(p.id, shown);
+    }
+    this.shownMoney = out;
+    return out;
+  }
+
   renderMoneyChanges(players) {
     const float = this.$('money-float');
     for (const p of players) {
+      const value = this.shownMoney.get(p.id) ?? p.money;
       const prev = this.prevMoney.get(p.id);
-      this.prevMoney.set(p.id, p.money);
-      if (prev == null || prev === p.money) continue;
-      const diff = p.money - prev;
+      this.prevMoney.set(p.id, value);
+      if (prev == null || prev === value) continue;
+      const diff = value - prev;
       const chip = el('span', { class: diff > 0 ? 'plus' : 'minus', text: `${p.name} ${diff > 0 ? '+' : '−'}${fmt(Math.abs(diff))}` });
       float.append(chip);
       setTimeout(() => chip.remove(), 1400);

@@ -27,6 +27,7 @@ export class Game {
     this.currentIndex = 0;
     this.lastDice = [];
     this.rollNonce = 0;
+    this.diceCount = 1;       // 1 sau 2 zaruri (doar jocul local)
     this.winnerName = null;
 
     this.offer = null;           // { playerId, propertyId, option }
@@ -180,6 +181,7 @@ export class Game {
     return {
       state: { turn: g.turn, players: g.players, bankMoney: g.bankMoney, history: g.history },
       currentIndex: this.currentIndex,
+      diceCount: this.diceCount,
       lastDice: this.lastDice,
       winnerName: this.winnerName,
       turnAwaitingEnd: this.turnAwaitingEnd,
@@ -208,6 +210,7 @@ export class Game {
     };
     this.game = s.state;
     this.currentIndex = s.currentIndex;
+    this.diceCount = s.diceCount === 2 ? 2 : 1;   // salvările vechi au un singur zar
     if (!sameDice(s.lastDice, this.lastDice)) this.rollNonce++;
     this.lastDice = s.lastDice;
     this.winnerName = s.winnerName;
@@ -251,7 +254,9 @@ export class Game {
    * @param {number|null} moneyPerPlayer  null = împărțire egală a tirajului
    * @param {number|null} timeLimitMinutes
    */
-  startGame(setup, moneyPerPlayer = null, timeLimitMinutes = null) {
+  startGame(setup, moneyPerPlayer = null, timeLimitMinutes = null, diceCount = 1) {
+    if (diceCount !== 1 && diceCount !== 2) throw new Error('Un zar sau două');
+    this.diceCount = diceCount;
     this.deadlineMs = timeLimitMinutes ? Date.now() + timeLimitMinutes * 60_000 : null;
     this.finalRanking = [];
     if (!(setup.length >= 2 && setup.length <= 4)) throw new Error('Între 2 și 4 jucători');
@@ -329,13 +334,15 @@ export class Game {
 
   /** Aruncă zarul și mută pionul. Blocat cât timp există un dialog activ. */
   roll(die) {
-    if (this.guestSend((id) => ({ t: EV.ROLL, playerId: id, value: die }))) return;
+    // un zar (număr) sau două (listă); online rămâne la un singur zar, ca în aplicația Android
+    const dice = Array.isArray(die) ? die : [die];
+    if (this.guestSend((id) => ({ t: EV.ROLL, playerId: id, value: dice[0] }))) return;
     const g = this.game;
     if (!g) return;
     if (this.activeDialog || this.turnAwaitingEnd || this.winnerName !== null) return;
-    const r = this.engine.playTurn(g, this.currentIndex, [die]);
+    const r = this.engine.playTurn(g, this.currentIndex, dice);
     this.game = r.state;
-    this.lastDice = [die];
+    this.lastDice = dice;
     this.rollNonce++;
     this.offer = r.offer;
     this.rentDue = r.rentDue;
@@ -534,7 +541,7 @@ export class Game {
       case 'DRAW': this.drawCard(); break;
       default:
         if (this.turnAwaitingEnd) this.endTurn();
-        else this.roll(this.botDie());
+        else this.roll(Array.from({ length: this.diceCount }, () => this.botDie()));
     }
     return true;
   }

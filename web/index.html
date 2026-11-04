@@ -69,6 +69,10 @@
             <h3>Durata partidei</h3>
             <div class="chips" id="setup-time"></div>
           </div>
+          <div class="field">
+            <h3>Zaruri</h3>
+            <div class="chips" id="setup-dice"></div>
+          </div>
           <div class="field wide">
             <h3>Bani de start (fiecare jucător)</h3>
             <div class="chips scrollx" id="setup-money"></div>
@@ -144,6 +148,9 @@
       <div id="board-wrap" class="board-wrap">
         <canvas id="board" aria-label="Tabla de joc Privatizare"></canvas>
         <div id="die" class="die" aria-label="Zarul">
+          <div class="die-face"></div>
+        </div>
+        <div id="die2" class="die" aria-label="Al doilea zar" hidden>
           <div class="die-face"></div>
         </div>
         <span id="die-badge" class="die-badge" hidden></span>

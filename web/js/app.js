@@ -94,10 +94,10 @@ const app = {
 
   /* ---------- partide ---------- */
 
-  startLocal(setup, money, time) {
+  startLocal(setup, money, time, diceCount = 1) {
     sound.unlock();
     this.requestLandscape();
-    this.game.startGame(setup, money, time);
+    this.game.startGame(setup, money, time, diceCount);
     this.enterGame(false);
   },
 

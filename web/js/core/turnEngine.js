@@ -34,9 +34,12 @@ export class TurnEngine {
     this.telexDeck = new CardDeck(catalog.telex, rng);
   }
 
-  /** Un zar. Pionul merge înainte; trecerea peste START aduce bonusul. */
+  /** Unul sau două zaruri: pionul merge cu suma. Trecerea peste START aduce bonusul. */
   playTurn(state, playerIndex, dice) {
-    if (!(dice.length === 1 && dice[0] >= 1 && dice[0] <= 6)) throw new Error(`Un singur zar, valoare 1..6: ${dice}`);
+    if (!(dice.length >= 1 && dice.length <= 2 && dice.every((d) => d >= 1 && d <= 6))) {
+      throw new Error(`Unul sau două zaruri, valori 1..6: ${dice}`);
+    }
+    const steps = dice.reduce((a, b) => a + b, 0);
     const ctx = new Ctx(this, state);
     const player = ctx.players[playerIndex];
 
@@ -50,7 +53,7 @@ export class TurnEngine {
       return ctx.result(state);
     }
 
-    const raw = player.position + dice[0];
+    const raw = player.position + steps;
     if (raw >= this.board.length) ctx.bankPays(playerIndex, GameRules.START_BONUS, 'trecere prin START');
     ctx.moveTo(playerIndex, raw % this.board.length);
     ctx.log(`${player.name} a dat ${dice.join('+')}`);

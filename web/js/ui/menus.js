@@ -83,6 +83,7 @@ export class SetupView {
     this.count = saved?.count ?? 2;
     this.money = saved?.money ?? null;          // null = „Maxim”
     this.time = saved?.time ?? null;            // null = fără limită
+    this.dice = saved?.dice === 2 ? 2 : 1;      // 1 zar (implicit) sau 2 zaruri (mod nou, doar local)
     const defaults = PAWN_COLORS.slice(0, 4).map((c) => c.key);
     this.seats = [0, 1, 2, 3].map((i) => ({
       name: saved?.seats?.[i]?.name ?? `Jucător ${i + 1}`,
@@ -116,6 +117,15 @@ export class SetupView {
       count.append(el('button', {
         class: `btn chip ${n === this.count ? 'chip-on' : ''}`, type: 'button', text: String(n),
         onclick: () => { this.count = n; this.render(); },
+      }));
+    }
+
+    const dice = $('setup-dice');
+    clear(dice);
+    for (const n of [1, 2]) {
+      dice.append(el('button', {
+        class: `btn chip ${n === this.dice ? 'chip-on' : ''}`, type: 'button', text: n === 1 ? '1 zar' : '2 zaruri',
+        onclick: () => { this.dice = n; this.render(); },
       }));
     }
 
@@ -179,10 +189,10 @@ export class SetupView {
 
   start() {
     if (!this.valid()) return;
-    const config = { count: this.count, money: this.money, time: this.time, seats: this.seats.map((s) => ({ ...s })) };
+    const config = { count: this.count, money: this.money, time: this.time, dice: this.dice, seats: this.seats.map((s) => ({ ...s })) };
     storage.saveSetup(config);
     const setup = this.active().map((s) => ({ name: s.name.trim(), colorKey: s.colorKey, isBot: s.isBot }));
-    this.app.startLocal(setup, this.money, this.time);
+    this.app.startLocal(setup, this.money, this.time, this.dice);
   }
 }
 

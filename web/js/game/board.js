@@ -3,15 +3,23 @@
 // Port din BoardView.kt, PawnView și CashStacks.kt. Coordonatele căsuțelor sunt fracții [0,1].
 
 import { loadImage } from '../ui/dom.js';
-import { PAWN_BY_KEY } from '../core/model.js';
+import { PAWN_BY_KEY, TILE, propertyIconPath } from '../core/model.js';
 
 const BOARD_W = 1600;
 const BOARD_H = 1131;
 const BOARD_ASPECT = BOARD_W / BOARD_H;
 const STEP_MS = 430;          // durata unui pas pe tablă
+const WALK_MS = 240;          // un pas din mersul forțat (RECHEMAT URGENT), mai rapid
 const TILT_SCALE = 0.93;      // înclinarea: tabla e puțin mai mică și ridicată
 const TILT_LIFT = -0.022;     // (fracție din înălțime)
-const PAWN_ASPECT = 138 / 256;  // sprite-ul pionului (w/h)
+const PAWN_ASPECT = 138 / 256;  // rezervă (w/h), până se încarcă sprite-ul; altfel se citește din imagine
+const BOARD_FILTER = 'saturate(1.6) contrast(1.06) brightness(1.06)';   // tabla: verde mai viu (ctx.filter; fără efect pe browserele vechi)
+// Etichetele proprietăților, desenate peste textul mic din fotografie (în unități de tablă, fracții din lățime/înălțime).
+// Pe laturile lungi tablei (sus/jos) etichetele sunt înguste: distanța dintre căsuțe e ~0.062 din lățime.
+const LABEL_ROW = { w: 0.06, h: 0.092, off: 0.092 };
+const LABEL_SIDE = { w: 0.092, h: 0.056, off: 0.07 };
+const LABEL_INK = '#2a1a12';
+const LABEL_PAPER = '#fbf6e8';
 const TILE_SIZE_HALF = { x: 0.034, y: 0.045 };   // elipsa de atingere pentru o căsuță
 const CLUSTER = {
   1: [[0, 0, 1]],
@@ -46,6 +54,7 @@ class PawnAnim {
     this.token = 0;           // identifică mutarea curentă (o mutare nouă o oprește pe cea veche)
     this.squash = 0;          // turtire la aterizare (0..1)
     this.moving = false;
+    this.arrived = false;     // pionul a ajuns pe căsuța mutării curente (banii se arată de-abia atunci)
   }
 }
 
@@ -70,6 +79,7 @@ export class BoardView {
     this.onBusyChange = o.onBusyChange ?? (() => {});
     this.dieBusy = o.dieBusy ?? (() => false);
     this.onFrame = o.onFrame ?? (() => {});
+    this.onArrive = o.onArrive ?? (() => {});   // (playerId) pionul a ajuns pe căsuță
 
     this.model = {
       players: [], activePlayerId: null, landedTile: null, highlightColor: '#ffd54f',
@@ -95,6 +105,11 @@ export class BoardView {
     loadImage('img/deck_back_telex.webp').then((img) => (this.deckImgs.telex = img));
     this.pawnImgs = {};
     for (const c of Object.values(PAWN_BY_KEY)) loadImage(c.img).then((img) => (this.pawnImgs[c.key] = img));
+    this.iconImgs = {};
+    for (const t of this.catalog.board) {
+      if (t.type !== TILE.PROPERTY) continue;
+      loadImage(propertyIconPath(t.propertyId)).then((img) => (this.iconImgs[t.propertyId] = img));
+    }
 
     this.bindPointers();
     this.resize();
@@ -317,6 +332,7 @@ export class BoardView {
 
   async animateTo(a, target) {
     const token = ++a.token;
+    a.arrived = false;
     this.setMoving(a, true);
     try {
       await sleep(90);
@@ -330,7 +346,18 @@ export class BoardView {
       const start = Math.round(a.v);
       const forward = mod(target - start, N);
       const backward = mod(start - target, N);
-      if (forward >= 1 && forward <= 12) {
+      if (target < 0) {
+        // RECHEMAT URGENT (START_POSITION): pionul merge efectiv pe traseu până la CONTINENTAL,
+        // apoi alunecă la marcajul START. Fără bonus; doar animația.
+        if (start !== target) {
+          const toFirst = mod(0 - start, N);
+          for (let i = 1; i <= toFirst; i++) {
+            if (!(await this.step(a, start + i, token, WALK_MS))) return;
+          }
+          a.v = 0;
+          if (!(await this.step(a, target, token, STEP_MS))) return;
+        }
+      } else if (forward >= 1 && forward <= 12) {
         for (let i = 1; i <= forward; i++) {
           if (!(await this.step(a, start + i, token))) return;
         }
@@ -339,7 +366,7 @@ export class BoardView {
           if (!(await this.step(a, start - i, token))) return;
         }
       } else {
-        a.v = target;   // salt (ex. RECHEMAT URGENT): fără animație pe traseu
+        a.v = target;   // salt de rezervă, dacă distanța nu e plauzibilă pentru un zar
       }
       if (token !== a.token) return;
       // „pop" la aterizare: pionul se turtește o clipă și revine
@@ -348,17 +375,19 @@ export class BoardView {
       if (token !== a.token) return;
       a.squash = 0;
       a.v = target;
+      a.arrived = true;
+      this.onArrive(a.id);   // banii și cartonașul apar acum, nu înainte de sosire
       await sleep(180);   // o pauză pe căsuța de sosire, înainte de ofertă / plată / cartonaș
     } finally {
       if (token === a.token) this.setMoving(a, false);
     }
   }
 
-  async step(a, to, token) {
+  async step(a, to, token, ms = STEP_MS) {
     const from = a.v;
     if (token !== a.token) return false;
     this.onStep?.();
-    await tween(STEP_MS, (t) => (a.v = from + (to - from) * t), () => token === a.token);
+    await tween(ms, (t) => (a.v = from + (to - from) * t), () => token === a.token);
     return token === a.token;
   }
 
@@ -386,15 +415,20 @@ export class BoardView {
     const { dpr, cssW, cssH } = layout;
     if (this.canvas.clientWidth && (this.canvas.clientWidth !== cssW || this.canvas.clientHeight !== cssH)) this.resize();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = '#1b1311';
+    ctx.fillStyle = '#173a22';
     ctx.fillRect(0, 0, cssW, cssH);
 
     const t = this.transform();
     ctx.setTransform(dpr * t.A, 0, 0, dpr * t.A, dpr * t.E, dpr * t.F);
     const { bx, by, bw, bh } = layout;
 
-    if (this.boardImg) ctx.drawImage(this.boardImg, bx, by, bw, bh);
-    else {
+    if (this.boardImg) {
+      // pânza tablei: culori mai vii, verdele mai natural (fără să se schimbe desenul)
+      ctx.save();
+      ctx.filter = BOARD_FILTER;
+      ctx.drawImage(this.boardImg, bx, by, bw, bh);
+      ctx.restore();
+    } else {
       ctx.fillStyle = '#2d4d32';
       ctx.fillRect(bx, by, bw, bh);
     }
@@ -402,7 +436,34 @@ export class BoardView {
     this.drawDecks(ctx, bx, by, bw, bh);
     this.drawHighlight(ctx, bx, by, bw, bh);
     this.drawMarkers(ctx, bx, by, bw, bh);
+    this.drawPropertyLabels(ctx, bx, by, bw, bh);
     this.drawPawns(ctx, bx, by, bw, bh);
+  }
+
+  /** Numele și pictograma fiecărei firme, lizibile; acoperă textul mic din fotografie. */
+  drawPropertyLabels(ctx, bx, by, bw, bh) {
+    this.catalog.board.forEach((tile, i) => {
+      if (tile.type !== TILE.PROPERTY) return;
+      const pos = this.catalog.positions[i];
+      const prop = this.catalog.actions[tile.propertyId];
+      if (!pos || !prop) return;
+      // etichetele stau spre interiorul tablei, în fața ovalului de pe margine
+      const side = pos[0] < 0.15 ? 'left' : pos[0] > 0.85 ? 'right' : pos[1] < 0.5 ? 'top' : 'bottom';
+      let cx = bx + bw * pos[0];
+      let cy = by + bh * pos[1];
+      let w;
+      let h;
+      if (side === 'left' || side === 'right') {
+        cx += (side === 'left' ? LABEL_SIDE.off : -LABEL_SIDE.off) * bw;
+        w = LABEL_SIDE.w * bw;
+        h = LABEL_SIDE.h * bh;
+      } else {
+        cy += (side === 'top' ? LABEL_ROW.off : -LABEL_ROW.off) * bh;
+        w = LABEL_ROW.w * bw;
+        h = LABEL_ROW.h * bh;
+      }
+      drawPropertyLabel(ctx, { x: cx - w / 2, y: cy - h / 2, w, h, horizontal: side === 'left' || side === 'right' }, prop.name, this.iconImgs[tile.propertyId], bw);
+    });
   }
 
   drawDecks(ctx, bx, by, bw, bh) {
@@ -539,14 +600,17 @@ export class BoardView {
 
       const tileH = bh * 0.045 * sizeScale;
       const pawnH = tileH * 2.36;
-      const pawnW = pawnH * PAWN_ASPECT;
+      // raportul real al sprite-ului: fiecare pion are altă lățime, nu se mai întinde pe una fixă
+      const sprite = this.pawnImgs[p.color];
+      const aspect = sprite?.naturalWidth ? sprite.naturalWidth / sprite.naturalHeight : PAWN_ASPECT;
+      const pawnW = pawnH * aspect;
       const shadowH = bh * 0.013;
       const bob = p.id === this.model.activePlayerId ? Math.sin(phase) * 0.0035 : 0;   // fracție din înălțime
 
       // umbra rămâne pe tablă, se micșorează când pionul e sus
       ctx.save();
       ctx.translate(anchorX, anchorY);
-      const sh = 1 - 0.35 * hop;
+      const sh = 1 - 0.2 * hop;
       ctx.globalAlpha = Math.max(0.2, 1 - 0.35 * hop);
       const g = ctx.createRadialGradient(0, 0, 0, 0, 0, pawnW * 0.62);
       g.addColorStop(0, 'rgba(0,0,0,0.55)');
@@ -562,13 +626,12 @@ export class BoardView {
 
       // pionul: zboară (alungire) și aterizează (turtire)
       const lift = -bh * (0.03 * hop + bob);
-      const sy = (1 + 0.13 * hop) * (1 - 0.22 * a.squash);
-      const sx = (1 - 0.07 * hop) * (1 + 0.16 * a.squash);
+      const sy = (1 + 0.06 * hop) * (1 - 0.1 * a.squash);
+      const sx = (1 - 0.03 * hop) * (1 + 0.07 * a.squash);
       ctx.translate(0, lift);
       ctx.scale(sx, sy);
-      const img = this.pawnImgs[p.color];
-      if (img) {
-        ctx.drawImage(img, -pawnW / 2, -pawnH + shadowH / 3, pawnW, pawnH);
+      if (sprite) {
+        ctx.drawImage(sprite, -pawnW / 2, -pawnH + shadowH / 3, pawnW, pawnH);
       } else {
         ctx.fillStyle = PAWN_BY_KEY[p.color]?.hex ?? '#888';
         ctx.beginPath();
@@ -598,3 +661,68 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
+
+/** Cutia unei etichete: pictograma și numele firmei, cu textul cât mai mare care încape. */
+function drawPropertyLabel(ctx, r, name, icon, bw) {
+  ctx.save();
+  roundRect(ctx, r.x, r.y, r.w, r.h, Math.min(r.w, r.h) * 0.14);
+  ctx.fillStyle = LABEL_PAPER;
+  ctx.fill();
+  ctx.lineWidth = Math.max(1, bw * 0.0013);
+  ctx.strokeStyle = LABEL_INK;
+  ctx.stroke();
+
+  const pad = Math.min(r.w, r.h) * 0.1;
+  let icoBox;
+  let txtBox;
+  if (r.horizontal) {
+    const s = r.h - pad * 2;
+    icoBox = { x: r.x + pad, y: r.y + pad, s };
+    txtBox = { x: r.x + pad * 2 + s, y: r.y + pad, w: r.w - s - pad * 3, h: r.h - pad * 2 };
+  } else {
+    const s = Math.min(r.w * 0.55, r.h * 0.4);
+    icoBox = { x: r.x + (r.w - s) / 2, y: r.y + pad, s };
+    txtBox = { x: r.x + pad, y: r.y + pad * 2 + s, w: r.w - pad * 2, h: r.h - pad * 3 - s };
+  }
+  if (icon) ctx.drawImage(icon, icoBox.x, icoBox.y, icoBox.s, icoBox.s);
+
+  const fit = fitLabelText(ctx, name, txtBox.w, txtBox.h, bw);
+  ctx.font = `800 ${fit.fs}px "Segoe UI", system-ui, sans-serif`;
+  ctx.fillStyle = LABEL_INK;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const lh = fit.fs * 1.12;
+  const top = txtBox.y + txtBox.h / 2 - ((fit.lines.length - 1) * lh) / 2;
+  fit.lines.forEach((line, k) => ctx.fillText(line, txtBox.x + txtBox.w / 2, top + k * lh));
+  ctx.restore();
+}
+
+/** Cea mai mare dimensiune cu care textul ajunge în cel mult două rânduri și încape în cutie. */
+function fitLabelText(ctx, text, maxW, maxH, bw) {
+  const words = text.split(' ');
+  const setFont = (fs) => { ctx.font = `800 ${fs}px "Segoe UI", system-ui, sans-serif`; };
+  for (let fs = bw * 0.0125; fs >= bw * 0.0055; fs -= 0.4) {
+    setFont(fs);
+    const lines = wrapLabelWords(ctx, words, maxW);
+    const fits = lines.length <= 2 && lines.length * fs * 1.12 <= maxH && lines.every((l) => ctx.measureText(l).width <= maxW);
+    if (fits) return { fs, lines };
+  }
+  const fs = bw * 0.0055;
+  setFont(fs);
+  return { fs, lines: wrapLabelWords(ctx, words, maxW).slice(0, 2) };
+}
+
+function wrapLabelWords(ctx, words, maxW) {
+  const lines = [];
+  let cur = '';
+  for (const w of words) {
+    const test = cur ? `${cur} ${w}` : w;
+    if (!cur || ctx.measureText(test).width <= maxW) cur = test;
+    else {
+      lines.push(cur);
+      cur = w;
+    }
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
