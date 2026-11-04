@@ -229,13 +229,15 @@ export class GameScreen {
     const g = this.game;
     const d = g.activeDialog;
     if (!d || this.pawnsBusy) return null;
-    if (!g.isOnline) return d;
     const target = {
       BUY: () => d.offer?.playerId,
       BANK_FEE: () => d.offer?.playerId,
       RENT: () => d.due?.payerId,
       DEBT: () => d.debt?.debtorId,
     }[d.type]?.() ?? g.currentPlayer?.id;
+    // deciziile roboților le ia robotul singur: jucătorul nu vede și nu apasă nimic în locul lui
+    if (g.game?.players.find((p) => p.id === target)?.isBot) return null;
+    if (!g.isOnline) return d;
     return target === g.myPlayerId ? d : null;
   }
 

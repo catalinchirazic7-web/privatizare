@@ -310,9 +310,13 @@ export class Game {
     this.emit();
   }
 
+  /** Predarea telefonului: doar între cel puțin doi oameni pe același dispozitiv, și nu către un robot. */
   prepareHandover() {
     if (this.isOnline) return;
-    this.handoverTo = this.game?.players[this.currentIndex]?.id ?? null;
+    const players = this.game?.players ?? [];
+    const next = players[this.currentIndex];
+    const humans = players.filter((p) => !p.isBot).length;
+    this.handoverTo = humans >= 2 && next && !next.isBot ? next.id : null;
   }
 
   /** Jucătorul la rând stă la Casa de Odihnă: îi scade o tură fără zar. */
