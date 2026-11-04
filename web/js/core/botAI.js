@@ -2,8 +2,9 @@
 // a zarelor, chiriile adversarilor din față) și apoi decide cumpărarea sau vânzarea.
 // Mecanica reală a „Privatizării”: fără grupuri/monopoluri. Un zar sau două (suma lor = pasul).
 
-import { calculateRent, sellBackValue } from './actions.js';
+import { calculateRent, wholeSaleValue } from './actions.js';
 import { TILE } from './model.js';
+import { statsFor } from './turnEngine.js';
 
 export const BUY_THRESHOLD = 50;
 export const MIN_SAFETY_BUFFER = 300;
@@ -37,6 +38,40 @@ export function stepDistribution(diceCount) {
 /** Pasul mediu: 3.5 pentru un zar, 7 pentru două. */
 export function expectedSteps(diceCount) {
   return diceCount === 2 ? 7 : 3.5;
+}
+
+/* ---------- Istoricul proprietăților ---------- */
+
+const PRIOR_WEIGHT_TURNS = 10; // cât cântărește prior-ul (teoria) față de istoricul real
+
+/**
+ * Câte aterizări pe [propertyId] se așteaptă de la toți adversarii, pe tură.
+ * Combină ce s-a întâmplat deja (state.stats) cu prior-ul din distribuția zarurilor.
+ */
+export function visitRate(state, botIdx, board, propertyId, diceCount = 1) {
+  const me = state.players[botIdx];
+  const opponents = state.players.filter((p) => p.id !== me.id).length;
+  const prior = opponents * (expectedSteps(diceCount) / board.length);
+  const stat = state.stats?.[propertyId];
+  const observed = stat
+    ? Object.entries(stat.visits).filter(([pid]) => pid !== me.id).reduce((a, [, n]) => a + n, 0)
+    : 0;
+  return (observed + prior * PRIOR_WEIGHT_TURNS) / (state.turn + PRIOR_WEIGHT_TURNS);
+}
+
+/** Cât a încasat deja proprietarul (botul) de pe [propertyId]. */
+export function collectedSoFar(state, propertyId) {
+  return state.stats?.[propertyId]?.collected ?? 0;
+}
+
+/** Vizitele adversarilor pe proprietate, per jucător: { [playerId]: număr }. */
+export function visitsByOpponent(state, botIdx, propertyId) {
+  const me = state.players[botIdx];
+  const out = {};
+  for (const [pid, n] of Object.entries(state.stats?.[propertyId]?.visits ?? {})) {
+    if (pid !== me.id) out[pid] = n;
+  }
+  return out;
 }
 
 /* ---------- Analiza situației ---------- */
@@ -112,7 +147,8 @@ export function utilityScore({ state, botIdx, board, actions, propertyId, option
 
   if (me.money < price) return reject('fără bani');
   const after = me.money - price;
-  if (after < sit.buffer) return reject('sub rezerva de siguranță');
+  // Rezerva de siguranță și pragul se aplică doar anexelor; titlul se încearcă dacă are bani.
+  if (option.type === 'ANNEX' && after < sit.buffer) return reject('sub rezerva de siguranță');
   if (option.type === 'ANNEX' && after < ANNEX_MIN_AVG_RENTS * sit.avgRent) {
     return reject('anexă sub 2 chirii medii în cont');
   }
@@ -121,10 +157,16 @@ export function utilityScore({ state, botIdx, board, actions, propertyId, option
 
   // Randament: câștigul de la fiecare adversar care trece pe căsuță, în orizontul de câteva ture.
   const gainPerVisit = option.type === 'TITLE' ? prop.titleTax : option.annex.profit;
-  const visitProb = expectedSteps(diceCount) / board.length;
-  const roi = (gainPerVisit * visitProb * sit.opponents * HORIZON_TURNS) / price;
+  const rate = visitRate(state, botIdx, board, propertyId, diceCount);
+  const roi = (gainPerVisit * rate * HORIZON_TURNS) / price;
   let score = BASE_SCORE + ROI_WEIGHT * Math.min(1, roi);
   reasons.push(`randament ${roi.toFixed(2)}`);
+
+  // Istoric: dacă proprietatea a încasat deja cât costă, investiția a dovedit că merită.
+  if (collectedSoFar(state, propertyId) >= price) {
+    score += 10;
+    reasons.push('a încasat deja cât costă');
+  }
 
   // Trafic: cât de probabil e să pice pe căsuța asta la următoarea aruncare a botului.
   const tileIndex = board.findIndex((t) => t.type === TILE.PROPERTY && t.propertyId === propertyId);
@@ -152,8 +194,13 @@ export function utilityScore({ state, botIdx, board, actions, propertyId, option
   return { score: Math.max(0, Math.min(100, Math.round(score))), hardReject: false, reasons, situation: sit };
 }
 
-/** Robotul cumpără doar dacă scorul depășește pragul și nu există refuz ferm. */
+/**
+ * Titlul liber: botul îl încearcă dacă are bani. Anexa: doar dacă scorul depășește pragul
+ * și nu există refuz ferm.
+ */
 export function botDecideBuy(args) {
+  const { state, botIdx, actions, propertyId, option } = args;
+  if (option.type === 'TITLE') return state.players[botIdx].money >= actions[propertyId].titlePrice;
   const r = utilityScore(args);
   return !r.hardReject && r.score >= BUY_THRESHOLD;
 }
@@ -161,36 +208,26 @@ export function botDecideBuy(args) {
 /* ---------- Vânzare la datorie ---------- */
 
 /**
- * Vânzările pentru o datorie: întâi anexele cu randamentul cel mai mic (profit/preț),
- * apoi titlurile cu chiria cea mai mică. Fiecare anexă se vinde de la nivelul cel mai înalt.
+ * Vânzările pentru o datorie: întreaga acțiune (titlu + anexe) odată, cea mai slabă întâi.
+ * „Slabă” = cel mai mic venit așteptat pe tură (chirie la nivelul actual × rata de vizită)
+ * raportat la valoarea de vânzare. Se oprește când datoria e acoperită.
  */
-export function botLiquidationSales(debtor, debt, actions) {
+export function botLiquidationSales(debtor, debt, actions, state, board, diceCount = 1) {
   if (debtor.money >= debt) return [];
   let money = debtor.money;
-  const levels = { ...debtor.ownedProperties };
+  const botIdx = state.players.findIndex((p) => p.id === debtor.id);
+  const ranked = Object.entries(debtor.ownedProperties).map(([propId, level]) => {
+    const prop = actions[propId];
+    const income = calculateRent(prop, level) * visitRate(state, botIdx, board, propId, diceCount);
+    const value = wholeSaleValue(prop, level);
+    return { propId, value, key: income / value };
+  }).sort((a, b) => a.key - b.key);
+
   const sales = [];
-
-  while (money < debt) {
-    let best = null;
-    for (const [propId, lvl] of Object.entries(levels)) {
-      if (lvl <= 0) continue;
-      const annex = actions[propId].annexes.find((a) => a.index === lvl);
-      const yieldRatio = annex.profit / annex.price;
-      if (!best || yieldRatio < best.yieldRatio) best = { propId, lvl, annex, yieldRatio };
-    }
-    if (!best) break;
-    sales.push({ propertyId: best.propId, annexIndex: best.lvl });
-    money += sellBackValue(best.annex.price);
-    levels[best.propId] -= 1;
-  }
-
-  const titles = Object.keys(levels)
-    .filter((propId) => levels[propId] === 0)
-    .sort((a, b) => actions[a].titleTax - actions[b].titleTax);
-  for (const propId of titles) {
+  for (const { propId, value } of ranked) {
     if (money >= debt) break;
     sales.push({ propertyId: propId, annexIndex: null });
-    money += sellBackValue(actions[propId].titlePrice);
+    money += value;
   }
   return sales;
 }

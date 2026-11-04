@@ -217,12 +217,12 @@ test('TELEX cu mutare: pendingMove, apoi moveBy', () => {
   assert.equal(moved.state.players[0].position, 3);
 });
 
-test('robotul vinde anexe înainte de titluri, doar cât trebuie', () => {
+test('robotul vinde o acțiune întreagă (titlu + anexe) odată, doar cât trebuie', () => {
   const debtor = player(0, { money: 0, ownedProperties: { poli: 2, unirii: 0 } });
-  const sales = botLiquidationSales(debtor, 2000, cat.actions);
+  const state = { turn: 1, players: [debtor, player(1)], bankMoney: 100000, history: [] };
+  const sales = botLiquidationSales(debtor, 2000, cat.actions, state, cat.board, 2);
   assert.ok(sales.length >= 1);
-  assert.equal(sales[0].propertyId, 'poli');
-  assert.equal(sales[0].annexIndex, 2);
+  assert.equal(sales.every((x) => x.annexIndex === null), true);
 });
 
 test('clasamentul la final: bani plus acțiuni', () => {

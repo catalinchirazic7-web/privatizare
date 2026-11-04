@@ -149,6 +149,7 @@ export class TurnEngine {
     const prop = this.actions[due.propertyId];
     try {
       ctx.transfer(payer, owner, due.amount, `chirie ${prop.name}`);
+      ctx.recordCollected(due.propertyId, due.amount);
     } catch (e) {
       if (!(e instanceof DebtException)) throw e;
       ctx.pending = e.debt;
@@ -331,6 +332,7 @@ export class TurnEngine {
       if (annex) ctx.offer = { playerId: buyer.id, propertyId, option: { type: 'ANNEX', annex } };
     } else {
       const level = owner.ownedProperties[propertyId];
+      ctx.recordVisit(propertyId, buyer.id);
       ctx.rentDue = {
         payerId: buyer.id,
         ownerId: owner.id,
@@ -404,12 +406,25 @@ export class TurnEngine {
   }
 }
 
+/** Statistica unei proprietăți: de câte ori a aterizat fiecare jucător și cât s-a încasat. */
+export function statsFor(stats, propertyId) {
+  if (!stats[propertyId]) stats[propertyId] = { visits: {}, collected: 0 };
+  return stats[propertyId];
+}
+
+function copyStats(stats) {
+  const out = {};
+  for (const [pid, s] of Object.entries(stats ?? {})) out[pid] = { visits: { ...s.visits }, collected: s.collected };
+  return out;
+}
+
 /** Stare de lucru pentru o tură: modificările se acumulează aici, apoi se produce un state nou. */
 class Ctx {
   constructor(engine, state) {
     this.engine = engine;
     this.players = state.players.map((p) => ({ ...p, ownedProperties: { ...p.ownedProperties } }));
     this.bank = state.bankMoney;
+    this.stats = copyStats(state.stats);
     this.offer = null;
     this.events = [];
     this.pending = null;
@@ -434,6 +449,17 @@ class Ctx {
 
   moveTo(idx, position) {
     this.players[idx] = { ...this.players[idx], position };
+  }
+
+  /** Un adversar a aterizat pe proprietatea [propertyId] (înainte de plata chiriei). */
+  recordVisit(propertyId, playerId) {
+    const s = statsFor(this.stats, propertyId);
+    s.visits[playerId] = (s.visits[playerId] ?? 0) + 1;
+  }
+
+  /** Chirie efectiv încasată de proprietar pe [propertyId]. */
+  recordCollected(propertyId, amount) {
+    statsFor(this.stats, propertyId).collected += amount;
   }
 
   setSkip(idx, turns, reason) {
@@ -479,6 +505,7 @@ class Ctx {
       players: this.players.map((p) => ({ ...p })),
       bankMoney: this.bank,
       history: [...original.history, ...this.events],
+      stats: this.stats,
     };
     return {
       state,

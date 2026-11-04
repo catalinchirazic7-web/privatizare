@@ -181,7 +181,7 @@ export class Game {
     if (!g) return null;
     const offerSnap = (o) => (o ? { playerId: o.playerId, propertyId: o.propertyId, annexIndex: o.option.type === 'ANNEX' ? o.option.annex.index : null } : null);
     return {
-      state: { turn: g.turn, players: g.players, bankMoney: g.bankMoney, history: g.history },
+      state: { turn: g.turn, players: g.players, bankMoney: g.bankMoney, history: g.history, stats: g.stats ?? {} },
       currentIndex: this.currentIndex,
       diceCount: this.diceCount,
       boardLayout: this.boardLayout,
@@ -279,7 +279,7 @@ export class Game {
       houseSince: 0,
       isBot: !!s.isBot,
     }));
-    this.game = { turn: 1, players, bankMoney: dist.bankMoney, history: [] };
+    this.game = { turn: 1, players, bankMoney: dist.bankMoney, history: [], stats: {} };
     this.currentIndex = 0;
     this.offer = null;
     this.feeOffer = null;
@@ -528,7 +528,7 @@ export class Game {
     const debtor = this.debtorBot(d);
     if (debtor) {
       if (d.type === 'LIQUIDATION_HANDOVER') this.acknowledgeLiquidation();
-      else this.settleDebt(botLiquidationSales(debtor, d.debt.amount, this.catalog.actions));
+      else this.settleDebt(botLiquidationSales(debtor, d.debt.amount, this.catalog.actions, this.game, this.catalog.board, this.diceCount));
       return true;
     }
     const p = this.currentPlayer;
