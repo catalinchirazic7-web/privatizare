@@ -4,7 +4,8 @@
 import { GameRules, distributeStartingMoney } from '../core/rules.js';
 import { TurnEngine, debtEquals } from '../core/turnEngine.js';
 import { TILE } from '../core/model.js';
-import { botDecideAnnex, botDecideTitle, botLiquidationSales, netWorth, rankPlayers } from '../core/actions.js';
+import { netWorth, rankPlayers } from '../core/actions.js';
+import { botDecideBuy, botLiquidationSales } from '../core/botAI.js';
 import { EV } from '../online/protocol.js';
 
 export class Game {
@@ -538,7 +539,10 @@ export class Game {
       case 'DEBT': return false;   // datornicul e om: lichidează el
       case 'BUY': {
         const opt = d.offer.option;
-        const accept = opt.type === 'TITLE' ? botDecideTitle(p, d.property) : botDecideAnnex(p, opt.annex);
+        const accept = botDecideBuy({
+          state: this.game, botIdx: this.game.players.indexOf(p), board: this.catalog.board,
+          actions: this.catalog.actions, propertyId: d.offer.propertyId, option: opt,
+        });
         if (accept) this.acceptOffer();
         else this.refuseOffer();
         break;

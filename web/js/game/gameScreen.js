@@ -788,10 +788,15 @@ export class GameScreen {
   renderWinner() {
     const g = this.game;
     if (!g.winnerName) {
+      this.winVideoWatched = false;
       if (this.modalKey === 'winner') this.closeModal();
       return;
     }
-    if (this.modalKey === 'winner') return;
+    if (this.modalKey === 'winner' || this.winVideoPlaying) return;
+    if (!this.winVideoWatched) {
+      this.playWinVideo();
+      return;
+    }
     sound.buy();
     const node = el('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true' },
       el('h3', { text: 'Joc terminat' }),
@@ -802,6 +807,27 @@ export class GameScreen {
       el('div', { class: 'actions' }, el('button', { class: 'btn primary', type: 'button', text: 'Meniu', onclick: () => this.exitToMenu() })),
     );
     this.openModal('winner', node);
+  }
+
+  /** Clipul de victorie se redă pe tot ecranul; apoi apare fereastra cu câștigătorul. */
+  playWinVideo() {
+    const overlay = $('win-overlay');
+    const video = $('win-video');
+    this.winVideoPlaying = true;
+    overlay.hidden = false;
+    const finish = () => {
+      if (!this.winVideoPlaying) return;
+      this.winVideoPlaying = false;
+      this.winVideoWatched = true;
+      video.onended = null;
+      video.pause();
+      overlay.hidden = true;
+      this.renderWinner();
+    };
+    video.onended = finish;
+    $('win-skip').onclick = finish;
+    video.currentTime = 0;
+    video.play().catch(finish);
   }
 
   /* ---------- fișa acțiunii ---------- */

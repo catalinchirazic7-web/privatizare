@@ -207,6 +207,11 @@
   </main>
 
   <!-- Dialoguri de joc și informative -->
+  <!-- Video de victorie, înainte de fereastra „Joc terminat” -->
+  <div id="win-overlay" class="win-overlay" hidden>
+    <video id="win-video" class="fullvideo" playsinline preload="auto" src="media/win_video.mp4"></video>
+    <button id="win-skip" class="btn ghost skip-btn" type="button">Continuă ›</button>
+  </div>
   <div id="modal-root" class="modal-root" hidden></div>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
