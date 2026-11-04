@@ -932,7 +932,7 @@ export class GameScreen {
       const diff = value - prev;
       const chip = el('span', { class: diff > 0 ? 'plus' : 'minus', text: `${p.name} ${diff > 0 ? '+' : '−'}${fmt(Math.abs(diff))}` });
       float.append(chip);
-      setTimeout(() => chip.remove(), 1400);
+      setTimeout(() => chip.remove(), 3000);
       if (diff > 0) sound.coin();
     }
     for (const id of [...this.prevMoney.keys()]) if (!players.some((p) => p.id === id)) this.prevMoney.delete(id);

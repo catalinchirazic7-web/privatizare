@@ -289,7 +289,7 @@ input { -webkit-user-select: text; user-select: text; }
   padding: 2px 8px;
   border-radius: 8px;
   background: rgba(0,0,0,.6);
-  animation: float-up 1.4s ease-out forwards;
+  animation: float-up 3s ease-out forwards;
 }
 .money-float .plus { color: var(--ok); }
 .money-float .minus { color: var(--danger); }
