@@ -39,8 +39,20 @@ export const sound = {
     }
     return enabled;
   },
+  /** Starea audio, pentru diagnostic: „running”, „suspended”, „interrupted”, sau „nepornit”. */
+  status() {
+    if (!enabled) return 'oprit în meniu';
+    if (!window.AudioContext && !window.webkitAudioContext) return 'browserul nu are audio';
+    return ctx ? ctx.state : 'nepornit';
+  },
   /** Apelat la prima atingere: deblochează audio pe iOS/Safari. */
   unlock() {
+    // apelat doar din atingeri și clicuri: dacă contextul a fost creat în afara unui gest și e blocat,
+    // îl înlocuim cu unul nou, creat acum, în gestul utilizatorului
+    if (ctx && ctx.state !== 'running') {
+      ctx.close().catch(() => {});
+      ctx = null;
+    }
     context();
   },
   dice() {

@@ -165,6 +165,11 @@ export class GameScreen {
       this.tilt = !this.tilt;
       this.render();
     });
+    $('test-sound').addEventListener('click', () => {
+      sound.unlock();
+      sound.coin();
+      setTimeout(() => this.toast(`Sunet: ${sound.status()}`), 300);
+    });
     $('toggle-sound').addEventListener('click', () => {
       sound.toggle();
       this.render();
