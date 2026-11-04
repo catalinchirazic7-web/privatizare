@@ -458,11 +458,12 @@ export class BoardView {
       ctx.translate(X + W / 2, Y + H / 2);
       ctx.scale(pulse, pulse);
       ctx.translate(-W / 2, -H / 2);
-      // teanc 3D: umbră pe masă, laturile de carton (hârtie crem) și lumină pe cartonașul de sus
-      const off = Math.min(W, H) * DECK_OFFSET;   // cât iese teancul spre dreapta-jos
+      // teanc 3D, întins în SUS-DREAPTA: cartonașul din spate e jos-stânga, cel de sus sus-dreapta
+      const off = Math.min(W, H) * DECK_OFFSET;   // cât iese teancul pe orizontală și pe verticală
       const step = off / (DECK_LAYERS - 1);
       const w = W - off;
       const h = H - off;
+      const cardAt = (i) => [i * step, off - i * step];   // colțul stânga-sus al cartonașului i
       const poly = (pts, fill) => {
         ctx.beginPath();
         ctx.moveTo(pts[0][0], pts[0][1]);
@@ -471,47 +472,42 @@ export class BoardView {
         ctx.fillStyle = fill;
         ctx.fill();
       };
-      // umbra teancului pe masă (moale, în dreapta-jos)
+      const [bx0, by0] = cardAt(0);
+      const [fx0, fy0] = cardAt(DECK_LAYERS - 1);
+      // umbra teancului pe masă
       ctx.save();
       ctx.shadowColor = 'rgba(0,0,0,0.55)';
       ctx.shadowBlur = bh * 0.06;
       ctx.shadowOffsetX = bh * 0.03;
       ctx.shadowOffsetY = bh * 0.04;
-      poly([[w, 0], [w + off, off], [w + off, off + h], [w, h]], '#e2d9bf');
-      poly([[0, h], [off, off + h], [w + off, off + h], [w, h]], '#bdb292');
+      poly([[bx0 + w, by0], [fx0 + w, fy0], [fx0 + w, fy0 + h], [bx0 + w, by0 + h]], '#e2d9bf');   // latura dreaptă
+      poly([[bx0, by0 + h], [bx0 + w, by0 + h], [fx0 + w, fy0 + h], [fx0, fy0 + h]], '#bdb292');   // latura de jos
       ctx.restore();
-      // marginile cartonașelor: linii deschise, ca hârtia
-      ctx.strokeStyle = 'rgba(255,250,235,0.55)';
-      ctx.lineWidth = Math.max(1, bh * 0.0015);
-      for (let i = 1; i < DECK_LAYERS - 1; i++) {
-        const k = i * step;
-        ctx.beginPath();
-        ctx.moveTo(w + k, k); ctx.lineTo(w + k, k + h);
-        ctx.moveTo(k, h + k); ctx.lineTo(w + k, h + k);
-        ctx.stroke();
-      }
+      // colțurile cadrului negru nepuse de teanc (stânga-sus și dreapta-jos)
+      poly([[-1, -1], [off + 1, -1], [-1, off + 1]], '#e2d9bf');
+      poly([[w, H + 1], [W + 1, h], [W + 1, H + 1]], '#bdb292');
       // cartonașele, din spate spre față, fiecare cu umbră mică
       for (let i = 0; i < DECK_LAYERS; i++) {
-        const ox = i * step;
+        const [ox, oy] = cardAt(i);
         const top = i === DECK_LAYERS - 1;
         ctx.save();
         ctx.shadowColor = 'rgba(0,0,0,0.45)';
         ctx.shadowBlur = bh * 0.008;
         ctx.shadowOffsetX = bh * 0.004;
         ctx.shadowOffsetY = bh * 0.006;
-        ctx.drawImage(img, ox, ox, w, h);
+        ctx.drawImage(img, ox, oy, w, h);
         ctx.restore();
         ctx.lineWidth = top && active ? Math.max(2, bh * 0.004) : Math.max(1, bh * 0.0012);
         ctx.strokeStyle = top && active ? '#f0d20e' : 'rgba(40,30,20,0.6)';
-        ctx.strokeRect(ox, ox, w, h);
+        ctx.strokeRect(ox, oy, w, h);
       }
       // lumină pe cartonașul de sus
-      const gl = ctx.createLinearGradient(off, off, off + w, off + h);
+      const gl = ctx.createLinearGradient(fx0, fy0, fx0 + w, fy0 + h);
       gl.addColorStop(0, 'rgba(255,255,255,0.28)');
       gl.addColorStop(0.45, 'rgba(255,255,255,0)');
       gl.addColorStop(1, 'rgba(0,0,0,0.18)');
       ctx.fillStyle = gl;
-      ctx.fillRect(off, off, w, h);
+      ctx.fillRect(fx0, fy0, w, h);
       if (active) {
         const label = 'TRAGE';
         const fs = Math.max(12, bh * 0.034);
