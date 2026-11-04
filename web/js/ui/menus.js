@@ -54,7 +54,7 @@ function openAbout(app) {
     el('p', { text: 'Joc de societate românesc, pentru tineret și adulți. Se joacă în 2–4 persoane.' }),
     el('p', { html: '<strong>Proiect independent realizat de Chirazic Catalin</strong>' }),
     el('p', { class: 'muted', text: 'Contact: catalinchirazic7@gmail.com' }),
-    el('p', { class: 'muted', text: 'Versiune 1.02 (web)' }),
+    el('p', { class: 'muted', text: 'Versiune 1.03 (web)' }),
     el('div', { class: 'actions' }, el('button', { class: 'btn primary', type: 'button', text: 'Închide', onclick: closeModal })),
   ));
 }
