@@ -26,6 +26,7 @@ const DIE2_DX = 0.075;                     // al doilea zar (mod cu două zaruri
 const LANDING_MS = 3800;
 const BOT_DELAY_MS = 1000;
 const CARD_SHOW_MS = 3500;   // cât stă pe ecran cartonașul tras de un robot, ca să-l vezi
+const SKIP_SHOW_MS = 2500;   // cât stă vizibil bannerul „staționează” al unui robot, ca să-l vezi
 const END_DELAY_MS = 900;
 const END_DELAY_SKIP_MS = 2200;
 const ROLL_ANIM_MS = 650;
@@ -956,7 +957,9 @@ export class GameScreen {
       clearTimeout(this.botTimer);
       this.botTimer = null;
       if (g.hasBotAction && !this.pawnsBusy && !this.die.busy) {
-        const delay = g.activeDialog?.type === 'CARD' ? CARD_SHOW_MS : BOT_DELAY_MS;
+        const delay = g.activeDialog?.type === 'CARD' ? CARD_SHOW_MS
+          : g.skipBanner && g.currentPlayer?.isBot ? SKIP_SHOW_MS
+          : BOT_DELAY_MS;
         this.botTimer = setTimeout(() => {
           this.botTimer = null;
           if (g.hasBotAction && !this.pawnsBusy && !this.die.busy) g.botNextAction();
