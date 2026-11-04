@@ -1,10 +1,10 @@
 // Service worker minimal: păstrează jocul utilizabil offline după prima încărcare.
-// - shell-ul aplicației și datele se iau din cache (cache-first, completate din rețea);
+// - fișierele aplicației se iau mereu din rețea (cu revalidare); din cache doar când nu e rețea;
 // - pagina principală se cere mereu din rețea când există (ca să primești versiunile noi);
 // - videourile și Firebase nu se cache-uiesc (sunt mari sau sunt live).
 // La o schimbare de cod, mărește VERSION.
 
-const VERSION = 'privatizare-web-v1.01-18';
+const VERSION = 'privatizare-web-v1.01-19';
 
 const SHELL = [
   './',
@@ -80,16 +80,16 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // rețea întâi (cu revalidare, ca să nu rămână fișiere vechi în cache-ul HTTP); cache doar offline
   event.respondWith(
-    caches.match(req).then((hit) => {
-      if (hit) return hit;
-      return fetch(req).then((res) => {
+    fetch(req, { cache: 'no-cache' })
+      .then((res) => {
         if (res.ok && res.type === 'basic') {
           const copy = res.clone();
           caches.open(VERSION).then((c) => c.put(req, copy));
         }
         return res;
-      });
-    }),
+      })
+      .catch(() => caches.match(req)),
   );
 });
