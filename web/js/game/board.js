@@ -3,7 +3,7 @@
 // Port din BoardView.kt, PawnView și CashStacks.kt. Coordonatele căsuțelor sunt fracții [0,1].
 
 import { loadImage } from '../ui/dom.js';
-import { PAWN_BY_KEY, applyLayout } from '../core/model.js';
+import { PAWN_BY_KEY, TILE, applyLayout } from '../core/model.js';
 
 const STEP_MS = 430;          // durata unui pas pe tablă
 const WALK_MS = 240;          // un pas din mersul forțat (RECHEMAT URGENT), mai rapid
@@ -350,15 +350,15 @@ export class BoardView {
       const forward = mod(target - start, N);
       const backward = mod(start - target, N);
       if (target < 0) {
-        // RECHEMAT URGENT (START_POSITION): pionul merge efectiv pe traseu până la CONTINENTAL,
-        // apoi alunecă la marcajul START. Fără bonus; doar animația.
+        // RECHEMAT URGENT (START_POSITION): pionul merge pas cu pas, pe drumul zarului, până la
+        // căsuța RECHEMAT (adversarii o văd), apoi e teleportat la marcajul START. Fără bonus.
         if (start !== target) {
-          const toFirst = mod(0 - start, N);
-          for (let i = 1; i <= toFirst; i++) {
-            if (!(await this.step(a, start + i, token, WALK_MS))) return;
+          const rechemat = this.catalog.board.findIndex((t) => t.type === TILE.RECHEMAT);
+          const toRechemat = mod(rechemat - start, N);
+          for (let i = 1; i <= toRechemat; i++) {
+            if (!(await this.step(a, start + i, token))) return;
           }
-          a.v = 0;
-          if (!(await this.step(a, target, token, STEP_MS))) return;
+          a.v = target;   // teleportat la START, după ce a ajuns pe RECHEMAT
         }
       } else if (forward >= 1 && forward <= 12) {
         for (let i = 1; i <= forward; i++) {

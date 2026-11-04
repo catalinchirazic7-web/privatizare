@@ -25,6 +25,7 @@ const DIE_POS = { fx: 0.63, fy: 0.34 };   // zarul stă în zona liberă din cen
 const DIE2_DX = 0.075;                     // al doilea zar (mod cu două zaruri), lângă primul
 const LANDING_MS = 3800;
 const BOT_DELAY_MS = 1000;
+const CARD_SHOW_MS = 3500;   // cât stă pe ecran cartonașul tras de un robot, ca să-l vezi
 const END_DELAY_MS = 900;
 const END_DELAY_SKIP_MS = 2200;
 const ROLL_ANIM_MS = 650;
@@ -229,6 +230,12 @@ export class GameScreen {
     const g = this.game;
     const d = g.activeDialog;
     if (!d || this.pawnsBusy) return null;
+    // o mutare care nu s-a afișat încă (pionul pornește abia acum) nu arată dialogul înainte de sosire
+    const moving = g.game.players.some((p) => {
+      const a = this.board.anims.get(p.id);
+      return !!a && a.target !== p.position;
+    });
+    if (moving) return null;
     const target = {
       BUY: () => d.offer?.playerId,
       BANK_FEE: () => d.offer?.playerId,
@@ -236,7 +243,9 @@ export class GameScreen {
       DEBT: () => d.debt?.debtorId,
     }[d.type]?.() ?? g.currentPlayer?.id;
     // deciziile roboților le ia robotul singur: jucătorul nu vede și nu apasă nimic în locul lui
-    if (g.game?.players.find((p) => p.id === target)?.isBot) return null;
+    const botTarget = g.game?.players.find((p) => p.id === target)?.isBot;
+    // cartonașul tras de robot se vede tuturor, doar ca informație (nu are buton)
+    if (botTarget) return d.type === 'CARD' ? d : null;
     if (!g.isOnline) return d;
     return target === g.myPlayerId ? d : null;
   }
@@ -675,7 +684,7 @@ export class GameScreen {
         });
       }
       case 'CARD':
-        return this.cardDialog(d.card);
+        return this.cardDialog(d.card, !!this.game.currentPlayer?.isBot);
       case 'DEBT':
         return this.liquidationDialog(d.debt);
       case 'LIQUIDATION_HANDOVER':
@@ -703,7 +712,7 @@ export class GameScreen {
     return el('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true' }, head, ...body, el('div', { class: 'actions' }, ...actions));
   }
 
-  cardDialog(card) {
+  cardDialog(card, byBot = false) {
     const art = card.cardId ? this.catalog.cardArt[card.cardId] : null;
     const amountTxt = card.amount != null ? `${card.outcome === CardOutcome.LOSS ? '−' : '+'}${fmt(card.amount)} ECU` : null;
     const outcomeCls = card.outcome === CardOutcome.GAIN ? 'outcome-gain' : card.outcome === CardOutcome.LOSS ? 'outcome-loss' : '';
@@ -720,7 +729,9 @@ export class GameScreen {
       visual,
       result,
       dest,
-      el('div', { class: 'actions' }, el('button', { class: 'btn primary', type: 'button', text: 'Am înțeles', onclick: () => this.game.dismissCard() })),
+      byBot
+        ? el('p', { class: 'muted', text: 'Robotul a tras cartonașul și îl citește…' })
+        : el('div', { class: 'actions' }, el('button', { class: 'btn primary', type: 'button', text: 'Am înțeles', onclick: () => this.game.dismissCard() })),
     );
   }
 
@@ -935,10 +946,11 @@ export class GameScreen {
       clearTimeout(this.botTimer);
       this.botTimer = null;
       if (g.hasBotAction && !this.pawnsBusy && !this.die.busy) {
+        const delay = g.activeDialog?.type === 'CARD' ? CARD_SHOW_MS : BOT_DELAY_MS;
         this.botTimer = setTimeout(() => {
           this.botTimer = null;
           if (g.hasBotAction && !this.pawnsBusy && !this.die.busy) g.botNextAction();
-        }, BOT_DELAY_MS);
+        }, delay);
       }
     }
 
