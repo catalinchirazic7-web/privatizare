@@ -57,8 +57,10 @@ const app = {
 
   /* ---------- meniuri ---------- */
 
-  openSetup() {
+  /** @param {1|2} dice  modul de joc ales din meniu: un zar sau două zaruri */
+  openSetup(dice = 1) {
     this.requestLandscape();
+    this.setupView.dice = dice;
     this.show('setup');
   },
 

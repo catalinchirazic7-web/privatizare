@@ -15,7 +15,8 @@ const $ = (id) => document.getElementById(id);
 /* ---------- Ecranul principal ---------- */
 
 export function initHome(app) {
-  $('btn-new').addEventListener('click', () => app.openSetup());
+  $('btn-new').addEventListener('click', () => app.openSetup(1));
+  $('btn-new-dice').addEventListener('click', () => app.openSetup(2));
   $('btn-online').addEventListener('click', () => app.openOnline());
   $('btn-rules').addEventListener('click', () => app.show('rules'));
   $('btn-exit').addEventListener('click', () => app.show('outro'));
