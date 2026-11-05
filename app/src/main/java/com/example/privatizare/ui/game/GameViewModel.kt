@@ -466,11 +466,8 @@ class GameViewModel(
                 BotAI.liquidationSales(p.id, d.debt.amount, game ?: return false, catalog.board, catalog.actions),
             )
             is TurnDialog.BuyDecisionPending -> {
-                val accept = if (p.catalin) {
-                    BotAI.decideCatalin(game ?: return false, p.id, catalog.board, catalog.actions, d.offer.propertyId, d.offer.option)
-                } else {
-                    BotAI.decideBuy(game ?: return false, p.id, catalog.board, catalog.actions, d.offer.propertyId, d.offer.option)
-                }
+                // Același mod de cumpărare pentru toți roboții; CatalinRobot se deosebește doar la zar și la cartonașe.
+                val accept = BotAI.decideCatalin(game ?: return false, p.id, catalog.board, catalog.actions, d.offer.propertyId, d.offer.option)
                 if (accept) acceptOffer() else refuseOffer()
             }
             is TurnDialog.BankFeePending -> acknowledgeBankFee()
@@ -577,6 +574,14 @@ class GameViewModel(
         if (activeDialog != null || !turnAwaitingEnd) return
         val size = game?.players?.size ?: return
         if (size == 0) return
+        // a încheiat tura: dacă și-a refăcut rezerva de 15% din averea totală, poate cumpăra din nou anexe
+        val g = game
+        val done = g?.players?.getOrNull(currentIndex)
+        if (g != null && done != null && done.annexRecovery &&
+            done.money >= BotAI.ANNEX_KEEP * Scoring.netWorth(done, catalog.actions)
+        ) {
+            game = g.copy(players = g.players.map { if (it.id == done.id) it.copy(annexRecovery = false) else it })
+        }
         currentIndex = (currentIndex + 1) % size
         // un rând complet (s-a întors la primul jucător) = o tură pentru statistici și pentru robot
         if (currentIndex == 0) game = game?.let { it.copy(turn = it.turn + 1) }

@@ -121,7 +121,7 @@ object SnapshotCodec {
 
     private fun player(p: Player) = JSONObject().apply {
         put("id", p.id); put("n", p.name); put("c", p.color.name); put("m", p.money); put("pos", p.position)
-        put("sk", p.skipTurns); put("bot", p.isBot); put("hs", p.houseSince)
+        put("sk", p.skipTurns); put("bot", p.isBot); put("hs", p.houseSince); put("ar", p.annexRecovery)
         put("own", JSONObject().apply { p.ownedProperties.forEach { (k, v) -> put(k, v) } })
     }
 
@@ -132,6 +132,7 @@ object SnapshotCodec {
             money = o.getLong("m"), position = o.getInt("pos"),
             ownedProperties = own.keys().asSequence().associateWith { own.getInt(it) },
             skipTurns = o.getInt("sk"), isBot = o.getBoolean("bot"), houseSince = o.optInt("hs", 0),
+            annexRecovery = o.optBoolean("ar", false),
         )
     }
 

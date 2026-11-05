@@ -124,6 +124,11 @@ export class BoardView {
     this.resize();   // raportul tablei s-a schimbat
   }
 
+  /** Joc nou: pionii stau direct pe poziția de start, fără mers de la partida anterioară. */
+  resetPawns() {
+    this.anims.clear();
+  }
+
   /** Model nou din starea jocului. Pionii care s-au mutat pornesc animația. */
   setModel(m) {
     Object.assign(this.model, m);

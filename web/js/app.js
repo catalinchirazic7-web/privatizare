@@ -102,6 +102,7 @@ const app = {
     this.requestLandscape();
     this.gameScreen.setLayout(boardLayout);
     this.game.startGame(setup, money, time, diceCount, boardLayout);
+    this.gameScreen.board.resetPawns();   // joc nou: pionii pornesc instant de la start
     this.enterGame(false);
   },
 

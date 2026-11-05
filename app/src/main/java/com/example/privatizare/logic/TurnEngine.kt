@@ -257,7 +257,11 @@ class TurnEngine(
                 val what = if (level == 0) "titlul" else "întreaga acțiune (titlu + $level anexe)"
                 events += "${player.name} a vândut $what ${prop.name} la Bancă (+$value)"
             }
-            players[idx] = player.copy(money = player.money + value, ownedProperties = newOwned)
+            // a vândut din propriile anexe (sau din acțiune cu anexe): nu mai cumpără anexe până își reface rezerva
+            players[idx] = player.copy(
+                money = player.money + value, ownedProperties = newOwned,
+                annexRecovery = player.annexRecovery || level > 0,
+            )
             bank -= value
         }
 

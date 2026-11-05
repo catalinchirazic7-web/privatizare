@@ -59,12 +59,12 @@ class BotAITest {
 
     @Test
     fun anexaSeCumparaCatTimpRamaneOPatrimeDinBani() {
-        // exemplele din cerință: 20.000 cu anexă de 12.000 da; 10.000 cu anexă de 7.700 nu (rămân 23%)
+        // exemplele din cerință: 20.000 cu anexă de 12.000 da; 9.000 cu anexă de 7.700 nu (rămân 14%)
         val cont = PropertyAction("cont", "CONT", 5000, 600, listOf(Annex(1, 4000, 1000), Annex(2, 7000, 2000), Annex(3, 12000, 3000)))
         val piata = PropertyAction("piata", "PIATA", 4000, 500, listOf(Annex(1, 2650, 700), Annex(2, 5200, 1500), Annex(3, 7700, 2200)))
         val acts = actions + mapOf("cont" to cont, "piata" to piata)
         val rich = state(player("bot", 20_000, owned = mapOf("cont" to 2)), player("ana", 0))
-        val poor = state(player("bot", 10_000, owned = mapOf("piata" to 2)), player("ana", 0))
+        val poor = state(player("bot", 9_000, owned = mapOf("piata" to 2)), player("ana", 0))
         assertTrue(BotAI.decideBuy(rich, "bot", board, acts, "cont", BuyOption.AnnexOption(cont.annexes[2])))
         assertTrue(BotAI.decideCatalin(rich, "bot", board, acts, "cont", BuyOption.AnnexOption(cont.annexes[2])))
         assertFalse(BotAI.decideBuy(poor, "bot", board, acts, "piata", BuyOption.AnnexOption(piata.annexes[2])))

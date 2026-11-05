@@ -104,23 +104,42 @@ test('distribuția fețelor cu noroc se potrivește cu formula (200k aruncări)'
   assert.ok(Math.abs(mean - 3.743) < 0.02, `media ${mean}`);
 });
 
-test('anexa: cumpără cât timp rămâne cel puțin ANNEX_KEEP din banii de acum', () => {
+test('anexa: cumpără doar dacă după plată rămâne rezerva (bani mulți da, bani exacți nu)', () => {
   const prop = cat.actions[propId];
   const annex = prop.annexes[0];
-  const money = Math.ceil(annex.price / (1 - ANNEX_KEEP)) + 10;   // după cumpărare rămân peste ANNEX_KEEP
-  const ok = catalinDecideBuy({ state: state(money), botIdx: 0, board, actions: cat.actions, propertyId: propId, option: { type: 'ANNEX', annex } });
-  assert.equal(ok, true);
-  const tight = catalinDecideBuy({ state: state(annex.price + 1), botIdx: 0, board, actions: cat.actions, propertyId: propId, option: { type: 'ANNEX', annex } });
+  const option = { type: 'ANNEX', annex };
+  const rich = state(annex.price * 10);
+  assert.equal(catalinDecideBuy({ state: rich, botIdx: 0, board, actions: cat.actions, propertyId: propId, option }), true);
+  const tight = catalinDecideBuy({ state: state(annex.price + 1), botIdx: 0, board, actions: cat.actions, propertyId: propId, option });
   assert.equal(tight, false);
 });
 
-test('anexa: exemplele din cerință (20.000 cu anexă de 12.000 da; 10.000 cu anexă de 7.700 nu)', () => {
+test('anexa: sub 15% din averea totală după plată nu se cumpără', () => {
+  const annex = cat.actions[propId].annexes[0];
+  const option = { type: 'ANNEX', annex };
+  const above = Math.ceil(annex.price / 0.8);   // după plată ar rămâne 20% din bani (averea = bani, fără acțiuni)
+  const below = Math.ceil(annex.price / 0.9);   // după plată ar rămâne 10%, sub 15%
+  assert.equal(catalinDecideBuy({ state: state(above), botIdx: 0, board, actions: cat.actions, propertyId: propId, option }), true);
+  assert.equal(catalinDecideBuy({ state: state(below), botIdx: 0, board, actions: cat.actions, propertyId: propId, option }), false);
+});
+
+test('anexa: după ce a vândut anexe pentru datorie nu mai cumpără până își reface rezerva', () => {
+  const annex = cat.actions[propId].annexes[0];
+  const option = { type: 'ANNEX', annex };
+  const s = state(annex.price * 10);
+  assert.equal(catalinDecideBuy({ state: s, botIdx: 0, board, actions: cat.actions, propertyId: propId, option }), true);
+  s.players[0].annexRecovery = true;
+  assert.equal(catalinDecideBuy({ state: s, botIdx: 0, board, actions: cat.actions, propertyId: propId, option }), false);
+  assert.equal(catalinDecideBuy({ state: s, botIdx: 0, board, actions: cat.actions, propertyId: propId, option: { type: 'TITLE' } }), true);
+});
+
+test('anexa: exemplele din cerință (20.000 cu anexă de 12.000 da; 9.000 cu anexă de 7.700 nu)', () => {
   const annexOf = (id, index) => cat.actions[id].annexes.find((a) => a.index === index);
   const decide = (propertyId, money, annex) => catalinDecideBuy({
     state: state(money), botIdx: 0, board, actions: cat.actions, propertyId, option: { type: 'ANNEX', annex },
   });
   assert.equal(decide('continental', 20000, annexOf('continental', 3)), true);
-  assert.equal(decide('piata_romana', 10000, annexOf('piata_romana', 3)), false);
+  assert.equal(decide('piata_romana', 9000, annexOf('piata_romana', 3)), false);
 });
 
 test('zarul CatalinRobot: fețe sau sume valide, cu control și fără', () => {

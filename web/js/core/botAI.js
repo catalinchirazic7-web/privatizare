@@ -15,9 +15,9 @@ const ROI_WEIGHT = 40;
 const ANNEX_MIN_AVG_RENTS = 2; // nu investește în anexe sub 2 chirii medii în cont
 const CASH_PRESSURE_PENALTY = 15;
 const EXPENSIVE_ANNEX_SHARE = 0.4; // o anexă care ia peste 40% din bani e scumpă pentru bot
-// La anexă rămâne cel puțin această fracțiune din banii de acum. 25%, nu 20%: 10.000 cu anexă de 7.700
-// (rămân 23%) nu se cumpără, iar 20.000 cu anexă de 12.000 (rămân 40%) se cumpără.
-export const ANNEX_KEEP = 0.25;
+// La anexă rămâne cel puțin această fracțiune din banii de acum. 15%: 9.000 cu anexă de 7.700
+// (rămân 14%) nu se cumpără, iar 20.000 cu anexă de 12.000 (rămân 40%) se cumpără.
+export const ANNEX_KEEP = 0.15;
 
 /* ---------- Zaruri ---------- */
 

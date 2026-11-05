@@ -4,8 +4,8 @@
 // în chirii înainte să poată conta pe venitul din anexe și titluri.
 // Clasicul rămâne în botAI.js, neschimbat.
 
-import { calculateRent, wholeSaleValue } from './actions.js';
-import { rentOnTile, visitRate, safetyBuffer, MIN_SAFETY_BUFFER, annexAffordable } from './botAI.js';
+import { calculateRent, wholeSaleValue, netWorth } from './actions.js';
+import { rentOnTile, visitRate, ANNEX_KEEP } from './botAI.js';
 import { CATALIN_LUCK, CATALIN_CONTROL, rollBotDie } from './dice.js';
 import { TILE } from './model.js';
 
@@ -118,14 +118,18 @@ export function horizonGain({ state, botIdx, board, actions, propertyId, option,
 }
 
 /**
- * Decizia CatalinRobot. Titlul: cumpără dacă are banii. Anexa: cumpără orice pe care o poate
- * plăti, cât timp rămâne ANNEX_KEEP din banii de acum (vezi annexAffordable).
+ * Decizia de cumpărare (la fel pentru toți roboții). Titlul: cumpără dacă are banii. Anexa: cumpără
+ * doar dacă, după plată, rămâne ANNEX_KEEP (15%) din averea totală (bani + acțiuni la 80%).
+ * Rezerva se recalculează la fiecare decizie, deci scade odată cu averea.
  * Anexele apar doar după titlu (nextAnnex), deci ordinea titlu → anexă e respectată.
  */
 export function catalinDecideBuy({ state, botIdx, option, actions, propertyId }) {
   const me = state.players[botIdx];
   if (option.type === 'TITLE') return me.money >= actions[propertyId].titlePrice;
-  return annexAffordable(me.money, option.annex.price);
+  if (me.annexRecovery) return false;   // a vândut anexe pentru datorie: nu mai cumpără până își reface rezerva
+  const price = option.annex.price;
+  if (me.money < price) return false;
+  return me.money - price >= ANNEX_KEEP * netWorth(me, actions);
 }
 
 /**

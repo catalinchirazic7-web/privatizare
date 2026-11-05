@@ -214,7 +214,7 @@ input { -webkit-user-select: text; user-select: text; }
 }
 .die.is-disabled { cursor: default; filter: saturate(.6) brightness(.9); }
 .die.is-ready { box-shadow: 0 0 0 4px var(--yellow), 0 8px 18px rgba(0,0,0,.45); }
-.die.is-pop { animation: die-pop .32s ease-out; }
+.die.is-pop { animation: die-pop .24s ease-out; }
 .die.is-flash { box-shadow: 0 0 0 6px var(--yellow), 0 0 26px 6px rgba(240,210,14,.8); }
 @keyframes die-pop { 0% { transform: translate(-50%,-50%) scale(.9); } 60% { transform: translate(-50%,-50%) scale(1.12); } 100% { transform: translate(-50%,-50%) scale(1); } }
 .die-face { position: absolute; inset: 8px; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 2px; }
@@ -380,7 +380,7 @@ input { -webkit-user-select: text; user-select: text; }
 @keyframes pop-in { from { transform: scale(.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
 .card-flip { perspective: 900px; width: min(72vw, 300px); margin: 0 auto; }
-.card-flip .inner { position: relative; transform-style: preserve-3d; animation: flip .6s ease-out; }
+.card-flip .inner { position: relative; transform-style: preserve-3d; animation: flip .45s ease-out; }
 @keyframes flip { from { transform: rotateY(180deg) scale(.9); } to { transform: rotateY(0) scale(1); } }
 .card-img { width: 100%; border-radius: 14px; box-shadow: 0 10px 24px rgba(0,0,0,.5); display: block; }
 .card-overlay { position: absolute; left: 50%; top: 56%; transform: translate(-50%, -50%); }
@@ -389,8 +389,8 @@ input { -webkit-user-select: text; user-select: text; }
 .card-text-only { background: #f5ecd6; color: #332522; border-radius: 14px; padding: 18px; font-weight: 700; text-align: center; font-size: 1.05rem; }
 .outcome-gain { color: var(--ok); }
 .outcome-loss { color: var(--danger); }
-.card-result { margin: 12px 0 4px; text-align: center; font-size: 1.5rem; font-weight: 900; animation: result-in .45s ease-out .55s both; }
-.card-note { margin: 4px 0; text-align: center; font-size: .92rem; opacity: .9; animation: result-in .45s ease-out .7s both; }
+.card-result { margin: 12px 0 4px; text-align: center; font-size: 1.5rem; font-weight: 900; animation: result-in .34s ease-out .41s both; }
+.card-note { margin: 4px 0; text-align: center; font-size: .92rem; opacity: .9; animation: result-in .34s ease-out .53s both; }
 @keyframes result-in { from { opacity: 0; transform: translateY(10px) scale(.92); } to { opacity: 1; transform: none; } }
 
 /* fișa acțiunii */
@@ -454,5 +454,5 @@ input { -webkit-user-select: text; user-select: text; }
 }
 
 /* zarul în rostogolire: se leagănă ușor */
-.die.is-rolling { animation: die-wobble .28s ease-in-out infinite alternate; }
+.die.is-rolling { animation: die-wobble .21s ease-in-out infinite alternate; }
 @keyframes die-wobble { from { transform: translate(-50%,-50%) rotate(-12deg); } to { transform: translate(-50%,-50%) rotate(12deg); } }

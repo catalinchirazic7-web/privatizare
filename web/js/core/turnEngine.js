@@ -198,6 +198,8 @@ export class TurnEngine {
       const level = player.ownedProperties[prop.id];
       if (level === undefined) throw new Error(`${player.name} nu deține ${prop.name}`);
       let value;
+      // a vândut din propriile anexe: nu mai cumpără anexe până își reface rezerva (vezi endTurn)
+      if (level > 0) player.annexRecovery = true;
       if (sale.annexIndex !== null && sale.annexIndex !== undefined) {
         if (sale.annexIndex !== level) throw new Error(`Anexele se vând în ordine inversă (nivel ${level})`);
         value = sellBackValue(prop.annexes.find((a) => a.index === level).price);

@@ -29,7 +29,7 @@ const CARD_SHOW_MS = 3500;   // cât stă pe ecran cartonașul tras de un robot,
 const SKIP_SHOW_MS = 2500;   // cât stă vizibil bannerul „staționează” al unui robot, ca să-l vezi
 const END_DELAY_MS = 900;
 const END_DELAY_SKIP_MS = 2200;
-const ROLL_ANIM_MS = 650;
+const ROLL_ANIM_MS = 488;   // zarul: cu 25% mai rapid (650 × 0,75)
 
 class DieView {
   constructor(root, badge) {
@@ -376,11 +376,17 @@ export class GameScreen {
     const canBuyAnnexFor = !dialog && g.turnAwaitingEnd && this.myTurn && current?.id === viewed.id && landed && viewed.ownedProperties[landed] !== undefined
       ? landed
       : null;
-    this.renderPortfolio(viewed, detailed, canBuyAnnexFor, sellMode);
+    // lista de firme apare doar când jucătorul trebuie să aleagă (vânzare la datorie, anexă); altfel doar jurnalul
+    if (sellMode || canBuyAnnexFor) this.renderPortfolio(viewed, detailed, canBuyAnnexFor, sellMode);
+    else clear(this.$('portfolio'));
 
+    // jurnalul fiecărui jucător: rândurile care îl privesc (numele lui apare în text)
+    this.$('history-label').textContent = `Jurnalul lui ${viewed.name}`;
     const hist = this.$('history');
     clear(hist);
-    for (const line of g.game.history.slice(-6)) hist.append(el('li', { text: line }));
+    for (const line of g.game.history) {
+      if (line.includes(viewed.name)) hist.append(el('li', { text: line }));
+    }
   }
 
   renderPortfolio(viewed, detailed, canBuyAnnexFor, sellMode) {

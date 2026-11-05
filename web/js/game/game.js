@@ -5,7 +5,7 @@ import { GameRules, distributeStartingMoney } from '../core/rules.js';
 import { TurnEngine, debtEquals } from '../core/turnEngine.js';
 import { TILE } from '../core/model.js';
 import { netWorth, rankPlayers } from '../core/actions.js';
-import { botDecideBuy, botLiquidationSales } from '../core/botAI.js';
+import { botLiquidationSales, ANNEX_KEEP } from '../core/botAI.js';
 import { catalinDecideBuy, catalinDice } from '../core/catalinAI.js';
 import { rollBotDie } from '../core/dice.js';
 import { EV } from '../online/protocol.js';
@@ -513,6 +513,11 @@ export class Game {
     if (this.activeDialog || !this.turnAwaitingEnd) return;
     const size = this.game?.players.length ?? 0;
     if (size === 0) return;
+    // a încheiat tura: dacă și-a refăcut rezerva de 15% din averea totală, poate cumpăra din nou anexe
+    const done = this.game.players[this.currentIndex];
+    if (done?.annexRecovery && done.money >= ANNEX_KEEP * netWorth(done, this.catalog.actions)) {
+      this.game = { ...this.game, players: this.game.players.map((p) => (p === done ? { ...p, annexRecovery: false } : p)) };
+    }
     this.currentIndex = (this.currentIndex + 1) % size;
     // un rând complet (s-a întors la primul jucător) = o tură pentru statistici și pentru robot
     if (this.currentIndex === 0) this.game = { ...this.game, turn: this.game.turn + 1 };
@@ -545,8 +550,8 @@ export class Game {
       case 'DEBT': return false;   // datornicul e om: lichidează el
       case 'BUY': {
         const opt = d.offer.option;
-        const decide = p.catalin ? catalinDecideBuy : botDecideBuy;
-        const accept = decide({
+        // Același mod de cumpărare pentru toți roboții; CatalinRobot se deosebește doar la zar și la cartonașe.
+        const accept = catalinDecideBuy({
           state: this.game, botIdx: this.game.players.indexOf(p), board: this.catalog.board,
           actions: this.catalog.actions, propertyId: d.offer.propertyId, option: opt, diceCount: this.diceCount,
         });

@@ -19,4 +19,6 @@ data class Player(
     val isBot: Boolean = false,
     /** CatalinRobot (doar când [isBot]): decizii pe orizont și zar cu noroc, ca în web. */
     val catalin: Boolean = false,
+    /** A vândut anexe pentru datorie: nu mai cumpără anexe până își reface rezerva de 15% din averea totală. */
+    val annexRecovery: Boolean = false,
 )

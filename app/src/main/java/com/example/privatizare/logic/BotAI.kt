@@ -26,7 +26,7 @@ object BotAI {
     private const val PRIOR_WEIGHT_TURNS = 10.0
     private const val DICE_COUNT = 1
     /** La anexă rămâne cel puțin această fracțiune din banii de acum (la fel ca web/js/core/botAI.js). */
-    const val ANNEX_KEEP = 0.25
+    const val ANNEX_KEEP = 0.15
 
     /** Probabilitatea sumei a două zaruri (2..12). */
     fun diceSumProb(sum: Int): Double =
@@ -308,8 +308,8 @@ object BotAI {
     }
 
     /**
-     * Decizia CatalinRobot. Titlul: cumpără dacă are banii. Anexa: cumpără orice pe care o poate
-     * plăti, cât timp rămâne [ANNEX_KEEP] din banii de acum (vezi [annexAffordable]).
+     * Decizia de cumpărare (la fel pentru toți roboții). Titlul: cumpără dacă are banii. Anexa: cumpără
+     * doar dacă, după plată, rămâne [ANNEX_KEEP] (15%) din averea totală, recalculată la fiecare decizie.
      */
     fun decideCatalin(
         state: GameState, botId: String, board: List<Tile>, actions: Map<String, PropertyAction>,
@@ -318,7 +318,11 @@ object BotAI {
         val me = state.players.first { it.id == botId }
         return when (option) {
             is BuyOption.Title -> me.money >= actions.getValue(propertyId).titlePrice
-            is BuyOption.AnnexOption -> annexAffordable(me.money, option.annex.price)
+            is BuyOption.AnnexOption -> {
+                val price = option.annex.price
+                if (me.annexRecovery || me.money < price) return false   // după vânzare de anexe: nu mai cumpără
+                me.money - price >= ANNEX_KEEP * Scoring.netWorth(me, actions)
+            }
         }
     }
 
