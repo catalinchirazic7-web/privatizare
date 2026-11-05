@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { rollDie, rollBotDie, CATALIN_LUCK } from '../js/core/dice.js';
 import { botStepDistribution, horizonGain, catalinDecideBuy, expectedRentPaid, catalinDice } from '../js/core/catalinAI.js';
+import { ANNEX_KEEP } from '../js/core/botAI.js';
 import { loadRealCatalog } from './helpers.mjs';
 import { PAWN_COLORS, TILE } from '../js/core/model.js';
 
@@ -103,14 +104,23 @@ test('distribuția fețelor cu noroc se potrivește cu formula (200k aruncări)'
   assert.ok(Math.abs(mean - 3.743) < 0.02, `media ${mean}`);
 });
 
-test('anexa: cumpără cât timp rămâne cel puțin 20% din banii de acum', () => {
+test('anexa: cumpără cât timp rămâne cel puțin ANNEX_KEEP din banii de acum', () => {
   const prop = cat.actions[propId];
   const annex = prop.annexes[0];
-  const money = Math.ceil(annex.price / 0.8) + 10;   // după cumpărare rămân peste 20%
+  const money = Math.ceil(annex.price / (1 - ANNEX_KEEP)) + 10;   // după cumpărare rămân peste ANNEX_KEEP
   const ok = catalinDecideBuy({ state: state(money), botIdx: 0, board, actions: cat.actions, propertyId: propId, option: { type: 'ANNEX', annex } });
   assert.equal(ok, true);
   const tight = catalinDecideBuy({ state: state(annex.price + 1), botIdx: 0, board, actions: cat.actions, propertyId: propId, option: { type: 'ANNEX', annex } });
   assert.equal(tight, false);
+});
+
+test('anexa: exemplele din cerință (20.000 cu anexă de 12.000 da; 10.000 cu anexă de 7.700 nu)', () => {
+  const annexOf = (id, index) => cat.actions[id].annexes.find((a) => a.index === index);
+  const decide = (propertyId, money, annex) => catalinDecideBuy({
+    state: state(money), botIdx: 0, board, actions: cat.actions, propertyId, option: { type: 'ANNEX', annex },
+  });
+  assert.equal(decide('continental', 20000, annexOf('continental', 3)), true);
+  assert.equal(decide('piata_romana', 10000, annexOf('piata_romana', 3)), false);
 });
 
 test('zarul CatalinRobot: fețe sau sume valide, cu control și fără', () => {

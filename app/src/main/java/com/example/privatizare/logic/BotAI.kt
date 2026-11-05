@@ -25,6 +25,8 @@ object BotAI {
     private const val EXPENSIVE_ANNEX_SHARE = 0.4
     private const val PRIOR_WEIGHT_TURNS = 10.0
     private const val DICE_COUNT = 1
+    /** La anexă rămâne cel puțin această fracțiune din banii de acum (la fel ca web/js/core/botAI.js). */
+    const val ANNEX_KEEP = 0.25
 
     /** Probabilitatea sumei a două zaruri (2..12). */
     fun diceSumProb(sum: Int): Double =
@@ -154,15 +156,21 @@ object BotAI {
         return Score(score.roundToInt().coerceIn(0, 100), false, reasons)
     }
 
-    /** Titlul liber: îl încearcă dacă are bani. Anexa: doar dacă scorul depășește pragul și nu e refuz ferm. */
+    /** Titlul liber: îl încearcă dacă are bani. Anexa: o cumpără dacă o poate plăti și rămâne [ANNEX_KEEP] din bani. */
     fun decideBuy(
         state: GameState, botId: String, board: List<Tile>, actions: Map<String, PropertyAction>,
         propertyId: String, option: BuyOption, diceCount: Int = DICE_COUNT,
     ): Boolean {
-        if (option is BuyOption.Title) return state.players.first { it.id == botId }.money >= option.price
-        val r = utilityScore(state, botId, board, actions, propertyId, option, diceCount)
-        return !r.hardReject && r.score >= BUY_THRESHOLD
+        val me = state.players.first { it.id == botId }
+        return when (option) {
+            is BuyOption.Title -> me.money >= option.price
+            is BuyOption.AnnexOption -> annexAffordable(me.money, option.annex.price)
+        }
     }
+
+    /** Anexa se cumpără cât timp, după plată, rămâne cel puțin [ANNEX_KEEP] din banii de acum. */
+    fun annexAffordable(money: Long, price: Long): Boolean =
+        money >= price && (money - price).toDouble() >= ANNEX_KEEP * money
 
     /**
      * Vânzările pentru o datorie: întreaga acțiune (titlu + anexe) odată, cea mai slabă întâi.
@@ -197,8 +205,6 @@ object BotAI {
     const val CATALIN_HORIZON = 10
     /** Șansa ca robotul să-și aleagă fața zarului (restul: aruncare cu noroc). */
     const val CATALIN_CONTROL = 0.6
-    /** La anexă rămâne cel puțin această fracțiune din banii de acum. */
-    const val ANNEX_KEEP = 0.2
 
     /** Distribuția pasului robotului: fiecare zar cu noroc, suma pe [diceCount] zaruri. */
     fun botStepDistribution(diceCount: Int = DICE_COUNT, luck: Double = CATALIN_LUCK): Map<Int, Double> {
@@ -302,21 +308,18 @@ object BotAI {
     }
 
     /**
-     * Decizia CatalinRobot: cumpără dacă are banii, rămâne peste rezerva pentru chiriile așteptate
-     * pe orizont (și peste rezerva de siguranță) și câștigul pe orizont este pozitiv.
+     * Decizia CatalinRobot. Titlul: cumpără dacă are banii. Anexa: cumpără orice pe care o poate
+     * plăti, cât timp rămâne [ANNEX_KEEP] din banii de acum (vezi [annexAffordable]).
      */
     fun decideCatalin(
         state: GameState, botId: String, board: List<Tile>, actions: Map<String, PropertyAction>,
         propertyId: String, option: BuyOption, diceCount: Int = DICE_COUNT,
     ): Boolean {
         val me = state.players.first { it.id == botId }
-        val (gain, price) = horizonGain(state, botId, board, actions, propertyId, option, diceCount)
-        if (me.money < price) return false
-        // Titlul: cumpără orice titlu pe care ajunge, cât timp are banii.
-        // Titlul: cumpără orice titlu pe care ajunge, cât timp are banii.
-        if (option is BuyOption.Title) return true
-        // Anexa: cumpără orice, cât timp după cumpărare rămâne cel puțin 20% din banii de acum.
-        return (me.money - price) >= ANNEX_KEEP * me.money
+        return when (option) {
+            is BuyOption.Title -> me.money >= actions.getValue(propertyId).titlePrice
+            is BuyOption.AnnexOption -> annexAffordable(me.money, option.annex.price)
+        }
     }
 
     /**

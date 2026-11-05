@@ -5,14 +5,13 @@
 // Clasicul rămâne în botAI.js, neschimbat.
 
 import { calculateRent, wholeSaleValue } from './actions.js';
-import { rentOnTile, visitRate, safetyBuffer, MIN_SAFETY_BUFFER } from './botAI.js';
+import { rentOnTile, visitRate, safetyBuffer, MIN_SAFETY_BUFFER, annexAffordable } from './botAI.js';
 import { CATALIN_LUCK, CATALIN_CONTROL, rollBotDie } from './dice.js';
 import { TILE } from './model.js';
 
 export { CATALIN_CONTROL };
 export const CATALIN_HORIZON = 10;   // ture înainte pentru care se calculează câștigul și plățile
 export const OUTLOOK_TURNS = 3;      // ture analizate exact (toate căile zarului) pentru riscul de lichiditate
-export const ANNEX_KEEP = 0.2;       // la anexă rămâne cel puțin 20% din banii de acum
 
 /** Distribuția pasului robotului: fiecare zar cu noroc (best-of-two cu șansa [luck]), suma pe [diceCount] zaruri. */
 export function botStepDistribution(diceCount = 1, luck = CATALIN_LUCK) {
@@ -119,18 +118,14 @@ export function horizonGain({ state, botIdx, board, actions, propertyId, option,
 }
 
 /**
- * Decizia CatalinRobot. Titlul: cumpără dacă are banii. Anexa: cumpără dacă are banii, rămâne
- * peste rezerva ce acoperă chiriile așteptate pe orizont și câștigul pe orizont e pozitiv.
+ * Decizia CatalinRobot. Titlul: cumpără dacă are banii. Anexa: cumpără orice pe care o poate
+ * plăti, cât timp rămâne ANNEX_KEEP din banii de acum (vezi annexAffordable).
  * Anexele apar doar după titlu (nextAnnex), deci ordinea titlu → anexă e respectată.
  */
-export function catalinDecideBuy({ state, botIdx, board, actions, propertyId, option, diceCount = 1 }) {
+export function catalinDecideBuy({ state, botIdx, option, actions, propertyId }) {
   const me = state.players[botIdx];
-  const price = option.type === 'TITLE' ? actions[propertyId].titlePrice : option.annex.price;
-  if (me.money < price) return false;
-  // Titlul: cumpără orice titlu pe care ajunge, cât timp are banii.
-  if (option.type === 'TITLE') return true;
-  // Anexa: cumpără orice, cât timp după cumpărare rămâne cel puțin 20% din banii de acum.
-  return me.money - price >= ANNEX_KEEP * me.money;
+  if (option.type === 'TITLE') return me.money >= actions[propertyId].titlePrice;
+  return annexAffordable(me.money, option.annex.price);
 }
 
 /**

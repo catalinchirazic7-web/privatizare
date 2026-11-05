@@ -15,6 +15,9 @@ const ROI_WEIGHT = 40;
 const ANNEX_MIN_AVG_RENTS = 2; // nu investește în anexe sub 2 chirii medii în cont
 const CASH_PRESSURE_PENALTY = 15;
 const EXPENSIVE_ANNEX_SHARE = 0.4; // o anexă care ia peste 40% din bani e scumpă pentru bot
+// La anexă rămâne cel puțin această fracțiune din banii de acum. 25%, nu 20%: 10.000 cu anexă de 7.700
+// (rămân 23%) nu se cumpără, iar 20.000 cu anexă de 12.000 (rămân 40%) se cumpără.
+export const ANNEX_KEEP = 0.25;
 
 /* ---------- Zaruri ---------- */
 
@@ -200,9 +203,17 @@ export function utilityScore({ state, botIdx, board, actions, propertyId, option
  */
 export function botDecideBuy(args) {
   const { state, botIdx, actions, propertyId, option } = args;
-  if (option.type === 'TITLE') return state.players[botIdx].money >= actions[propertyId].titlePrice;
-  const r = utilityScore(args);
-  return !r.hardReject && r.score >= BUY_THRESHOLD;
+  const me = state.players[botIdx];
+  if (option.type === 'TITLE') return me.money >= actions[propertyId].titlePrice;
+  return annexAffordable(me.money, option.annex.price);
+}
+
+/**
+ * Anexa se cumpără cât timp, după plată, rămâne cel puțin ANNEX_KEEP din banii de acum.
+ * Folosită de robotul clasic și de CatalinRobot.
+ */
+export function annexAffordable(money, price) {
+  return money >= price && money - price >= ANNEX_KEEP * money;
 }
 
 /* ---------- Vânzare la datorie ---------- */

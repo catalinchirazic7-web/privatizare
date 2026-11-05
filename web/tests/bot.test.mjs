@@ -74,6 +74,16 @@ test('titlu: îl încearcă dacă are bani, chiar dacă rămâne sub rezervă', 
   assert.equal(botDecideBuy({ state, botIdx: 0, board, actions: cat.actions, propertyId: 'poli', option: { type: 'TITLE' } }), false);
 });
 
+test('robotul clasic cumpără anexa cât timp rămâne 25% din bani: 20.000 cu 12.000 da, 10.000 cu 7.700 nu', () => {
+  const decide = (propertyId, level, money) => {
+    const state = { turn: 1, players: [player(0, { money, ownedProperties: { [propertyId]: level } }), player(1), player(2), player(3)], bankMoney: 100000, history: [] };
+    const annex = cat.actions[propertyId].annexes.find((a) => a.index === level + 1);
+    return botDecideBuy({ state, botIdx: 0, board, actions: cat.actions, propertyId, option: { type: 'ANNEX', annex } });
+  };
+  assert.equal(decide('continental', 2, 20000), true);
+  assert.equal(decide('piata_romana', 2, 10000), false);
+});
+
 test('anexă scumpă cu puțini bani: refuzată sau penalizată', () => {
   const { state } = scenario({ botMoney: 30000 });
   const annex = cat.actions.continental.annexes[1];
