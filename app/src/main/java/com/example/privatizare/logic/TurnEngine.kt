@@ -70,7 +70,7 @@ class TurnEngine(
     private val actions: Map<String, PropertyAction>,
     loto: List<LotoCard>,
     telex: List<TelexCard>,
-    random: Random = SecureRandom().asKotlinRandom(),
+    private val random: Random = SecureRandom().asKotlinRandom(),
 ) {
     private val lotoDeck = CardDeck(loto, random)
     private val telexDeck = CardDeck(telex, random)
@@ -157,10 +157,12 @@ class TurnEngine(
     fun drawCard(state: GameState, playerIndex: Int, kind: String): TurnResult {
         val ctx = Ctx(state)
         val player = ctx.players[playerIndex]
+        // CatalinRobot: în majoritatea cazurilor scoate cartonașul cel mai bun pentru el din teanc
+        val chooses = player.catalin && random.nextDouble() < BotAI.CATALIN_CONTROL
         try {
             when (kind) {
                 "LOTO" -> {
-                    val card = lotoDeck.draw()
+                    val card = if (chooses) lotoDeck.drawBest(::lotoValue) else lotoDeck.draw()
                     ctx.log("${player.name} a tras din pachetul LOTO: ${card.text}")
                     ctx.card = lotoResult(card).let { ShownCard("LOTO", card.text, it.outcome, it.amount, cardId = card.id) }
                     when (card.kind) {
@@ -170,7 +172,7 @@ class TurnEngine(
                     }
                 }
                 "TELEX" -> {
-                    val card = telexDeck.draw()
+                    val card = if (chooses) telexDeck.drawBest(::telexValue) else telexDeck.draw()
                     ctx.log("${player.name} a tras din pachetul TELEX: ${card.text}")
                     val effects = effectiveEffects(ctx, playerIndex, card)
                     ctx.card = telexResult(effects).let {

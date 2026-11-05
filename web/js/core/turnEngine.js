@@ -4,7 +4,8 @@
 import { GameRules } from './rules.js';
 import { TILE } from './model.js';
 import { calculateRent, nextAnnex, sellBackValue, wholeSaleValue } from './actions.js';
-import { CardDeck, lotoResult, telexResult } from './cards.js';
+import { CardDeck, lotoResult, telexResult, lotoValue, telexValue } from './cards.js';
+import { CATALIN_CONTROL } from './dice.js';
 
 /** Datorie care nu poate fi plătită din bani lichizi. creditorId null = Banca. */
 export function debtEquals(a, b) {
@@ -32,6 +33,7 @@ export class TurnEngine {
     this.actions = catalog.actions;
     this.lotoDeck = new CardDeck(catalog.loto, rng);
     this.telexDeck = new CardDeck(catalog.telex, rng);
+    this.rng = rng;
   }
 
   /** Unul sau două zaruri: pionul merge cu suma. Trecerea peste START aduce bonusul. */
@@ -108,15 +110,17 @@ export class TurnEngine {
     const ctx = new Ctx(this, state);
     const player = ctx.players[playerIndex];
     try {
+      // CatalinRobot: în majoritatea cazurilor scoate cartonașul cel mai bun pentru el din teanc
+      const chooses = player.catalin && this.rng() < CATALIN_CONTROL;
       if (kind === 'LOTO') {
-        const card = this.lotoDeck.draw();
+        const card = chooses ? this.lotoDeck.drawBest(lotoValue) : this.lotoDeck.draw();
         ctx.log(`${player.name} a tras din pachetul LOTO: ${card.text}`);
         const r = lotoResult(card);
         ctx.card = { kind: 'LOTO', text: card.text, outcome: r.outcome, amount: r.amount, destination: null, cardId: card.id };
         if (card.kind === 'W') ctx.bankPays(playerIndex, card.amount, 'LOTO');
         else if (card.kind === 'L') ctx.playerPaysBank(playerIndex, card.amount, 'LOTO');
       } else if (kind === 'TELEX') {
-        const card = this.telexDeck.draw();
+        const card = chooses ? this.telexDeck.drawBest(telexValue) : this.telexDeck.draw();
         ctx.log(`${player.name} a tras din pachetul TELEX: ${card.text}`);
         const effects = this.effectiveEffects(ctx, playerIndex, card);
         const r = telexResult(effects);

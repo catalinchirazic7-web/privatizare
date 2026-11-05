@@ -6,12 +6,12 @@
 
 import { calculateRent, wholeSaleValue } from './actions.js';
 import { rentOnTile, visitRate, safetyBuffer, MIN_SAFETY_BUFFER } from './botAI.js';
-import { CATALIN_LUCK, rollBotDie } from './dice.js';
+import { CATALIN_LUCK, CATALIN_CONTROL, rollBotDie } from './dice.js';
 import { TILE } from './model.js';
 
+export { CATALIN_CONTROL };
 export const CATALIN_HORIZON = 10;   // ture înainte pentru care se calculează câștigul și plățile
 export const OUTLOOK_TURNS = 3;      // ture analizate exact (toate căile zarului) pentru riscul de lichiditate
-export const CATALIN_CONTROL = 0.9;  // șansa ca robotul să-și aleagă fața zarului (restul: aruncare cu noroc)
 export const ANNEX_KEEP = 0.2;       // la anexă rămâne cel puțin 20% din banii de acum
 
 /** Distribuția pasului robotului: fiecare zar cu noroc (best-of-two cu șansa [luck]), suma pe [diceCount] zaruri. */
@@ -157,11 +157,11 @@ export function catalinDice(state, botIdx, board, actions, diceCount = 1, rng = 
   const score = (step) => tileScore(state, botIdx, board, actions, (pos + step) % board.length);
   if (diceCount === 1) {
     let best = 1;
-    for (let f = 2; f <= 6; f += 1) if (score(f) > score(best)) best = f;
+    for (let f = 2; f <= 6; f += 1) if (score(f) >= score(best)) best = f;   // la egalitate: fața mai mare
     return [best];
   }
   let bestSum = 2;
-  for (let s = 3; s <= 12; s += 1) if (score(s) > score(bestSum)) bestSum = s;
+  for (let s = 3; s <= 12; s += 1) if (score(s) >= score(bestSum)) bestSum = s;   // la egalitate: suma mai mare
   const lo = Math.max(1, bestSum - 6);
   const hi = Math.min(6, bestSum - 1);
   const a = lo + Math.floor(rng() * (hi - lo + 1));

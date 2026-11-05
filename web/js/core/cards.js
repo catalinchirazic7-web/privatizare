@@ -36,6 +36,37 @@ export class CardDeck {
     this.discard.push(card);
     return card;
   }
+
+  /** Scoate din teanc cartonașul cu valoarea cea mai mare pentru [valueOf] (la egalitate: primul). */
+  drawBest(valueOf) {
+    if (this.pile.length === 0) {
+      this.pile = shuffled(this.discard, this.rng);
+      this.discard = [];
+    }
+    let bi = 0;
+    for (let i = 1; i < this.pile.length; i += 1) {
+      if (valueOf(this.pile[i]) > valueOf(this.pile[bi])) bi = i;
+    }
+    const [card] = this.pile.splice(bi, 1);
+    this.discard.push(card);
+    return card;
+  }
+}
+
+/** Valoarea pentru jucător a unui cartonaș LOTO: câștigul e plus, pierderea minus. */
+export function lotoValue(card) {
+  const r = lotoResult(card);
+  if (r.outcome === CardOutcome.GAIN) return r.amount ?? 0;
+  if (r.outcome === CardOutcome.LOSS) return -(r.amount ?? 0);
+  return 0;
+}
+
+/** Valoarea pentru jucător a unui cartonaș TELEX, după efectele lui. */
+export function telexValue(card) {
+  const r = telexResult(card.effects);
+  if (r.outcome === CardOutcome.GAIN) return r.amount ?? 0;
+  if (r.outcome === CardOutcome.LOSS) return -(r.amount ?? 0);
+  return 0;
 }
 
 export const CardOutcome = Object.freeze({ GAIN: 'GAIN', LOSS: 'LOSS', NEUTRAL: 'NEUTRAL' });

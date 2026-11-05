@@ -348,9 +348,11 @@ object BotAI {
         val me = state.players.first { it.id == botId }
         val score = { step: Int -> tileScore(state, botId, board, actions, (me.position + step) % board.size) }
         if (diceCount == 1) {
-            return listOf((2..6).fold(1) { best, f -> if (score(f) > score(best)) f else best })
+            // la egalitate: fața mai mare
+            return listOf((2..6).fold(1) { best, f -> if (score(f) >= score(best)) f else best })
         }
-        val bestSum = (3..12).fold(2) { best, s -> if (score(s) > score(best)) s else best }
+        // la egalitate: suma mai mare
+        val bestSum = (3..12).fold(2) { best, s -> if (score(s) >= score(best)) s else best }
         val lo = maxOf(1, bestSum - 6)
         val hi = minOf(6, bestSum - 1)
         val a = lo + random.nextInt(hi - lo + 1)

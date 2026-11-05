@@ -3,6 +3,24 @@ package com.example.privatizare.logic
 import com.example.privatizare.data.model.CardEffect
 import com.example.privatizare.data.model.LotoCard
 import com.example.privatizare.data.model.LotoKind
+import com.example.privatizare.data.model.TelexCard
+
+/** Valoarea unui cartonaș LOTO pentru jucătorul care l-a tras: câștigul plus, pierderea minus. */
+fun lotoValue(card: LotoCard): Long = when (card.kind) {
+    LotoKind.WIN -> card.amount
+    LotoKind.LOSE -> -card.amount
+    LotoKind.NOTHING -> 0L
+}
+
+/** Valoarea unui cartonaș TELEX pentru jucătorul care l-a tras, după efectele lui. */
+fun telexValue(card: TelexCard): Long {
+    val r = telexResult(card.effects)
+    return when (r.outcome) {
+        CardOutcome.GAIN -> r.amount ?: 0L
+        CardOutcome.LOSS -> -(r.amount ?: 0L)
+        CardOutcome.NEUTRAL -> 0L
+    }
+}
 
 /** Ce înseamnă un cartonaș pentru jucătorul care l-a tras: folosit la efectele vizuale. */
 enum class CardOutcome { GAIN, LOSS, NEUTRAL }

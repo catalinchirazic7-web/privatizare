@@ -34,4 +34,17 @@ class CardDeck<T>(cards: List<T>, private val random: Random) {
         discard.add(card)
         return card
     }
+
+    /** Scoate din teanc cartonașul cu valoarea cea mai mare pentru [valueOf] (la egalitate: primul). */
+    fun drawBest(valueOf: (T) -> Long): T {
+        if (pile.isEmpty()) {
+            pile.addAll(discard.shuffled(random))
+            discard.clear()
+        }
+        var bi = 0
+        for (i in 1 until pile.size) if (valueOf(pile[i]) > valueOf(pile[bi])) bi = i
+        val card = pile.removeAt(bi)
+        discard.add(card)
+        return card
+    }
 }
