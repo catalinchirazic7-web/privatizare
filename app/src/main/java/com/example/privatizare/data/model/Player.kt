@@ -17,4 +17,6 @@ data class Player(
     val houseSince: Int = 0,
     /** Robot: deciziile sunt luate automat de [com.example.privatizare.logic.BotAI]. */
     val isBot: Boolean = false,
+    /** CatalinRobot (doar când [isBot]): decizii pe orizont și zar cu noroc, ca în web. */
+    val catalin: Boolean = false,
 )

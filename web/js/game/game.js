@@ -6,16 +6,18 @@ import { TurnEngine, debtEquals } from '../core/turnEngine.js';
 import { TILE } from '../core/model.js';
 import { netWorth, rankPlayers } from '../core/actions.js';
 import { botDecideBuy, botLiquidationSales } from '../core/botAI.js';
+import { catalinDecideBuy } from '../core/catalinAI.js';
+import { rollBotDie, CATALIN_LUCK } from '../core/dice.js';
 import { EV } from '../online/protocol.js';
 
 export class Game {
   /**
    * @param {object} catalog  rezultatul loadCatalog()
-   * @param {{botDie?: () => number, rng?: () => number}} opts
+   * @param {{botDie?: (luck: number) => number, rng?: () => number}} opts
    */
   constructor(catalog, opts = {}) {
     this.catalog = catalog;
-    this.botDie = opts.botDie ?? (() => 1 + Math.floor(Math.random() * 6));
+    this.botDie = opts.botDie ?? ((luck = 0) => rollBotDie(Math.random, luck));
     this.engine = new TurnEngine(catalog, opts.rng ?? Math.random);
     this.listeners = new Set();
     this.version = 0;
@@ -278,6 +280,7 @@ export class Game {
       skipTurns: 0,
       houseSince: 0,
       isBot: !!s.isBot,
+      catalin: !!s.isBot && !!s.catalin,   // CatalinRobot: robot cu zarul în favoarea lui
     }));
     this.game = { turn: 1, players, bankMoney: dist.bankMoney, history: [], stats: {} };
     this.currentIndex = 0;
@@ -510,6 +513,8 @@ export class Game {
     const size = this.game?.players.length ?? 0;
     if (size === 0) return;
     this.currentIndex = (this.currentIndex + 1) % size;
+    // un rând complet (s-a întors la primul jucător) = o tură pentru statistici și pentru robot
+    if (this.currentIndex === 0) this.game = { ...this.game, turn: this.game.turn + 1 };
     this.turnAwaitingEnd = false;
     this.skipBanner = null;
     this.prepareHandover();
@@ -539,7 +544,8 @@ export class Game {
       case 'DEBT': return false;   // datornicul e om: lichidează el
       case 'BUY': {
         const opt = d.offer.option;
-        const accept = botDecideBuy({
+        const decide = p.catalin ? catalinDecideBuy : botDecideBuy;
+        const accept = decide({
           state: this.game, botIdx: this.game.players.indexOf(p), board: this.catalog.board,
           actions: this.catalog.actions, propertyId: d.offer.propertyId, option: opt, diceCount: this.diceCount,
         });
@@ -553,7 +559,7 @@ export class Game {
       case 'DRAW': this.drawCard(); break;
       default:
         if (this.turnAwaitingEnd) this.endTurn();
-        else this.roll(Array.from({ length: this.diceCount }, () => this.botDie()));
+        else this.roll(Array.from({ length: this.diceCount }, () => this.botDie(p.catalin ? CATALIN_LUCK : 0)));
     }
     return true;
   }

@@ -203,6 +203,7 @@ fun SetupScreen(onStart: (List<PlayerSetup>, Long?, Int?, Int, String) -> Unit, 
             ?: listOf(PawnColor.ROSU, PawnColor.ALBASTRU, PawnColor.GALBEN, PawnColor.VERDE)).toTypedArray())
     }
     val isBot = remember { mutableStateListOf(*(saved?.bots ?: listOf(false, false, false, false)).toTypedArray()) }
+    val catalin = remember { mutableStateListOf(*(saved?.catalin ?: listOf(false, false, false, false)).toTypedArray()) }
 
     val active = (0 until count)
     val taken = active.mapNotNull { colors[it] }.toSet()
@@ -268,8 +269,15 @@ fun SetupScreen(onStart: (List<PlayerSetup>, Long?, Int?, Int, String) -> Unit, 
         active.forEach { i ->
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Locul ${i + 1}: ")
-                OutlinedButton(onClick = { isBot[i] = !isBot[i] }) {
-                    Text(if (isBot[i]) "ROBOT" else "OM")
+                // OM → ROBOT → CATALINROBOT → OM, ca în web
+                OutlinedButton(onClick = {
+                    when {
+                        !isBot[i] -> { isBot[i] = true; catalin[i] = false }
+                        !catalin[i] -> catalin[i] = true
+                        else -> { isBot[i] = false; catalin[i] = false }
+                    }
+                }) {
+                    Text(if (!isBot[i]) "OM" else if (catalin[i]) "CATALINROBOT" else "ROBOT")
                 }
             }
             OutlinedTextField(
@@ -299,13 +307,14 @@ fun SetupScreen(onStart: (List<PlayerSetup>, Long?, Int?, Int, String) -> Unit, 
                         names = names.toList(),
                         colors = colors.map { it?.name },
                         bots = isBot.toList(),
+                        catalin = catalin.toList(),
                         money = startMoney,
                         timeMinutes = timeMinutes,
                         dice = dice,
                         layout = layout,
                     ),
                 )
-                onStart(active.map { PlayerSetup(names[it].trim(), colors[it]!!, isBot[it]) }, startMoney, timeMinutes, dice, layout)
+                onStart(active.map { PlayerSetup(names[it].trim(), colors[it]!!, isBot[it], catalin[it]) }, startMoney, timeMinutes, dice, layout)
             },
             enabled = valid,
             modifier = Modifier.fillMaxWidth(),

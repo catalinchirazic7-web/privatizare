@@ -12,6 +12,19 @@ import { CONNECT_TIMEOUT_MS, DONATE } from '../config.js';
 
 const $ = (id) => document.getElementById(id);
 
+/* ---------- Locurile: OM → ROBOT → CATALINROBOT → OM ---------- */
+
+function seatLabel(seat) {
+  if (!seat.isBot) return 'OM';
+  return seat.catalin ? 'CATALINROBOT' : 'ROBOT';
+}
+
+function cycleSeat(seat) {
+  if (!seat.isBot) { seat.isBot = true; seat.catalin = false; }
+  else if (!seat.catalin) seat.catalin = true;
+  else { seat.isBot = false; seat.catalin = false; }
+}
+
 /* ---------- Ecranul principal ---------- */
 
 export function initHome(app) {
@@ -54,7 +67,7 @@ function openAbout(app) {
     el('p', { text: 'Joc de societate românesc, pentru tineret și adulți. Se joacă în 2–4 persoane.' }),
     el('p', { html: '<strong>Proiect independent realizat de Chirazic Catalin</strong>' }),
     el('p', { class: 'muted', text: 'Contact: catalinchirazic7@gmail.com' }),
-    el('p', { class: 'muted', text: 'Versiune 1.03 (web)' }),
+    el('p', { class: 'muted', text: 'Versiune 1.04 (web)' }),
     el('div', { class: 'actions' }, el('button', { class: 'btn primary', type: 'button', text: 'Închide', onclick: closeModal })),
   ));
 }
@@ -91,6 +104,7 @@ export class SetupView {
       name: saved?.seats?.[i]?.name ?? `Jucător ${i + 1}`,
       colorKey: saved?.seats?.[i]?.colorKey ?? defaults[i],
       isBot: saved?.seats?.[i]?.isBot ?? false,
+      catalin: saved?.seats?.[i]?.catalin ?? false,   // CatalinRobot (doar când isBot)
     }));
     this.bind();
   }
@@ -167,8 +181,8 @@ export class SetupView {
         el('div', { class: 'seat-head' },
           el('strong', { text: `Locul ${i + 1}` }),
           el('button', {
-            class: 'btn ghost small', type: 'button', text: seat.isBot ? 'ROBOT' : 'OM',
-            onclick: () => { seat.isBot = !seat.isBot; this.render(); },
+            class: 'btn ghost small', type: 'button', text: seatLabel(seat),
+            onclick: () => { cycleSeat(seat); this.render(); },
           }),
         ),
         el('label', { class: 'field-label', text: 'Nume' },
@@ -202,7 +216,7 @@ export class SetupView {
     if (!this.valid()) return;
     const config = { count: this.count, money: this.money, time: this.time, dice: this.dice, layout: this.layout, seats: this.seats.map((s) => ({ ...s })) };
     storage.saveSetup(config);
-    const setup = this.active().map((s) => ({ name: s.name.trim(), colorKey: s.colorKey, isBot: s.isBot }));
+    const setup = this.active().map((s) => ({ name: s.name.trim(), colorKey: s.colorKey, isBot: s.isBot, catalin: s.catalin }));
     this.app.startLocal(setup, this.money, this.time, this.dice, this.layout);
   }
 }

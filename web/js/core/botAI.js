@@ -77,7 +77,7 @@ export function visitsByOpponent(state, botIdx, propertyId) {
 /* ---------- Analiza situației ---------- */
 
 /** Chiria pe care o plătește cine intră pe căsuța [tileIndex] (0 dacă nu e plătibilă). */
-function rentOnTile(state, botIdx, board, actions, tileIndex) {
+export function rentOnTile(state, botIdx, board, actions, tileIndex) {
   const tile = board[tileIndex];
   if (tile.type !== TILE.PROPERTY) return { rent: 0, ownerId: null };
   const me = state.players[botIdx];

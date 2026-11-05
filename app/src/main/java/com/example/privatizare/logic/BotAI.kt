@@ -6,6 +6,7 @@ import com.example.privatizare.data.model.Tile
 import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 /**
  * Inteligența robotului (port din web/js/core/botAI.js). Funcții pure: primesc starea, returnează decizia.
@@ -188,5 +189,80 @@ object BotAI {
             money += value
         }
         return sales
+    }
+
+    /* ---------- CatalinRobot: analiză pe orizont (port din web/js/core/catalinAI.js) ---------- */
+
+    const val CATALIN_HORIZON = 10
+
+    /** Distribuția pasului robotului: fiecare zar cu noroc, suma pe [diceCount] zaruri. */
+    fun botStepDistribution(diceCount: Int = DICE_COUNT, luck: Double = CATALIN_LUCK): Map<Int, Double> {
+        val die = (1..6).associateWith { k -> (1 - luck) / 6 + luck * (2 * k - 1) / 36.0 }
+        var dist: Map<Int, Double> = mapOf(0 to 1.0)
+        repeat(diceCount) {
+            val next = HashMap<Int, Double>()
+            for ((s, p) in dist) for ((k, q) in die) next[s + k] = (next[s + k] ?: 0.0) + p * q
+            dist = next
+        }
+        return dist
+    }
+
+    /** Chiria așteptată pe care o plătește robotul în următoarele [horizon] ture, din lanțul de poziții. */
+    fun expectedRentPaid(
+        state: GameState, botId: String, board: List<Tile>, actions: Map<String, PropertyAction>,
+        diceCount: Int = DICE_COUNT, horizon: Int = CATALIN_HORIZON,
+    ): Double {
+        val me = state.players.first { it.id == botId }
+        if (me.position !in board.indices) return 0.0
+        val dist = botStepDistribution(diceCount)
+        var pos = DoubleArray(board.size).also { it[me.position] = 1.0 }
+        var paid = 0.0
+        repeat(horizon) {
+            val next = DoubleArray(board.size)
+            for (i in board.indices) if (pos[i] != 0.0) for ((s, p) in dist) next[(i + s) % board.size] += pos[i] * p
+            for (i in board.indices) paid += next[i] * rentOnTile(state, botId, board, actions, i)
+            pos = next
+        }
+        return paid
+    }
+
+    /** Câștigul net pe orizont: chiriile adversarilor în plus minus pierderea la revânzare (20%), și prețul. */
+    fun horizonGain(
+        state: GameState, botId: String, board: List<Tile>, actions: Map<String, PropertyAction>,
+        propertyId: String, option: BuyOption, diceCount: Int = DICE_COUNT, horizon: Int = CATALIN_HORIZON,
+    ): Pair<Double, Long> {
+        val me = state.players.first { it.id == botId }
+        val prop = actions.getValue(propertyId)
+        val oldLevel = me.ownedProperties[propertyId] ?: -1
+        val newLevel = when (option) { is BuyOption.Title -> 0; is BuyOption.AnnexOption -> option.annex.index }
+        val price = when (option) { is BuyOption.Title -> prop.titlePrice; is BuyOption.AnnexOption -> option.annex.price }
+        val oldRent = if (oldLevel < 0) 0L else ActionCalculator.calculateRent(prop, oldLevel)
+        val newRent = ActionCalculator.calculateRent(prop, newLevel)
+        val oldSale = if (oldLevel < 0) 0L else ActionCalculator.wholeSaleValue(prop, oldLevel)
+        val newSale = ActionCalculator.wholeSaleValue(prop, newLevel)
+        val rate = visitRate(state, botId, board.size, propertyId, diceCount)
+        val extraRent = (newRent - oldRent) * rate * horizon
+        val lostValue = price - (newSale - oldSale)
+        return (extraRent - lostValue) to price
+    }
+
+    /**
+     * Decizia CatalinRobot: cumpără dacă are banii, rămâne peste rezerva pentru chiriile așteptate
+     * pe orizont (și peste rezerva de siguranță) și câștigul pe orizont este pozitiv.
+     */
+    fun decideCatalin(
+        state: GameState, botId: String, board: List<Tile>, actions: Map<String, PropertyAction>,
+        propertyId: String, option: BuyOption, diceCount: Int = DICE_COUNT,
+    ): Boolean {
+        val me = state.players.first { it.id == botId }
+        val (gain, price) = horizonGain(state, botId, board, actions, propertyId, option, diceCount)
+        if (me.money < price) return false
+        val after = me.money - price
+        val reserve = maxOf(
+            MIN_SAFETY_BUFFER,
+            expectedRentPaid(state, botId, board, actions, diceCount).roundToLong(),
+            safetyBuffer(state, botId, board, actions, diceCount),
+        )
+        return after >= reserve && gain > 0
     }
 }

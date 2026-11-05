@@ -12,6 +12,8 @@ import com.example.privatizare.data.model.Player
 import com.example.privatizare.data.model.PropertyAction
 import com.example.privatizare.data.model.Tile
 import com.example.privatizare.logic.BotAI
+import com.example.privatizare.logic.CATALIN_LUCK
+import com.example.privatizare.logic.rollBotDie
 import com.example.privatizare.logic.GameRules
 import com.example.privatizare.multiplayer.CardSnap
 import com.example.privatizare.multiplayer.DebtSnap
@@ -31,7 +33,7 @@ import com.example.privatizare.logic.TurnEngine
 import com.example.privatizare.logic.distributeStartingMoney
 
 /** Setarea unui jucător din ecranul de configurare. */
-data class PlayerSetup(val name: String, val color: PawnColor, val isBot: Boolean = false)
+data class PlayerSetup(val name: String, val color: PawnColor, val isBot: Boolean = false, val catalin: Boolean = false)
 
 /** Dialogul activ al turei. Cât timp există unul nerezolvat, zarul e blocat și tura nu trece. */
 sealed class TurnDialog {
@@ -70,6 +72,8 @@ class GameViewModel(
     private val catalog: GameRepository.Catalog,
     /** Zarul robotului. Injectabil ca testele să fie deterministe. */
     private val botDie: () -> Int = { (1..6).random() },
+    /** Zarul CatalinRobot (cu noroc). Injectabil ca testele să fie deterministe. */
+    private val catalinDie: () -> Int = { rollBotDie(luck = CATALIN_LUCK) },
 ) : ViewModel() {
 
     private val engine = TurnEngine(catalog.board, catalog.actions, catalog.loto, catalog.telex)
@@ -315,7 +319,10 @@ class GameViewModel(
         val dist = if (moneyPerPlayer == null) distributeStartingMoney(setup.size)
             else distributeStartingMoney(setup.size, moneyPerPlayer)
         val players = setup.mapIndexed { i, s ->
-            Player(id = "p$i", name = s.name, color = s.color, money = dist.playerMoney, isBot = s.isBot, position = GameRules.START_POSITION)
+            Player(
+                id = "p$i", name = s.name, color = s.color, money = dist.playerMoney, isBot = s.isBot,
+                catalin = s.isBot && s.catalin, position = GameRules.START_POSITION,
+            )
         }
         game = GameState(players = players, bankMoney = dist.bankMoney)
         currentIndex = 0
@@ -463,17 +470,18 @@ class GameViewModel(
                 BotAI.liquidationSales(p.id, d.debt.amount, game ?: return false, catalog.board, catalog.actions),
             )
             is TurnDialog.BuyDecisionPending -> {
-                val accept = BotAI.decideBuy(
-                    game ?: return false, p.id, catalog.board, catalog.actions,
-                    d.offer.propertyId, d.offer.option,
-                )
+                val accept = if (p.catalin) {
+                    BotAI.decideCatalin(game ?: return false, p.id, catalog.board, catalog.actions, d.offer.propertyId, d.offer.option)
+                } else {
+                    BotAI.decideBuy(game ?: return false, p.id, catalog.board, catalog.actions, d.offer.propertyId, d.offer.option)
+                }
                 if (accept) acceptOffer() else refuseOffer()
             }
             is TurnDialog.BankFeePending -> acknowledgeBankFee()
             is TurnDialog.RentDuePending -> payRent()
             is TurnDialog.CardPending -> dismissCard()
             is TurnDialog.DrawPending -> drawCard()
-            null -> if (turnAwaitingEnd) endTurn() else rollDice(List(diceCount) { botDie() })
+            null -> if (turnAwaitingEnd) endTurn() else rollDice(List(diceCount) { if (p.catalin) catalinDie() else botDie() })
         }
         return true
     }
@@ -571,6 +579,8 @@ class GameViewModel(
         val size = game?.players?.size ?: return
         if (size == 0) return
         currentIndex = (currentIndex + 1) % size
+        // un rând complet (s-a întors la primul jucător) = o tură pentru statistici și pentru robot
+        if (currentIndex == 0) game = game?.let { it.copy(turn = it.turn + 1) }
         turnAwaitingEnd = false
         skipBanner = null
         prepareHandover()

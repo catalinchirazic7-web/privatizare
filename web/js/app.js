@@ -4,7 +4,7 @@
 import { loadCatalog } from './core/model.js';
 import { Game } from './game/game.js';
 import { GameScreen } from './game/gameScreen.js';
-import { rollDie } from './core/dice.js';
+import { rollBotDie } from './core/dice.js';
 import { storage } from './storage.js';
 import { sound } from './audio.js';
 import * as menus from './ui/menus.js';
@@ -182,7 +182,7 @@ async function boot() {
   window.addEventListener('error', (e) => app.toast(`Eroare: ${e.message}`));
 
   app.catalog = await loadCatalog('./data/');
-  app.game = new Game(app.catalog, { botDie: () => rollDie() });
+  app.game = new Game(app.catalog, { botDie: (luck = 0) => rollBotDie(Math.random, luck) });
   app.gameScreen = new GameScreen({
     root: $('scr-game'),
     catalog: app.catalog,

@@ -48,6 +48,8 @@ object SetupMemory {
         val names: List<String>,
         val colors: List<String?>,
         val bots: List<Boolean>,
+        /** CatalinRobot pe locurile robot (implicit: robot clasic). */
+        val catalin: List<Boolean> = listOf(false, false, false, false),
         val money: Long?,
         val timeMinutes: Int?,
         /** 1 zar (implicit) sau 2 zaruri (mod nou, doar local). */
@@ -64,6 +66,7 @@ object SetupMemory {
             names = (0 until 4).map { p.getString("name$it", null) ?: "Jucător ${it + 1}" },
             colors = (0 until 4).map { p.getString("color$it", null) },
             bots = (0 until 4).map { p.getBoolean("bot$it", false) },
+            catalin = (0 until 4).map { p.getBoolean("catalin$it", false) },
             money = p.getLong("money", -1L).takeIf { it > 0 },
             timeMinutes = p.getInt("time", -1).takeIf { it > 0 },
             dice = if (p.getInt("dice", 1) == 2) 2 else 1,
@@ -78,6 +81,7 @@ object SetupMemory {
             c.names.forEachIndexed { i, n -> e.putString("name$i", n) }
             c.colors.forEachIndexed { i, col -> e.putString("color$i", col) }
             c.bots.forEachIndexed { i, b -> e.putBoolean("bot$i", b) }
+            c.catalin.forEachIndexed { i, b -> e.putBoolean("catalin$i", b) }
             e.putLong("money", c.money ?: -1L)
             e.putInt("time", c.timeMinutes ?: -1)
             e.putInt("dice", c.dice)
