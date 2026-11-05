@@ -198,6 +198,21 @@ async function boot() {
   menus.bindLobby(app);
   menus.refreshHome();
 
+  // butonul rotund de sunet (stânga-sus): roșu = oprit, verde = pornit
+  const soundFab = $('sound-fab');
+  const syncSoundFab = () => {
+    soundFab.classList.toggle('on', sound.enabled);
+    soundFab.textContent = sound.enabled ? '🔊' : '🔇';
+    soundFab.setAttribute('aria-label', sound.enabled ? 'Sunet pornit' : 'Sunet oprit');
+  };
+  soundFab.addEventListener('click', () => {
+    sound.unlock();
+    sound.toggle();
+    syncSoundFab();
+  });
+  window.addEventListener('sound-changed', syncSoundFab);
+  syncSoundFab();
+
   $('intro-skip').addEventListener('click', () => app.show('home'));
   $('intro-start').addEventListener('click', () => {
     $('intro-start').hidden = true;

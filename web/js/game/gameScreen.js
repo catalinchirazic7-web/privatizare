@@ -174,6 +174,7 @@ export class GameScreen {
     });
     $('toggle-sound').addEventListener('click', () => {
       sound.toggle();
+      window.dispatchEvent(new Event('sound-changed'));
       this.render();
     });
     $('btn-game-exit').addEventListener('click', () => this.exitToMenu());

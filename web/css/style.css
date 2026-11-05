@@ -456,3 +456,15 @@ input { -webkit-user-select: text; user-select: text; }
 /* zarul în rostogolire: se leagănă ușor */
 .die.is-rolling { animation: die-wobble .21s ease-in-out infinite alternate; }
 @keyframes die-wobble { from { transform: translate(-50%,-50%) rotate(-12deg); } to { transform: translate(-50%,-50%) rotate(12deg); } }
+
+/* butonul rotund de sunet, în colțul stânga-sus: roșu = oprit, verde = pornit */
+.sound-fab {
+  position: fixed; top: 10px; left: 10px; z-index: 60;
+  width: 46px; height: 46px; border-radius: 50%;
+  border: 3px solid rgba(255,255,255,.85);
+  background: #D32F2F; color: #fff;
+  font-size: 22px; line-height: 1; padding: 0;
+  box-shadow: 0 3px 10px rgba(0,0,0,.45);
+  cursor: pointer;
+}
+.sound-fab.on { background: #2E7D32; }
