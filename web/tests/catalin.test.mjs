@@ -69,17 +69,18 @@ test('fără bani suficienți, CatalinRobot refuză', () => {
   assert.equal(catalinDecideBuy({ state: s, botIdx: 0, board, actions: cat.actions, propertyId: propId, option: titleOption }), false);
 });
 
-test('după cumpărare trebuie să rămână rezerva (chiriile așteptate pe orizont)', () => {
+test('titlul: cumpără orice titlu pe care ajunge, chiar cu bani puțini rămași', () => {
   const price = cat.actions[propId].titlePrice;
   const s = state(price + 1);
-  assert.equal(catalinDecideBuy({ state: s, botIdx: 0, board, actions: cat.actions, propertyId: propId, option: titleOption }), false);
+  assert.equal(catalinDecideBuy({ state: s, botIdx: 0, board, actions: cat.actions, propertyId: propId, option: titleOption }), true);
 });
 
-test('cu bani mulți, decizia urmează semnul câștigului pe orizont', () => {
-  const s = state(1e9);
-  const { gain } = horizonGain({ state: s, botIdx: 0, board, actions: cat.actions, propertyId: propId, option: titleOption });
-  const decided = catalinDecideBuy({ state: s, botIdx: 0, board, actions: cat.actions, propertyId: propId, option: titleOption });
-  assert.equal(decided, gain > 0);
+test('anexa: rămâne rezerva (chiriile așteptate pe orizont) și câștigul pe orizont', () => {
+  const prop = cat.actions[propId];
+  const annex = prop.annexes[0];
+  const s = state(annex.price + 1);
+  const annexOption = { type: 'ANNEX', annex };
+  assert.equal(catalinDecideBuy({ state: s, botIdx: 0, board, actions: cat.actions, propertyId: propId, option: annexOption }), false);
 });
 
 test('chiria așteptată plătită de robot este nenegativă și zero fără proprietăți ale adversarilor', () => {

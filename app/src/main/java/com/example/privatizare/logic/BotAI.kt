@@ -226,6 +226,56 @@ object BotAI {
         return paid
     }
 
+    /** Ture analizate exact (toate căile zarului) pentru riscul de lichiditate la anexe. */
+    const val OUTLOOK_TURNS = 3
+
+    /**
+     * Toate căile zarului pe [horizon] ture: distribuția chiriilor totale plătite (total -> probabilitate)
+     * și cheltuiala așteptată pe titlurile libere pe care ajunge robotul.
+     */
+    fun pathOutlook(
+        state: GameState, botId: String, board: List<Tile>, actions: Map<String, PropertyAction>,
+        diceCount: Int = DICE_COUNT, horizon: Int = OUTLOOK_TURNS,
+    ): Pair<Map<Long, Double>, Double> {
+        val me = state.players.first { it.id == botId }
+        if (me.position !in board.indices) return emptyMap<Long, Double>() to 0.0
+        val dist = botStepDistribution(diceCount)
+        var states = HashMap<Pair<Int, Long>, Double>().apply { put(me.position to 0L, 1.0) }
+        var titleSpend = 0.0
+        repeat(horizon) {
+            val next = HashMap<Pair<Int, Long>, Double>()
+            for ((key, p) in states) {
+                val (pos, rent) = key
+                for ((s, q) in dist) {
+                    val idx = (pos + s) % board.size
+                    val tile = board[idx]
+                    val pp = p * q
+                    if (tile is Tile.Property && me.ownedProperties[tile.propertyId] == null &&
+                        state.players.none { it.id != botId && it.ownedProperties.containsKey(tile.propertyId) }
+                    ) {
+                        titleSpend += pp * actions.getValue(tile.propertyId).titlePrice
+                    }
+                    val nk = idx to rent + rentOnTile(state, botId, board, actions, idx)
+                    next[nk] = (next[nk] ?: 0.0) + pp
+                }
+            }
+            states = next
+        }
+        val rentDist = HashMap<Long, Double>()
+        for ((key, p) in states) rentDist[key.second] = (rentDist[key.second] ?: 0.0) + p
+        return rentDist to titleSpend
+    }
+
+    /** Valoarea sub care rămâne cel puțin [q] din probabilitate (ex. 0.9: rareori se plătește mai mult). */
+    fun rentQuantile(rentDist: Map<Long, Double>, q: Double): Long {
+        var acc = 0.0
+        for ((r, p) in rentDist.toSortedMap()) {
+            acc += p
+            if (acc >= q) return r
+        }
+        return rentDist.keys.maxOrNull() ?: 0L
+    }
+
     /** Câștigul net pe orizont: chiriile adversarilor în plus minus pierderea la revânzare (20%), și prețul. */
     fun horizonGain(
         state: GameState, botId: String, board: List<Tile>, actions: Map<String, PropertyAction>,
@@ -257,10 +307,16 @@ object BotAI {
         val me = state.players.first { it.id == botId }
         val (gain, price) = horizonGain(state, botId, board, actions, propertyId, option, diceCount)
         if (me.money < price) return false
+        // Titlul: cumpără orice titlu pe care ajunge, cât timp are banii.
+        if (option is BuyOption.Title) return true
         val after = me.money - price
+        // Rezerva pentru anexă: chiria plătită în 90% din cazuri în următoarele ture, banii pentru
+        // titlurile pe care le va întâlni, și rezerva de siguranță.
+        val (rentDist, titleSpend) = pathOutlook(state, botId, board, actions, diceCount)
         val reserve = maxOf(
             MIN_SAFETY_BUFFER,
-            expectedRentPaid(state, botId, board, actions, diceCount).roundToLong(),
+            rentQuantile(rentDist, 0.9),
+            titleSpend.roundToLong(),
             safetyBuffer(state, botId, board, actions, diceCount),
         )
         return after >= reserve && gain > 0
