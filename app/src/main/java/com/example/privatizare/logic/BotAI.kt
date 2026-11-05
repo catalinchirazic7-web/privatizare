@@ -196,7 +196,7 @@ object BotAI {
 
     const val CATALIN_HORIZON = 10
     /** Șansa ca robotul să-și aleagă fața zarului (restul: aruncare cu noroc). */
-    const val CATALIN_CONTROL = 0.9
+    const val CATALIN_CONTROL = 0.6
     /** La anexă rămâne cel puțin această fracțiune din banii de acum. */
     const val ANNEX_KEEP = 0.2
 

@@ -4,7 +4,7 @@
 export const CATALIN_LUCK = 0.25;
 
 /** Șansa ca robotul CatalinRobot să-și aleagă zarul (și cartonașul), în loc să lase la întâmplare. */
-export const CATALIN_CONTROL = 0.9;
+export const CATALIN_CONTROL = 0.6;
 
 export function rollDie(rng = Math.random) {
   return 1 + Math.floor(rng() * 6);
