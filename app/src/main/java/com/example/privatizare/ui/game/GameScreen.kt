@@ -54,6 +54,7 @@ import com.example.privatizare.ui.online.OnlineMenuScreen
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -461,6 +462,10 @@ fun GameScreen(vm: GameViewModel, catalog: GameRepository.Catalog, onExit: () ->
     val boardLayout = catalog.layouts[vm.boardLayout]
         ?: GameRepository.Layout(catalog.positions, catalog.decks, catalog.startMarker)
     val boardIsNew = vm.boardLayout == "new"
+    // pionii care se mișcă acum, și banii afișați: o creștere apare abia când pionul ajunge (ca în web)
+    var movingIds by remember { mutableStateOf<Set<String>>(emptySet()) }
+    val shownMoney = remember { mutableStateMapOf<String, Long>() }
+    val rechematTile = remember(catalog) { catalog.board.indexOfFirst { it is Tile.RechematUrgent } }
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val screenH = maxHeight
@@ -516,6 +521,8 @@ fun GameScreen(vm: GameViewModel, catalog: GameRepository.Catalog, onExit: () ->
                 highlightColor = Color(current?.color?.hex ?: 0xFFFFD54F),
                 startMarker = boardLayout.startMarker,
                 tilt = tiltBoard,
+                rechematTile = rechematTile,
+                onMovingIds = { movingIds = it },
                 onTileTap = { idx ->
                     val prop = catalog.board.getOrNull(idx) as? Tile.Property
                     if (prop != null && dialog == null && vm.winnerName == null) sheetProperty = prop.propertyId
@@ -523,7 +530,7 @@ fun GameScreen(vm: GameViewModel, catalog: GameRepository.Catalog, onExit: () ->
                 overlay = { bw, bh ->
                     // banii fizici ai jucătorului uman afișat; desenați sub zar, ca zarul să primească atingerile
                     cashOwner?.let { owner ->
-                        CashStacks(owner.money, bw, bh, flight)
+                        CashStacks(shownMoney[owner.id] ?: owner.money, bw, bh, flight)
                     }
                     // zarul în zona liberă din centrul careului
                     val twoDice = vm.diceCount == 2 && !vm.isGuest
@@ -555,7 +562,10 @@ fun GameScreen(vm: GameViewModel, catalog: GameRepository.Catalog, onExit: () ->
                 },
             )
             // sumele +/− de pe tablă, 3 secunde, ca în web
-            MoneyFloats(game.players, modifier = Modifier.align(Alignment.TopCenter).padding(top = 56.dp))
+            MoneyFloats(
+                game.players.map { p -> p.copy(money = shownMoney[p.id] ?: p.money) },
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = 56.dp),
+            )
         }
 
         // Cardul căsuței pe care s-a aterizat: nume mare, iconiță și situația proprietății
@@ -821,6 +831,13 @@ fun GameScreen(vm: GameViewModel, catalog: GameRepository.Catalog, onExit: () ->
     }
     // Când apare un dialog de joc, fișa se închide ca să nu se suprapună
     LaunchedEffect(dialog) { if (dialog != null) sheetProperty = null }
+    // banii afișați: o creștere apare abia la sosirea pionului; o scădere apare imediat
+    LaunchedEffect(vm.game?.players, movingIds) {
+        for (p in vm.game?.players ?: emptyList()) {
+            val before = shownMoney[p.id]
+            shownMoney[p.id] = if (before == null || p.id !in movingIds || p.money < before) p.money else before
+        }
+    }
     // sunetele ferestrelor de joc, ca în web: cartonaș, cumpărare, datorie
     LaunchedEffect(dialog) {
         when (dialog) {

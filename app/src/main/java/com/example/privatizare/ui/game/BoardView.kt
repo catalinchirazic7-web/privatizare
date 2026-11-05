@@ -176,6 +176,10 @@ fun BoardView(
     boardAspect: Float = BOARD_ASPECT_OLD,
     /** Conținut desenat pe tablă (zarul), poziționat cu fracții din dimensiunea tablei. */
     overlay: @Composable (boardWidth: Dp, boardHeight: Dp) -> Unit = { _, _ -> },
+    /** Căsuța RECHEMAT URGENT (unde pionul merge pas cu pas înainte să fie trimis la START); -1 = nu există. */
+    rechematTile: Int = -1,
+    /** Id-urile pionilor aflați în mișcare: banii unui jucător care urcă apar abia la sosire. */
+    onMovingIds: (Set<String>) -> Unit = {},
 ) {
     BoxWithConstraints(
         modifier = (if (stretch) modifier else modifier.aspectRatio(boardAspect)).clipToBounds(),
@@ -190,6 +194,8 @@ fun BoardView(
         val movingPawns = remember { mutableStateMapOf<String, Boolean>() }
         val anyMoving = movingPawns.isNotEmpty()
         LaunchedEffect(anyMoving) { onPawnsBusy(anyMoving) }
+        val movingKeys = movingPawns.keys.toSet()
+        LaunchedEffect(movingKeys) { onMovingIds(movingKeys) }
 
         LaunchedEffect(presetNonce) {
             val f = focusIndex?.let { positions.getOrNull(it) }
@@ -292,6 +298,7 @@ fun BoardView(
                         startMarker = startMarker,
                         dieBusy = dieBusy,
                         onMoving = { moving -> if (moving) movingPawns[p.id] = true else movingPawns.remove(p.id) },
+                        rechematTile = rechematTile,
                     )
                 }
             }
@@ -336,6 +343,7 @@ private fun PawnView(
     startMarker: Pair<Float, Float>,
     dieBusy: () -> Boolean,
     onMoving: (Boolean) -> Unit,
+    rechematTile: Int = -1,
 ) {
     val total = positions.size
     if (total == 0) return
@@ -357,6 +365,16 @@ private fun PawnView(
             val forward = (target - start + total) % total
             val backward = (start - target + total) % total
             when {
+                // RECHEMAT URGENT: pionul merge pas cu pas, pe drumul zarului, până la căsuța RECHEMAT
+                // (adversarii o văd), apoi e trimis la START. Fără bonus, ca în web.
+                target < 0 && rechematTile >= 0 -> {
+                    val toRechemat = (rechematTile - start + total) % total
+                    for (i in 1..toRechemat) {
+                        GameSound.step()
+                        travel.animateTo((start + i).toFloat(), tween(WALK_MS, easing = LinearEasing))
+                    }
+                    travel.snapTo(target.toFloat())
+                }
                 forward in 1..12 -> for (i in 1..forward) {
                     GameSound.step()
                     travel.animateTo((start + i).toFloat(), tween(STEP_MS, easing = LinearEasing))
@@ -642,7 +660,9 @@ fun propertyMarkers(players: List<Player>, propertyTiles: Map<String, Int>): Lis
     }
 
 /** Cât durează un pas al pionului de pe o căsuță pe alta. */
-private const val STEP_MS = 1000
+// ca în web: un pas pe tablă durează 430 ms, iar mersul forțat (RECHEMAT) 240 ms
+private const val STEP_MS = 430
+private const val WALK_MS = 240
 
 @Composable
 private fun PropertyMarkerView(marker: PropertyMarker, position: Pair<Float, Float>, boardWidth: Dp, boardHeight: Dp) {
