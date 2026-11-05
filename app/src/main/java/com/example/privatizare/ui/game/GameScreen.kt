@@ -417,6 +417,10 @@ fun GameScreen(vm: GameViewModel, catalog: GameRepository.Catalog, onExit: () ->
     var dieBusy by remember { mutableStateOf(false) }   // zarul se rostogolește: pionii așteaptă să se oprească
     var stretchBoard by remember { mutableStateOf(true) }   // implicit: tabla umple tot ecranul
     var tiltBoard by remember { mutableStateOf(true) }      // tabla înclinată în perspectivă (efect 3D)
+    // sunetul: setarea salvată, și butonul din meniu care o schimbă
+    val soundContext = LocalContext.current
+    remember { GameSound.init(soundContext) }
+    var soundOn by remember { mutableStateOf(GameSound.enabled) }
     var hudTouches by remember { mutableIntStateOf(0) }
     // Căsuța pe care s-a aterizat: primește un inel pulsatoriu și un card mare cu nume + iconiță
     // Fișa acțiunii deschise (cartonașul original al unei firme)
@@ -424,6 +428,10 @@ fun GameScreen(vm: GameViewModel, catalog: GameRepository.Catalog, onExit: () ->
     var landedTile by remember { mutableStateOf<Int?>(null) }
     var cardVisible by remember { mutableStateOf(false) }
     var cardNonce by remember { mutableIntStateOf(0) }
+    // căsuța unde urmează să ajungă pionul pulsează din clipa în care starea primește mutarea, ca în web
+    LaunchedEffect(vm.currentPlayer?.position, pawnsBusy) {
+        if (pawnsBusy) vm.currentPlayer?.let { landedTile = it.position }
+    }
     LaunchedEffect(pawnsBusy) {
         if (!pawnsBusy) {
             vm.currentPlayer?.let {
@@ -546,6 +554,8 @@ fun GameScreen(vm: GameViewModel, catalog: GameRepository.Catalog, onExit: () ->
                     }
                 },
             )
+            // sumele +/− de pe tablă, 3 secunde, ca în web
+            MoneyFloats(game.players, modifier = Modifier.align(Alignment.TopCenter).padding(top = 56.dp))
         }
 
         // Cardul căsuței pe care s-a aterizat: nume mare, iconiță și situația proprietății
@@ -689,6 +699,10 @@ fun GameScreen(vm: GameViewModel, catalog: GameRepository.Catalog, onExit: () ->
                             OutlinedButton(onClick = { tiltBoard = !tiltBoard }) {
                                 Text(if (tiltBoard) "3D: pornit" else "3D: oprit")
                             }
+                            Spacer(Modifier.width(6.dp))
+                            OutlinedButton(onClick = { soundOn = GameSound.toggle(soundContext) }) {
+                                Text(if (soundOn) "Sunet: pornit" else "Sunet: oprit")
+                            }
                         }
                         Spacer(Modifier.height(6.dp))
                         Row {
@@ -807,8 +821,21 @@ fun GameScreen(vm: GameViewModel, catalog: GameRepository.Catalog, onExit: () ->
     }
     // Când apare un dialog de joc, fișa se închide ca să nu se suprapună
     LaunchedEffect(dialog) { if (dialog != null) sheetProperty = null }
+    // sunetele ferestrelor de joc, ca în web: cartonaș, cumpărare, datorie
+    LaunchedEffect(dialog) {
+        when (dialog) {
+            is TurnDialog.CardPending -> GameSound.card()
+            is TurnDialog.BuyDecisionPending -> GameSound.coin()
+            is TurnDialog.DebtPending -> GameSound.alert()
+            else -> Unit
+        }
+    }
 
     var winVideoDone by remember { mutableStateOf(false) }
+    // la fereastra „Joc terminat” se aude cumpărarea, ca în web
+    LaunchedEffect(vm.winnerName, winVideoDone) {
+        if (vm.winnerName != null && winVideoDone) GameSound.buy()
+    }
     vm.winnerName?.let { winner ->
         if (!winVideoDone) {
             // Clipul de victorie pe tot ecranul; apoi apare fereastra cu câștigătorul.

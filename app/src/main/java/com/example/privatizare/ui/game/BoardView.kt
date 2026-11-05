@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -36,12 +37,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -61,6 +74,8 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.PI
 import kotlin.math.floor
 import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
 
@@ -343,9 +358,11 @@ private fun PawnView(
             val backward = (start - target + total) % total
             when {
                 forward in 1..12 -> for (i in 1..forward) {
+                    GameSound.step()
                     travel.animateTo((start + i).toFloat(), tween(STEP_MS, easing = LinearEasing))
                 }
                 backward in 1..6 -> for (i in 1..backward) {
+                    GameSound.step()
                     travel.animateTo((start - i).toFloat(), tween(STEP_MS, easing = LinearEasing))
                 }
                 else -> travel.snapTo(target.toFloat())   // salt (ex. RECHEMAT URGENT)
@@ -485,7 +502,15 @@ private fun TileHighlight(pos: Pair<Float, Float>, boardWidth: Dp, boardHeight: 
     }
 }
 
-/** Pachetul de cartonașe, cu spatele în sus, pus peste caseta lui de pe tablă (straturi decalate pentru efect de stivă). */
+/** Straturile și decalajul teancului 3D, ca în web (board.js: DECK_LAYERS, DECK_OFFSET). */
+private const val DECK_LAYERS = 12
+private const val DECK_OFFSET = 0.24f
+
+/**
+ * Teancul de cartonașe pus peste caseta lui de pe tablă, ca în web (board.js, drawDecks):
+ * 12 straturi decalate în sus-dreapta, cu fețe laterale și umbră, lumină pe cartonașul de sus,
+ * pulsare cât e rândul jucătorului să tragă, și eticheta TRAGE.
+ */
 @Composable
 private fun DeckStack(
     rect: GameRepository.DeckRect,
@@ -496,58 +521,111 @@ private fun DeckStack(
     active: Boolean = false,
     onTap: () -> Unit = {},
 ) {
-    val pulse = remember { Animatable(1f) }
-    ForcedLaunchedEffect(active) {
-        if (!active) { pulse.snapTo(1f); return@ForcedLaunchedEffect }
-        while (true) {
-            pulse.animateTo(1.07f, tween(600))
-            pulse.animateTo(1f, tween(600))
-        }
-    }
-    // Pachetul umple tot chenarul; straturile de dedesubt se văd ca margini de stivă
+    val image = ImageBitmap.imageResource(id = drawable)
+    val transition = rememberInfiniteTransition(label = "teanc")
+    val phase by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(1200, easing = LinearEasing), RepeatMode.Restart),
+        label = "teancFaza",
+    )
+    val pulse = if (active) 1f + 0.07f * (0.5f - 0.5f * cos(2f * PI.toFloat() * phase)) else 1f
     val w = boardWidth * rect.w
     val h = boardHeight * rect.h
-    val x = boardWidth * rect.x
-    val y = boardHeight * rect.y
-    Box(
+    Canvas(
         modifier = Modifier
-            .graphicsLayer {
-                translationX = x.toPx()
-                translationY = y.toPx()
-                scaleX = pulse.value
-                scaleY = pulse.value
-            }
+            .offset(x = boardWidth * rect.x, y = boardHeight * rect.y)
             .size(w, h)
+            .semantics { contentDescription = description }
             .clickable(enabled = active, onClick = onTap),
     ) {
-        for (layer in 2 downTo 0) {
-            Image(
-                painter = painterResource(id = drawable),
-                contentDescription = if (layer == 0) description else null,
-                contentScale = ContentScale.FillBounds,
-                modifier = Modifier
-                    .padding(start = (layer * 2).dp, top = (layer * 2).dp)
-                    .size(w - 4.dp, h - 4.dp)
-                    .border(
-                        if (active && layer == 0) 3.dp else 1.dp,
-                        if (active && layer == 0) Color(0xFFF0D20E) else Color.Black.copy(alpha = 0.6f),
-                    ),
-            )
-        }
-        if (active) {
-            // invitația de a trage: eticheta TRAGE peste pachetul care pulsează
-            Text(
-                "TRAGE",
-                color = Color.White,
-                fontWeight = FontWeight.Black,
-                fontSize = 22.sp,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .background(Color.Black.copy(alpha = 0.65f), RoundedCornerShape(8.dp))
-                    .padding(horizontal = 14.dp, vertical = 6.dp),
-            )
+        val bh = boardHeight.toPx()
+        scale(pulse, pivot = Offset(size.width / 2f, size.height / 2f)) {
+            drawDeck(image, size.width, size.height, bh, active)
         }
     }
+}
+
+/** Desenează teancul în spațiul casetei [W]x[H]; [bh] = înălțimea tablei (pentru mărimile de text). */
+private fun DrawScope.drawDeck(image: ImageBitmap, W: Float, H: Float, bh: Float, active: Boolean) {
+    val off = min(W, H) * DECK_OFFSET
+    val step = off / (DECK_LAYERS - 1)
+    fun cardAt(i: Int): Offset {
+        val k = DECK_LAYERS - 1 - i          // 0 pentru cartonașul de sus
+        return Offset(k * step, -k * step)
+    }
+    fun shadowPaint(blur: Float, dx: Float, dy: Float, alpha: Int) = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.BLACK
+        setShadowLayer(blur, dx, dy, android.graphics.Color.argb(alpha, 0, 0, 0))
+    }
+
+    drawIntoCanvas { c ->
+        val n = c.nativeCanvas
+        // umbra teancului pe masă și marginile vizibile (sus și dreapta)
+        val edges = shadowPaint(bh * 0.06f, bh * 0.03f, bh * 0.04f, 140)
+        n.drawPath(polyPath(listOf(Offset(0f, 0f), Offset(off, -off), Offset(off + W, -off), Offset(W, 0f))), edges.apply { color = android.graphics.Color.rgb(0xbd, 0xb2, 0x92) })
+        n.drawPath(polyPath(listOf(Offset(W, 0f), Offset(off + W, -off), Offset(off + W, H - off), Offset(W, H))), edges.apply { color = android.graphics.Color.rgb(0xe2, 0xd9, 0xbf) })
+    }
+
+    // cartonașele, din spate spre față
+    for (i in 0 until DECK_LAYERS) {
+        val at = cardAt(i)
+        val top = i == DECK_LAYERS - 1
+        drawIntoCanvas { c ->
+            // umbra cartonașului: un dreptunghi negru sub el, vizibil doar ca umbră
+            c.nativeCanvas.drawRect(at.x, at.y, at.x + W, at.y + H, shadowPaint(bh * 0.008f, bh * 0.004f, bh * 0.006f, 115))
+        }
+        drawImage(
+            image = image,
+            dstOffset = IntOffset(at.x.roundToInt(), at.y.roundToInt()),
+            dstSize = IntSize(W.roundToInt(), H.roundToInt()),
+        )
+        drawRect(
+            color = if (top && active) Color(0xFFF0D20E) else Color(0x99281E14),
+            topLeft = at,
+            size = Size(W, H),
+            style = Stroke(width = if (top && active) max(2f, bh * 0.004f) else max(1f, bh * 0.0012f)),
+        )
+    }
+
+    // lumină pe cartonașul de sus
+    drawRect(
+        brush = Brush.linearGradient(
+            0f to Color.White.copy(alpha = 0.28f),
+            0.45f to Color.Transparent,
+            1f to Color.Black.copy(alpha = 0.18f),
+            start = Offset(0f, 0f),
+            end = Offset(W, H),
+        ),
+        size = Size(W, H),
+    )
+
+    if (active) {
+        // eticheta TRAGE, în centrul pachetului
+        val fs = max(12f, bh * 0.034f)
+        drawIntoCanvas { c ->
+            val n = c.nativeCanvas
+            val text = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                color = android.graphics.Color.WHITE
+                textSize = fs
+                typeface = android.graphics.Typeface.DEFAULT_BOLD
+                textAlign = android.graphics.Paint.Align.CENTER
+            }
+            val tw = text.measureText("TRAGE") + fs
+            val th = fs * 1.6f
+            val bg = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = android.graphics.Color.argb(166, 0, 0, 0) }
+            n.drawRoundRect(W / 2 - tw / 2, H / 2 - th / 2, W / 2 + tw / 2, H / 2 + th / 2, fs * 0.4f, fs * 0.4f, bg)
+            val fm = text.fontMetrics
+            n.drawText("TRAGE", W / 2, H / 2 - (fm.ascent + fm.descent) / 2f, text)
+        }
+    }
+}
+
+/** Un contur poligonal, ca un path Android (pentru fețele laterale ale teancului). */
+private fun polyPath(points: List<Offset>): android.graphics.Path = android.graphics.Path().apply {
+    moveTo(points[0].x, points[0].y)
+    points.drop(1).forEach { lineTo(it.x, it.y) }
+    close()
 }
 
 /** Marcaj de proprietate pe tablă: o căsuță deținută, în culoarea proprietarului.

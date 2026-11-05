@@ -140,6 +140,7 @@ fun BoardDie(
     ForcedLaunchedEffect(localRoll) {
         if (!localRoll) return@ForcedLaunchedEffect
         rolling = true
+        GameSound.dice()
         if (remote) {
             val startKey = lastKey
             onRolled(1)
@@ -174,6 +175,7 @@ fun BoardDie(
         if (rolling) return@ForcedLaunchedEffect
         val v = latestValue ?: return@ForcedLaunchedEffect
         rolling = true
+        GameSound.dice()
         settleOn(v)
         delay(140)
         rolling = false
