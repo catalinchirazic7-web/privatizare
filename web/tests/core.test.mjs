@@ -287,7 +287,7 @@ test('coduri de cameră: alfabet fără I, O, 0, 1', () => {
 test('reguli de cameră: loc liber, culoare luată, cameră plină', () => {
   const info = {
     stage: RoomStage.LOBBY, hostId: 'p0',
-    players: [{ id: 'p0', name: 'A', color: 'ROSU', role: RoomRole.HOST }, { id: 'p1', name: 'B', color: 'VERDE', role: RoomRole.GUEST }],
+    players: [{ id: 'p0', name: 'A', color: 'ROSU', role: RoomRole.HOST }, { id: 'p1', name: 'B', color: 'PORTOCALIU', role: RoomRole.GUEST }],
   };
   assert.equal(RoomRules.freeSeat(info.players), 'p2');
   assert.match(RoomRules.joinError(info, 'ROSU'), /deja luat/);

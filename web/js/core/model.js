@@ -6,11 +6,9 @@ export const PAWN_COLORS = Object.freeze([
   { key: 'ROSU', name: 'Roșu', hex: '#D32F2F', img: 'img/pawn_rosu.webp', dark: false },
   { key: 'ALBASTRU', name: 'Albastru', hex: '#1976D2', img: 'img/pawn_albastru.webp', dark: false },
   { key: 'GALBEN', name: 'Galben', hex: '#FBC02D', img: 'img/pawn_galben.webp', dark: false },
-  { key: 'VERDE', name: 'Verde', hex: '#388E3C', img: 'img/pawn_verde.webp', dark: false },
   { key: 'MOV', name: 'Mov', hex: '#7B1FA2', img: 'img/pawn_mov.webp', dark: false },
   { key: 'PORTOCALIU', name: 'Portocaliu', hex: '#F57C00', img: 'img/pawn_portocaliu.webp', dark: false },
   { key: 'NEGRU', name: 'Negru', hex: '#263238', img: 'img/pawn_negru.webp', dark: false },
-  { key: 'ALB_ARGINTIU', name: 'Alb/Argintiu', hex: '#ECEFF1', img: 'img/pawn_alb.webp', dark: true },
 ]);
 
 export const PAWN_BY_KEY = Object.freeze(Object.fromEntries(PAWN_COLORS.map((c) => [c.key, c])));
