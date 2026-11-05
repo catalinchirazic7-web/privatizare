@@ -7,6 +7,7 @@ import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
+import kotlin.random.Random
 
 /**
  * Inteligența robotului (port din web/js/core/botAI.js). Funcții pure: primesc starea, returnează decizia.
@@ -194,6 +195,10 @@ object BotAI {
     /* ---------- CatalinRobot: analiză pe orizont (port din web/js/core/catalinAI.js) ---------- */
 
     const val CATALIN_HORIZON = 10
+    /** Șansa ca robotul să-și aleagă fața zarului (restul: aruncare cu noroc). */
+    const val CATALIN_CONTROL = 0.9
+    /** La anexă rămâne cel puțin această fracțiune din banii de acum. */
+    const val ANNEX_KEEP = 0.2
 
     /** Distribuția pasului robotului: fiecare zar cu noroc, suma pe [diceCount] zaruri. */
     fun botStepDistribution(diceCount: Int = DICE_COUNT, luck: Double = CATALIN_LUCK): Map<Int, Double> {
@@ -308,17 +313,47 @@ object BotAI {
         val (gain, price) = horizonGain(state, botId, board, actions, propertyId, option, diceCount)
         if (me.money < price) return false
         // Titlul: cumpără orice titlu pe care ajunge, cât timp are banii.
+        // Titlul: cumpără orice titlu pe care ajunge, cât timp are banii.
         if (option is BuyOption.Title) return true
-        val after = me.money - price
-        // Rezerva pentru anexă: chiria plătită în 90% din cazuri în următoarele ture, banii pentru
-        // titlurile pe care le va întâlni, și rezerva de siguranță.
-        val (rentDist, titleSpend) = pathOutlook(state, botId, board, actions, diceCount)
-        val reserve = maxOf(
-            MIN_SAFETY_BUFFER,
-            rentQuantile(rentDist, 0.9),
-            titleSpend.roundToLong(),
-            safetyBuffer(state, botId, board, actions, diceCount),
-        )
-        return after >= reserve && gain > 0
+        // Anexa: cumpără orice, cât timp după cumpărare rămâne cel puțin 20% din banii de acum.
+        return (me.money - price) >= ANNEX_KEEP * me.money
+    }
+
+    /**
+     * Tot ce cântărește robotul când alege o căsuță: un titlu liber pe care și-l poate permite e bun,
+     * o chirie plătită unui adversar e rău, iar o căsuță a lui sau fără efect e neutră.
+     */
+    fun tileScore(
+        state: GameState, botId: String, board: List<Tile>, actions: Map<String, PropertyAction>, index: Int,
+    ): Double {
+        val tile = board[index]
+        if (tile !is Tile.Property) return 0.0
+        val me = state.players.first { it.id == botId }
+        val rent = rentOnTile(state, botId, board, actions, index)
+        val ownedByOpponent = state.players.any { it.id != botId && it.ownedProperties.containsKey(tile.propertyId) }
+        if (ownedByOpponent) return -rent / 500.0
+        if (me.ownedProperties.containsKey(tile.propertyId)) return 0.5
+        return if (me.money >= actions.getValue(tile.propertyId).titlePrice) 3.0 else 0.5
+    }
+
+    /**
+     * Zarul CatalinRobot: cu CATALIN_CONTROL își alege fața (sau suma celor două zaruri) care duce pe
+     * cea mai bună căsuță; altfel aruncă cu noroc, ca un zar obișnuit.
+     */
+    fun catalinDice(
+        state: GameState, botId: String, board: List<Tile>, actions: Map<String, PropertyAction>,
+        diceCount: Int = DICE_COUNT, random: Random = Random.Default,
+    ): List<Int> {
+        if (random.nextDouble() >= CATALIN_CONTROL) return List(diceCount) { rollBotDie(random, CATALIN_LUCK) }
+        val me = state.players.first { it.id == botId }
+        val score = { step: Int -> tileScore(state, botId, board, actions, (me.position + step) % board.size) }
+        if (diceCount == 1) {
+            return listOf((2..6).fold(1) { best, f -> if (score(f) > score(best)) f else best })
+        }
+        val bestSum = (3..12).fold(2) { best, s -> if (score(s) > score(best)) s else best }
+        val lo = maxOf(1, bestSum - 6)
+        val hi = minOf(6, bestSum - 1)
+        val a = lo + random.nextInt(hi - lo + 1)
+        return listOf(a, bestSum - a)
     }
 }

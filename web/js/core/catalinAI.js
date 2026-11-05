@@ -6,11 +6,13 @@
 
 import { calculateRent, wholeSaleValue } from './actions.js';
 import { rentOnTile, visitRate, safetyBuffer, MIN_SAFETY_BUFFER } from './botAI.js';
-import { CATALIN_LUCK } from './dice.js';
+import { CATALIN_LUCK, rollBotDie } from './dice.js';
 import { TILE } from './model.js';
 
 export const CATALIN_HORIZON = 10;   // ture înainte pentru care se calculează câștigul și plățile
 export const OUTLOOK_TURNS = 3;      // ture analizate exact (toate căile zarului) pentru riscul de lichiditate
+export const CATALIN_CONTROL = 0.9;  // șansa ca robotul să-și aleagă fața zarului (restul: aruncare cu noroc)
+export const ANNEX_KEEP = 0.2;       // la anexă rămâne cel puțin 20% din banii de acum
 
 /** Distribuția pasului robotului: fiecare zar cu noroc (best-of-two cu șansa [luck]), suma pe [diceCount] zaruri. */
 export function botStepDistribution(diceCount = 1, luck = CATALIN_LUCK) {
@@ -123,20 +125,45 @@ export function horizonGain({ state, botIdx, board, actions, propertyId, option,
  */
 export function catalinDecideBuy({ state, botIdx, board, actions, propertyId, option, diceCount = 1 }) {
   const me = state.players[botIdx];
-  const { gain, price } = horizonGain({ state, botIdx, board, actions, propertyId, option, diceCount });
+  const price = option.type === 'TITLE' ? actions[propertyId].titlePrice : option.annex.price;
   if (me.money < price) return false;
   // Titlul: cumpără orice titlu pe care ajunge, cât timp are banii.
   if (option.type === 'TITLE') return true;
-  const after = me.money - price;
-  // Rezerva pentru anexă: chiria care se plătește în 90% din cazuri în următoarele ture,
-  // banii pentru titlurile pe care le va întâlni, și rezerva de siguranță.
-  const { rentDist, titleSpend } = pathOutlook(state, botIdx, board, actions, diceCount);
-  const reserve = Math.max(
-    MIN_SAFETY_BUFFER,
-    rentQuantile(rentDist, 0.9),
-    Math.round(titleSpend),
-    safetyBuffer(state, botIdx, board, actions, diceCount),
-  );
-  if (after < reserve) return false;
-  return gain > 0;
+  // Anexa: cumpără orice, cât timp după cumpărare rămâne cel puțin 20% din banii de acum.
+  return me.money - price >= ANNEX_KEEP * me.money;
+}
+
+/**
+ * Tot ce cântărește robotul când alege o căsuță: un titlu liber pe care și-l poate permite e bun,
+ * o chirie plătită unui adversar e rău, iar o căsuță a lui sau fără efect e neutră.
+ */
+export function tileScore(state, botIdx, board, actions, idx) {
+  const tile = board[idx];
+  if (tile.type !== TILE.PROPERTY) return 0;
+  const me = state.players[botIdx];
+  const { rent, ownerId } = rentOnTile(state, botIdx, board, actions, idx);
+  if (ownerId !== null) return -rent / 500;
+  if (me.ownedProperties[tile.propertyId] !== undefined) return 0.5;
+  return me.money >= actions[tile.propertyId].titlePrice ? 3 : 0.5;
+}
+
+/**
+ * Zarul CatalinRobot: cu probabilitatea CATALIN_CONTROL își alege fața (sau suma celor două zaruri)
+ * care duce pe cea mai bună căsuță; altfel aruncă cu noroc, ca un zar obișnuit.
+ */
+export function catalinDice(state, botIdx, board, actions, diceCount = 1, rng = Math.random) {
+  if (rng() >= CATALIN_CONTROL) return Array.from({ length: diceCount }, () => rollBotDie(rng, CATALIN_LUCK));
+  const pos = state.players[botIdx].position;
+  const score = (step) => tileScore(state, botIdx, board, actions, (pos + step) % board.length);
+  if (diceCount === 1) {
+    let best = 1;
+    for (let f = 2; f <= 6; f += 1) if (score(f) > score(best)) best = f;
+    return [best];
+  }
+  let bestSum = 2;
+  for (let s = 3; s <= 12; s += 1) if (score(s) > score(bestSum)) bestSum = s;
+  const lo = Math.max(1, bestSum - 6);
+  const hi = Math.min(6, bestSum - 1);
+  const a = lo + Math.floor(rng() * (hi - lo + 1));
+  return [a, bestSum - a];
 }

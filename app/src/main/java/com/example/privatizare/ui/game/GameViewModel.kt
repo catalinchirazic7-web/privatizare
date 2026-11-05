@@ -12,8 +12,6 @@ import com.example.privatizare.data.model.Player
 import com.example.privatizare.data.model.PropertyAction
 import com.example.privatizare.data.model.Tile
 import com.example.privatizare.logic.BotAI
-import com.example.privatizare.logic.CATALIN_LUCK
-import com.example.privatizare.logic.rollBotDie
 import com.example.privatizare.logic.GameRules
 import com.example.privatizare.multiplayer.CardSnap
 import com.example.privatizare.multiplayer.DebtSnap
@@ -72,8 +70,6 @@ class GameViewModel(
     private val catalog: GameRepository.Catalog,
     /** Zarul robotului. Injectabil ca testele să fie deterministe. */
     private val botDie: () -> Int = { (1..6).random() },
-    /** Zarul CatalinRobot (cu noroc). Injectabil ca testele să fie deterministe. */
-    private val catalinDie: () -> Int = { rollBotDie(luck = CATALIN_LUCK) },
 ) : ViewModel() {
 
     private val engine = TurnEngine(catalog.board, catalog.actions, catalog.loto, catalog.telex)
@@ -481,7 +477,10 @@ class GameViewModel(
             is TurnDialog.RentDuePending -> payRent()
             is TurnDialog.CardPending -> dismissCard()
             is TurnDialog.DrawPending -> drawCard()
-            null -> if (turnAwaitingEnd) endTurn() else rollDice(List(diceCount) { if (p.catalin) catalinDie() else botDie() })
+            null -> if (turnAwaitingEnd) endTurn() else rollDice(
+                if (p.catalin) BotAI.catalinDice(game ?: return false, p.id, catalog.board, catalog.actions, diceCount)
+                else List(diceCount) { botDie() },
+            )
         }
         return true
     }

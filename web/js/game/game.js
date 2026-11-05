@@ -6,8 +6,8 @@ import { TurnEngine, debtEquals } from '../core/turnEngine.js';
 import { TILE } from '../core/model.js';
 import { netWorth, rankPlayers } from '../core/actions.js';
 import { botDecideBuy, botLiquidationSales } from '../core/botAI.js';
-import { catalinDecideBuy } from '../core/catalinAI.js';
-import { rollBotDie, CATALIN_LUCK } from '../core/dice.js';
+import { catalinDecideBuy, catalinDice } from '../core/catalinAI.js';
+import { rollBotDie } from '../core/dice.js';
 import { EV } from '../online/protocol.js';
 
 export class Game {
@@ -18,7 +18,8 @@ export class Game {
   constructor(catalog, opts = {}) {
     this.catalog = catalog;
     this.botDie = opts.botDie ?? ((luck = 0) => rollBotDie(Math.random, luck));
-    this.engine = new TurnEngine(catalog, opts.rng ?? Math.random);
+    this.rng = opts.rng ?? Math.random;
+    this.engine = new TurnEngine(catalog, this.rng);
     this.listeners = new Set();
     this.version = 0;
 
@@ -559,7 +560,9 @@ export class Game {
       case 'DRAW': this.drawCard(); break;
       default:
         if (this.turnAwaitingEnd) this.endTurn();
-        else this.roll(Array.from({ length: this.diceCount }, () => this.botDie(p.catalin ? CATALIN_LUCK : 0)));
+        else this.roll(p.catalin
+          ? catalinDice(this.game, this.game.players.indexOf(p), this.catalog.board, this.catalog.actions, this.diceCount, this.rng)
+          : Array.from({ length: this.diceCount }, () => this.botDie(0)));
     }
     return true;
   }

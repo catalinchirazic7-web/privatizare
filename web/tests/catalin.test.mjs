@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { rollDie, rollBotDie, CATALIN_LUCK } from '../js/core/dice.js';
-import { botStepDistribution, horizonGain, catalinDecideBuy, expectedRentPaid } from '../js/core/catalinAI.js';
+import { botStepDistribution, horizonGain, catalinDecideBuy, expectedRentPaid, catalinDice } from '../js/core/catalinAI.js';
 import { loadRealCatalog } from './helpers.mjs';
 import { PAWN_COLORS, TILE } from '../js/core/model.js';
 
@@ -101,4 +101,26 @@ test('distribuția fețelor cu noroc se potrivește cu formula (200k aruncări)'
   }
   // pasul mediu: 3.5 la zar normal, ~3.74 cu noroc
   assert.ok(Math.abs(mean - 3.743) < 0.02, `media ${mean}`);
+});
+
+test('anexa: cumpără cât timp rămâne cel puțin 20% din banii de acum', () => {
+  const prop = cat.actions[propId];
+  const annex = prop.annexes[0];
+  const money = Math.ceil(annex.price / 0.8) + 10;   // după cumpărare rămân peste 20%
+  const ok = catalinDecideBuy({ state: state(money), botIdx: 0, board, actions: cat.actions, propertyId: propId, option: { type: 'ANNEX', annex } });
+  assert.equal(ok, true);
+  const tight = catalinDecideBuy({ state: state(annex.price + 1), botIdx: 0, board, actions: cat.actions, propertyId: propId, option: { type: 'ANNEX', annex } });
+  assert.equal(tight, false);
+});
+
+test('zarul CatalinRobot: fețe sau sume valide, cu control și fără', () => {
+  const s = state(50000);
+  const one = [0.1, 0.99].map((r) => catalinDice(s, 0, board, cat.actions, 1, seeded(Math.round(r * 1000))));
+  for (const d of one) {
+    assert.equal(d.length, 1);
+    assert.ok(d[0] >= 1 && d[0] <= 6);
+  }
+  const two = catalinDice(s, 0, board, cat.actions, 2, seeded(3));
+  assert.equal(two.length, 2);
+  assert.ok(two.every((v) => v >= 1 && v <= 6));
 });
