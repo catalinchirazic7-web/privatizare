@@ -555,7 +555,7 @@ export class BoardView {
     ctx.stroke();
   }
 
-  /** Marcajele proprietăților: o căsuță deținută, în culoarea proprietarului. Fără nivel (anexele nu sunt publice). */
+  /** Marcajele proprietăților: o căsuță deținută, în culoarea proprietarului, cu anexele cumpărate din total (ex. 2/4). */
   drawMarkers(ctx, bx, by, bw, bh) {
     for (const p of this.model.players) {
       const color = PAWN_BY_KEY[p.color]?.hex ?? '#888';
@@ -565,13 +565,28 @@ export class BoardView {
         if (!pos) continue;
         const w = bw * 0.06;
         const h = bh * 0.075;
+        const cx = bx + bw * pos[0];
+        const cy = by + bh * pos[1];
         ctx.beginPath();
-        ctx.ellipse(bx + bw * pos[0], by + bh * pos[1], w / 2, h / 2, 0, 0, Math.PI * 2);
+        ctx.ellipse(cx, cy, w / 2, h / 2, 0, 0, Math.PI * 2);
         ctx.fillStyle = color;
         ctx.fill();
         ctx.lineWidth = 2;
         ctx.strokeStyle = color;
         ctx.stroke();
+        const label = `${p.ownedProperties[propId]}/${this.catalog.actions[propId]?.annexes?.length ?? 0}`;
+        // fontul cât mai mare care încape în elipsă: lățimea textului ≤ 80% din lățime, înălțimea ≤ 50% din înălțime
+        ctx.font = '900 100px system-ui, sans-serif';
+        const unit = ctx.measureText(label).width / 100;
+        const fs = Math.min(h * 0.5, (w * 0.8) / unit);
+        ctx.font = `900 ${fs}px system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.lineWidth = Math.max(1, fs * 0.15);
+        ctx.strokeStyle = 'rgba(0,0,0,0.65)';
+        ctx.strokeText(label, cx, cy);
+        ctx.fillStyle = '#fff';
+        ctx.fillText(label, cx, cy);
       }
     }
   }
