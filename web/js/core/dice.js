@@ -7,7 +7,7 @@ export const CATALIN_LUCK = 0.25;
 export const CATALIN_CONTROL = 0.6;
 
 /** Șansa ca omul să arunce de două ori și să ia fața mai mare, când în joc e un robot ușor. Robotul ușor are 0. */
-export const EASY_HUMAN_LUCK = 0.33;
+export const EASY_HUMAN_LUCK = 0.5;
 
 export function rollDie(rng = Math.random) {
   return 1 + Math.floor(rng() * 6);

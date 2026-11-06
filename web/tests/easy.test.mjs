@@ -21,18 +21,18 @@ function mean(luck, n = 60000) {
   return sum / n;
 }
 
-test('noroc omului în robotul ușor: 0,33', () => {
-  assert.equal(EASY_HUMAN_LUCK, 0.33);
+test('noroc omului în robotul ușor: 0,5', () => {
+  assert.equal(EASY_HUMAN_LUCK, 0.5);
 });
 
 test('fără noroc zarul e uniform (media ~3,5)', () => {
   assert.ok(Math.abs(mean(0) - 3.5) < 0.05);
 });
 
-test('cu noroc 0,33 media urcă (cel mai bun din două aruncări, ~3,8)', () => {
+test('cu noroc 0,5 media urcă (cel mai bun din două aruncări, ~3,99)', () => {
   const lucky = mean(EASY_HUMAN_LUCK);
   assert.ok(lucky > mean(0) + 0.2, `medie ${lucky}`);
-  assert.ok(Math.abs(lucky - 3.82) < 0.05, `medie ${lucky}`);
+  assert.ok(Math.abs(lucky - 3.99) < 0.05, `medie ${lucky}`);
 });
 
 test('noroc 0 dă exact aceeași secvență ca zarul normal', () => {
