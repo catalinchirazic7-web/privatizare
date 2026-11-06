@@ -12,17 +12,19 @@ import { CONNECT_TIMEOUT_MS, DONATE } from '../config.js';
 
 const $ = (id) => document.getElementById(id);
 
-/* ---------- Locurile: OM → ROBOT → CATALINROBOT → OM ---------- */
+/* ---------- Locurile: OM → ROBOT → CATALINROBOT → ROBOT UȘOR → OM ---------- */
 
 function seatLabel(seat) {
   if (!seat.isBot) return 'OM';
+  if (seat.easy) return 'ROBOT UȘOR';
   return seat.catalin ? 'CATALINROBOT' : 'ROBOT';
 }
 
 function cycleSeat(seat) {
-  if (!seat.isBot) { seat.isBot = true; seat.catalin = false; }
-  else if (!seat.catalin) seat.catalin = true;
-  else { seat.isBot = false; seat.catalin = false; }
+  if (!seat.isBot) { seat.isBot = true; seat.catalin = false; seat.easy = false; }
+  else if (!seat.catalin && !seat.easy) seat.catalin = true;
+  else if (seat.catalin) { seat.catalin = false; seat.easy = true; }
+  else { seat.isBot = false; seat.easy = false; }
 }
 
 /* ---------- Ecranul principal ---------- */
@@ -105,6 +107,7 @@ export class SetupView {
       colorKey: saved?.seats?.[i]?.colorKey ?? defaults[i],
       isBot: saved?.seats?.[i]?.isBot ?? false,
       catalin: saved?.seats?.[i]?.catalin ?? false,   // CatalinRobot (doar când isBot)
+      easy: saved?.seats?.[i]?.easy ?? false,         // robot ușor (doar când isBot)
     }));
     this.bind();
   }
@@ -216,7 +219,7 @@ export class SetupView {
     if (!this.valid()) return;
     const config = { count: this.count, money: this.money, time: this.time, dice: this.dice, layout: this.layout, seats: this.seats.map((s) => ({ ...s })) };
     storage.saveSetup(config);
-    const setup = this.active().map((s) => ({ name: s.name.trim(), colorKey: s.colorKey, isBot: s.isBot, catalin: s.catalin }));
+    const setup = this.active().map((s) => ({ name: s.name.trim(), colorKey: s.colorKey, isBot: s.isBot, catalin: s.catalin, easy: s.easy }));
     this.app.startLocal(setup, this.money, this.time, this.dice, this.layout);
   }
 }

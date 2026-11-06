@@ -8,6 +8,7 @@ import { el, clear, fmt, ecu } from '../ui/dom.js';
 import { PAWN_BY_KEY, TILE } from '../core/model.js';
 import { calculateRent, nextAnnex, sellBackValue, wholeSaleValue } from '../core/actions.js';
 import { GameRules } from '../core/rules.js';
+import { rollBotDie } from '../core/dice.js';
 import { tileVisual, tileHint, propertyVisual } from './visuals.js';
 import { actionArtPath, propertyIconPath } from '../core/model.js';
 import { CardOutcome } from '../core/cards.js';
@@ -24,10 +25,10 @@ const DIE_PIPS = {
 const DIE_POS = { fx: 0.63, fy: 0.34 };   // zarul stă în zona liberă din centrul tablei
 const DIE2_DX = 0.075;                     // al doilea zar (mod cu două zaruri), lângă primul
 const LANDING_MS = 3800;
-const BOT_DELAY_MS = 1000;
-const CARD_SHOW_MS = 3500;   // cât stă pe ecran cartonașul tras de un robot, ca să-l vezi
-const SKIP_SHOW_MS = 2500;   // cât stă vizibil bannerul „staționează” al unui robot, ca să-l vezi
-const END_DELAY_MS = 900;
+const BOT_DELAY_MS = 600;
+const CARD_SHOW_MS = 2200;   // cât stă pe ecran cartonașul tras de un robot (apăsat = se închide imediat)
+const SKIP_SHOW_MS = 1600;   // cât stă vizibil bannerul „staționează” al unui robot, ca să-l vezi
+const END_DELAY_MS = 600;
 const END_DELAY_SKIP_MS = 2200;
 const ROLL_ANIM_MS = 488;   // zarul: cu 25% mai rapid (650 × 0,75)
 
@@ -122,6 +123,8 @@ export class GameScreen {
     this.lastShownNonce = 0;
     this.prevMoney = new Map();
     this.shownMoney = new Map();
+    this.lastRentN = 0;          // ultima chirie deja arătată (balonul apare o singură dată)
+    this.rentIns = [];           // încasările de la robot, afișate în sertar: { pid, amount, until }
     this.botKey = null;
     this.endKey = null;
     this.botTimer = null;
@@ -191,6 +194,7 @@ export class GameScreen {
     this.lastShownNonce = this.game.rollNonce;
     this.prevMoney = new Map((this.game.game?.players ?? []).map((p) => [p.id, p.money]));
     this.shownMoney = new Map(this.prevMoney);
+    this.lastRentN = this.game.lastRent?.n ?? 0;
     this.unsubs.push(this.game.onChange(() => this.render()));
     if (online) this.unsubs.push(online.onChange(() => this.render()));
     this.clockTimer = setInterval(() => this.tickClock(), 1000);
@@ -347,7 +351,9 @@ export class GameScreen {
     const dp = this.$('drawer-players');
     clear(dp);
     for (const p of players) {
-      dp.append(el('span', {}, el('i', { style: { background: PAWN_BY_KEY[p.color].hex } }), `${p.name}: ${ecu(this.shownMoney.get(p.id) ?? p.money)}, ${Object.keys(p.ownedProperties).length} firme`));
+      const row = el('span', {}, el('i', { style: { background: PAWN_BY_KEY[p.color].hex } }), `${p.name}: ${ecu(this.shownMoney.get(p.id) ?? p.money)}, ${Object.keys(p.ownedProperties).length} firme`);
+      for (const r of this.rentIns) if (r.pid === p.id && r.until > Date.now()) row.append(el('b', { class: 'rent-in', text: `+${fmt(r.amount)}` }));
+      dp.append(row);
     }
     this.$('toggle-stretch').textContent = this.stretch ? 'Tablă: pe tot ecranul' : 'Tablă: proporțională';
     this.$('toggle-tilt').textContent = this.tilt ? 'Înclinare: pornit' : 'Înclinare: oprit';
@@ -483,7 +489,7 @@ export class GameScreen {
     this.die.startRolling();
     const two = g.diceCount === 2 && !g.isGuest;   // online rămâne la un singur zar
     if (two) this.die2.startRolling();
-    const values = Array.from({ length: two ? 2 : 1 }, () => 1 + Math.floor(Math.random() * 6));
+    const values = Array.from({ length: two ? 2 : 1 }, () => rollBotDie(Math.random, g.humanLuck));
     if (g.isGuest) {
       // oaspetele așteaptă zarul oficial de la gazdă: rostogolirea ține până sosește starea
       g.roll(values[0]);
@@ -742,7 +748,9 @@ export class GameScreen {
       : el('div', { class: 'card-text-only', text: card.text });
     const result = amountTxt ? el('p', { class: `card-result ${outcomeCls}`, text: amountTxt }) : null;
     const dest = card.destination ? el('p', { class: 'card-note', text: card.destination }) : null;
-    return el('div', { class: 'modal wide', role: 'dialog', 'aria-modal': 'true' },
+    // cartonașul robotului se închide la atingere: nu mai aștepți timpul afișării
+    const skip = byBot ? { onclick: () => this.game.dismissCard() } : {};
+    return el('div', { class: 'modal wide', role: 'dialog', 'aria-modal': 'true', ...skip },
       el('h3', { text: card.kind === 'LOTO' ? 'Cartonaș LOTO' : 'Cartonaș TELEX' }),
       visual,
       result,
@@ -956,13 +964,43 @@ export class GameScreen {
     return out;
   }
 
+  /** Chiria dintre om și robot: {human, bot, paid}, sau null (între doi oameni sau doi roboți). */
+  robotRentParties(rent, players) {
+    const payer = players.find((p) => p.id === rent.payerId);
+    const owner = players.find((p) => p.id === rent.ownerId);
+    if (!payer || !owner || payer.isBot === owner.isBot) return null;
+    return payer.isBot ? { human: owner, bot: payer, paid: false } : { human: payer, bot: owner, paid: true };
+  }
+
+  /** Omul plătește robotului: roșu sus-dreapta. Robotul îi plătește omului: verde în sertar, lângă numele lui. */
+  showRentBalloon({ human, bot, paid }, amount, float) {
+    if (paid) {
+      const chip = el('span', { class: 'minus', text: `Ai plătit ${fmt(amount)} lui ${bot.name}` });
+      float.append(chip);
+      setTimeout(() => chip.remove(), 3000);
+      return;
+    }
+    const now = Date.now();
+    this.rentIns = this.rentIns.filter((r) => r.until > now).concat({ pid: human.id, amount, until: now + 3000 });
+    this.$('drawer').hidden = false;
+    this.touchDrawer();
+    setTimeout(() => this.render(), 3100);   // scoate balonul verde din sertar când expiră
+    sound.coin();
+  }
+
   renderMoneyChanges(players) {
     const float = this.$('money-float');
+    const rent = this.game.lastRent;
+    const rentNew = !!rent && rent.n !== this.lastRentN;
+    if (rentNew) this.lastRentN = rent.n;
+    const robotRent = rentNew ? this.robotRentParties(rent, players) : null;
+    if (robotRent) this.showRentBalloon(robotRent, rent.amount, float);
     for (const p of players) {
       const value = this.shownMoney.get(p.id) ?? p.money;
       const prev = this.prevMoney.get(p.id);
       this.prevMoney.set(p.id, value);
       if (prev == null || prev === value) continue;
+      if (robotRent && (p.id === robotRent.human.id || p.id === robotRent.bot.id)) continue;   // balonul de chirie le ține locul
       const diff = value - prev;
       const chip = el('span', { class: diff > 0 ? 'plus' : 'minus', text: `${p.name} ${diff > 0 ? '+' : '−'}${fmt(Math.abs(diff))}` });
       float.append(chip);

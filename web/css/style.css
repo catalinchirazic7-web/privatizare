@@ -294,6 +294,7 @@ input { -webkit-user-select: text; user-select: text; }
 .money-float .plus { color: var(--ok); }
 .money-float .minus { color: var(--danger); }
 @keyframes float-up { 0% { opacity: 0; transform: translateY(6px); } 15% { opacity: 1; } 100% { opacity: 0; transform: translateY(-24px); } }
+.drawer-players .rent-in { color: var(--ok); font-weight: 900; margin-left: 6px; padding: 1px 6px; border-radius: 6px; background: rgba(0,0,0,.6); animation: float-up 3s ease-out forwards; }
 
 .drawer {
   margin: 6px auto 0;

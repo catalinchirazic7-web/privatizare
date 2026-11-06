@@ -7,7 +7,7 @@ import { TILE } from '../core/model.js';
 import { netWorth, rankPlayers } from '../core/actions.js';
 import { botLiquidationSales, ANNEX_KEEP } from '../core/botAI.js';
 import { catalinDecideBuy, catalinDice } from '../core/catalinAI.js';
-import { rollBotDie } from '../core/dice.js';
+import { rollBotDie, EASY_HUMAN_LUCK } from '../core/dice.js';
 import { EV } from '../online/protocol.js';
 
 export class Game {
@@ -32,6 +32,9 @@ export class Game {
     this.lastDice = [];
     this.rollNonce = 0;
     this.diceCount = 1;       // 1 sau 2 zaruri (doar jocul local)
+    this.humanLuck = 0;       // noroc la zarul omului: EASY_HUMAN_LUCK dacă e în joc un robot ușor
+    this.rentSeq = 0;
+    this.lastRent = null;     // ultima chirie plătită: { payerId, ownerId, amount, n }
     this.boardLayout = 'old';  // tabla: 'old' (veche) sau 'new' (nouă)
     this.winnerName = null;
 
@@ -59,6 +62,7 @@ export class Game {
   }
 
   emit() {
+    if (!this.isOnline) this.autoPayRent();   // chiria omului se plătește singură; fereastra apare doar când lipsesc bani
     this.version++;
     for (const fn of [...this.listeners]) fn(this);
   }
@@ -187,6 +191,7 @@ export class Game {
       state: { turn: g.turn, players: g.players, bankMoney: g.bankMoney, history: g.history, stats: g.stats ?? {} },
       currentIndex: this.currentIndex,
       diceCount: this.diceCount,
+      humanLuck: this.humanLuck,
       boardLayout: this.boardLayout,
       lastDice: this.lastDice,
       winnerName: this.winnerName,
@@ -217,6 +222,7 @@ export class Game {
     this.game = s.state;
     this.currentIndex = s.currentIndex;
     this.diceCount = s.diceCount === 2 ? 2 : 1;   // salvările vechi au un singur zar
+    this.humanLuck = s.humanLuck ?? 0;            // salvările vechi au noroc 0
     this.boardLayout = s.boardLayout === 'new' ? 'new' : 'old';   // salvările vechi sunt pe tabla veche
     if (!sameDice(s.lastDice, this.lastDice)) this.rollNonce++;
     this.lastDice = s.lastDice;
@@ -282,8 +288,10 @@ export class Game {
       houseSince: 0,
       isBot: !!s.isBot,
       catalin: !!s.isBot && !!s.catalin,   // CatalinRobot: robot cu zarul în favoarea lui
+      easy: !!s.isBot && !!s.easy,         // robot ușor: zar fără noroc
     }));
     this.game = { turn: 1, players, bankMoney: dist.bankMoney, history: [], stats: {} };
+    this.humanLuck = players.some((p) => p.easy) ? EASY_HUMAN_LUCK : 0;
     this.currentIndex = 0;
     this.offer = null;
     this.feeOffer = null;
@@ -406,12 +414,20 @@ export class Game {
     this.emit();
   }
 
+  /** Chiria de plătit de un om (nu de robot) se plătește fără fereastră. Fără bani, motorul face datorie și apare lichidarea. */
+  autoPayRent() {
+    const r = this.rentDue;
+    const payer = this.game?.players.find((p) => p.id === r?.payerId);
+    if (r && payer && !payer.isBot) this.payRent();
+  }
+
   payRent() {
     if (this.guestSend((id) => ({ t: EV.RENT, playerId: id }))) return;
     const r = this.rentDue;
     if (!r || !this.game) return;
     const res = this.engine.payRent(this.game, r);
     this.game = res.state;
+    this.lastRent = { payerId: r.payerId, ownerId: r.ownerId, amount: r.amount, n: ++this.rentSeq };
     this.rentDue = null;
     this.debt = res.debt;
     this.debtAcknowledged = null;
