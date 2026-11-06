@@ -125,7 +125,8 @@ export class GameScreen {
     this.prevMoney = new Map();
     this.shownMoney = new Map();
     this.lastRentN = 0;          // ultima chirie deja arătată (balonul apare o singură dată)
-    this.rerollTimer = null;     // fereastra în care omul poate rearunca zarul (modul ușor)
+    this.rerollTimer = null;     // fereastra în care zarul stă la dispoziția omului (modul ușor)
+    this.rollHold = null;        // zarul așteptat: { values, commit } (al omului sau al robotului ușor)
     this.rentIns = [];           // încasările de la robot, afișate în sertar: { pid, amount, until }
     this.botKey = null;
     this.endKey = null;
@@ -293,7 +294,8 @@ export class GameScreen {
     wait.textContent = waitText ?? '';
 
     // --- zarul ---
-    const busyDie = !!dialog || !!g.winnerName || g.turnAwaitingEnd || !!current?.isBot || !myTurn || this.die.busy;
+    const holding = !!this.rollHold;   // zarul stă la dispoziția omului (al lui sau al robotului ușor)
+    const busyDie = !!dialog || !!g.winnerName || g.turnAwaitingEnd || (!!current?.isBot && !holding) || (!myTurn && !holding) || this.die.busy;
     this.die.setReady(!busyDie, !busyDie);
     this.die2El.hidden = g.diceCount !== 2;
     this.die2.setReady(!busyDie, !busyDie);
@@ -314,10 +316,12 @@ export class GameScreen {
     if (current && moving && moving.target !== current.position) {
       this.landedTile = current.position >= 0 ? current.position : this.rechematTile();
     }
+    // cât timp zarul stă la dispoziție, căsuța unde ajunge pionul pulsează deja (înainte de mutare)
+    const previewTile = this.rollHold && current ? this.previewIndex(current, this.rollHold.values) : null;
     this.board.setModel({
       players,
       activePlayerId: current?.id ?? null,
-      landedTile: this.landedTile,
+      landedTile: previewTile ?? this.landedTile,
       highlightColor: current ? PAWN_BY_KEY[current.color].hex : '#ffd54f',
       drawKind: dialog?.type === 'DRAW' && myTurn && !current?.isBot ? dialog.kind.toLowerCase() : null,
       propertyTiles,
@@ -485,12 +489,9 @@ export class GameScreen {
 
   onDieTap() {
     const g = this.game;
-    if (this.die.busy || !this.dieEnabled()) return;
-    if (this.rerollTimer) {   // a doua apăsare în fereastra de reroll: rearuncă
-      clearTimeout(this.rerollTimer);
-      this.rerollTimer = null;
-      g.useReroll();
-    }
+    if (this.die.busy) return;
+    if (this.rollHold) { this.rerollHeld(); return; }   // zarul stă la dispoziție: îl rearuncă
+    if (!this.dieEnabled()) return;
     sound.unlock();
     sound.dice();
     this.die.startRolling();
@@ -510,19 +511,75 @@ export class GameScreen {
     }
     setTimeout(() => {
       this.settleDice(values);
-      if (g.easyMode && !g.rerolled) this.openRerollWindow(values);
+      if (g.easyMode) this.holdRoll(values, 'Nu-ți place? Atinge zarul ca să rearunci');
       else this.commitRoll(values);
     }, ROLL_ANIM_MS);
     this.pump();
   }
 
-  /** Modul ușor: zarul stă la dispoziția omului câteva secunde ca să-l rearunce (o dată pe tură). */
-  openRerollWindow(values) {
-    this.toast('Nu-ți place? Atinge zarul ca să rearunci (o dată pe tură)');
+  /**
+   * Modul ușor: zarul stă la dispoziția omului REROLL_WINDOW_MS. Fiecare atingere îl rearunca
+   * (de câte ori vrea); dacă nu mai atinge, aruncarea se aplică.
+   */
+  holdRoll(values, hint) {
+    const target = this.previewIndex(this.game.currentPlayer, values);
+    const where = target == null ? '' : ` Ajungi la: ${this.tileName(target)}.`;
+    this.toast(`${hint}${where}`);
+    this.rollHold = { values };
+    clearTimeout(this.rerollTimer);
     this.rerollTimer = setTimeout(() => {
       this.rerollTimer = null;
+      this.rollHold = null;
       this.commitRoll(values);
     }, REROLL_WINDOW_MS);
+    this.render();
+  }
+
+  /** O atingere în fereastra de reroll: zarul se rearunca, iar fereastra se redeschide cu noile valori. */
+  rerollHeld() {
+    const g = this.game;
+    clearTimeout(this.rerollTimer);
+    this.rerollTimer = null;
+    this.rollHold = null;
+    sound.unlock();
+    sound.dice();
+    this.die.startRolling();
+    const two = g.diceCount === 2;
+    if (two) this.die2.startRolling();
+    const values = Array.from({ length: two ? 2 : 1 }, () => rollDie());
+    setTimeout(() => {
+      this.settleDice(values);
+      this.holdRoll(values, 'Rearuncat. Atinge din nou dacă nu-ți place');
+    }, ROLL_ANIM_MS);
+    this.pump();
+  }
+
+  /** Robotul ușor aruncă, dar zarul lui stă la dispoziția omului ca să-l rearunce. */
+  startBotRoll() {
+    const g = this.game;
+    const values = g.easyBotRoll(g.currentPlayer);
+    sound.dice();
+    this.die.startRolling();
+    if (values[1] != null) this.die2.startRolling();
+    setTimeout(() => {
+      this.settleDice(values);
+      this.holdRoll(values, 'Robotul a dat. Nu-ți place? Atinge zarul ca să-l rearunci');
+    }, ROLL_ANIM_MS);
+    this.pump();
+  }
+
+  /** Căsuța pe care ajunge pionul cu valorile date (aceeași regulă ca la mutare), sau null. */
+  previewIndex(player, values) {
+    if (!player || player.position < 0 || player.skipTurns > 0) return null;
+    const steps = values.reduce((a, b) => a + b, 0);
+    return (player.position + steps) % this.catalog.board.length;
+  }
+
+  tileName(index) {
+    const tile = this.catalog.board[index];
+    if (!tile) return '';
+    if (tile.type === TILE.PROPERTY) return this.catalog.actions[tile.propertyId]?.name ?? '';
+    return tileVisual(tile, this.catalog.actions).shortName;
   }
 
   /** Aruncarea oficială: pionul pornește după ce zarul a fost citit. */
@@ -1055,7 +1112,12 @@ export class GameScreen {
           : BOT_DELAY_MS;
         this.botTimer = setTimeout(() => {
           this.botTimer = null;
-          if (g.hasBotAction && !this.pawnsBusy && !this.die.busy) g.botNextAction();
+          if (!g.hasBotAction || this.pawnsBusy || this.die.busy || this.rollHold) return;
+          const bot = g.currentPlayer;
+          // robotul ușor: aruncarea lui stă la dispoziția omului ca să o poată rearunca
+          const botRolls = g.easyMode && !g.activeDialog && !g.turnAwaitingEnd && !g.isGuest && !!bot?.easy;
+          if (botRolls) this.startBotRoll();
+          else g.botNextAction();
         }, delay);
       }
     }
