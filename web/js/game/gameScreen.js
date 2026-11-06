@@ -1061,9 +1061,11 @@ export class GameScreen {
     }
     const now = Date.now();
     this.rentIns = this.rentIns.filter((r) => r.until > now).concat({ pid: human.id, amount, until: now + 3000 });
-    this.$('drawer').hidden = false;
-    this.touchDrawer();
-    setTimeout(() => this.render(), 3100);   // scoate balonul verde din sertar când expiră
+    // nu deschidem sertarul singur: semnul verde apare doar în zona de bani, ca în restul jocului
+    const chip = el('span', { class: 'plus', text: `${human.name} +${fmt(amount)} de la ${bot.name}` });
+    float.append(chip);
+    setTimeout(() => chip.remove(), 3000);
+    setTimeout(() => this.render(), 3100);   // scoate încasarea din sertar când expiră
     sound.coin();
   }
 
