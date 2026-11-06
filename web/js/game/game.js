@@ -7,7 +7,7 @@ import { TILE } from '../core/model.js';
 import { netWorth, rankPlayers } from '../core/actions.js';
 import { botLiquidationSales, ANNEX_KEEP } from '../core/botAI.js';
 import { catalinDecideBuy, catalinDice } from '../core/catalinAI.js';
-import { rollBotDie, EASY_HUMAN_LUCK } from '../core/dice.js';
+import { rollBotDie, isLowRoll } from '../core/dice.js';
 import { EV } from '../online/protocol.js';
 
 export class Game {
@@ -32,7 +32,8 @@ export class Game {
     this.lastDice = [];
     this.rollNonce = 0;
     this.diceCount = 1;       // 1 sau 2 zaruri (doar jocul local)
-    this.humanLuck = 0;       // noroc la zarul omului: EASY_HUMAN_LUCK dacă e în joc un robot ușor
+    this.easyMode = false;    // în joc e un robot ușor: se poate rearunca zarul
+    this.rerolled = false;    // s-a rearuncat deja în tura curentă (omul sau robotul)
     this.rentSeq = 0;
     this.lastRent = null;     // ultima chirie plătită: { payerId, ownerId, amount, n }
     this.boardLayout = 'old';  // tabla: 'old' (veche) sau 'new' (nouă)
@@ -191,7 +192,8 @@ export class Game {
       state: { turn: g.turn, players: g.players, bankMoney: g.bankMoney, history: g.history, stats: g.stats ?? {} },
       currentIndex: this.currentIndex,
       diceCount: this.diceCount,
-      humanLuck: this.humanLuck,
+      easyMode: this.easyMode,
+      rerolled: this.rerolled,
       boardLayout: this.boardLayout,
       lastDice: this.lastDice,
       winnerName: this.winnerName,
@@ -222,7 +224,8 @@ export class Game {
     this.game = s.state;
     this.currentIndex = s.currentIndex;
     this.diceCount = s.diceCount === 2 ? 2 : 1;   // salvările vechi au un singur zar
-    this.humanLuck = s.humanLuck ?? 0;            // salvările vechi au noroc 0
+    this.easyMode = !!s.easyMode;                 // salvările vechi nu au mod ușor
+    this.rerolled = !!s.rerolled;
     this.boardLayout = s.boardLayout === 'new' ? 'new' : 'old';   // salvările vechi sunt pe tabla veche
     if (!sameDice(s.lastDice, this.lastDice)) this.rollNonce++;
     this.lastDice = s.lastDice;
@@ -291,7 +294,8 @@ export class Game {
       easy: !!s.isBot && !!s.easy,         // robot ușor: zar fără noroc
     }));
     this.game = { turn: 1, players, bankMoney: dist.bankMoney, history: [], stats: {} };
-    this.humanLuck = players.some((p) => p.easy) ? EASY_HUMAN_LUCK : 0;
+    this.easyMode = players.some((p) => p.easy);
+    this.rerolled = false;
     this.currentIndex = 0;
     this.offer = null;
     this.feeOffer = null;
@@ -524,6 +528,20 @@ export class Game {
   }
 
   /** Încheie tura și trece la jucătorul următor. */
+  /** Rearuncarea zarului (omul din fereastra de după aruncare, sau robotul ușor). O dată pe tură. */
+  useReroll() {
+    this.rerolled = true;
+  }
+
+  /** Zarul robotului ușor: dacă iese mic și nu s-a rearuncat în tura asta, îl rearunca o dată. */
+  easyBotRoll(p) {
+    const roll = () => Array.from({ length: this.diceCount }, () => this.botDie(0));
+    const first = roll();
+    if (!p.easy || this.rerolled || !isLowRoll(first)) return first;
+    this.useReroll();
+    return roll();
+  }
+
   endTurn() {
     if (this.guestSend((id) => ({ t: EV.END, playerId: id }))) return;
     if (this.activeDialog || !this.turnAwaitingEnd) return;
@@ -535,6 +553,7 @@ export class Game {
       this.game = { ...this.game, players: this.game.players.map((p) => (p === done ? { ...p, annexRecovery: false } : p)) };
     }
     this.currentIndex = (this.currentIndex + 1) % size;
+    this.rerolled = false;   // rearuncarea e o dată pe tură, pentru fiecare jucător
     // un rând complet (s-a întors la primul jucător) = o tură pentru statistici și pentru robot
     if (this.currentIndex === 0) this.game = { ...this.game, turn: this.game.turn + 1 };
     this.turnAwaitingEnd = false;
@@ -583,7 +602,7 @@ export class Game {
         if (this.turnAwaitingEnd) this.endTurn();
         else this.roll(p.catalin
           ? catalinDice(this.game, this.game.players.indexOf(p), this.catalog.board, this.catalog.actions, this.diceCount, this.rng)
-          : Array.from({ length: this.diceCount }, () => this.botDie(0)));
+          : this.easyBotRoll(p));
     }
     return true;
   }

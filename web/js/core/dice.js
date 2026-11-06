@@ -6,8 +6,10 @@ export const CATALIN_LUCK = 0.25;
 /** Șansa ca robotul CatalinRobot să-și aleagă zarul (și cartonașul), în loc să lase la întâmplare. */
 export const CATALIN_CONTROL = 0.6;
 
-/** Șansa ca omul să arunce de două ori și să ia fața mai mare, când în joc e un robot ușor. Robotul ușor are 0. */
-export const EASY_HUMAN_LUCK = 0.5;
+/** O aruncare e mică (se rearuncă în modul ușor) când media pe zar e cel mult 2. */
+export function isLowRoll(dice) {
+  return dice.reduce((a, b) => a + b, 0) <= 2 * dice.length;
+}
 
 export function rollDie(rng = Math.random) {
   return 1 + Math.floor(rng() * 6);

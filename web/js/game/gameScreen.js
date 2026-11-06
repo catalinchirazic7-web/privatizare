@@ -8,7 +8,7 @@ import { el, clear, fmt, ecu } from '../ui/dom.js';
 import { PAWN_BY_KEY, TILE } from '../core/model.js';
 import { calculateRent, nextAnnex, sellBackValue, wholeSaleValue } from '../core/actions.js';
 import { GameRules } from '../core/rules.js';
-import { rollBotDie } from '../core/dice.js';
+import { rollDie } from '../core/dice.js';
 import { tileVisual, tileHint, propertyVisual } from './visuals.js';
 import { actionArtPath, propertyIconPath } from '../core/model.js';
 import { CardOutcome } from '../core/cards.js';
@@ -31,6 +31,7 @@ const SKIP_SHOW_MS = 1600;   // cât stă vizibil bannerul „staționează” a
 const END_DELAY_MS = 600;
 const END_DELAY_SKIP_MS = 2200;
 const ROLL_ANIM_MS = 488;   // zarul: cu 25% mai rapid (650 × 0,75)
+const REROLL_WINDOW_MS = 2000;   // în modul ușor: cât stă zarul la dispoziția omului ca să-l rearunce
 
 class DieView {
   constructor(root, badge) {
@@ -124,6 +125,7 @@ export class GameScreen {
     this.prevMoney = new Map();
     this.shownMoney = new Map();
     this.lastRentN = 0;          // ultima chirie deja arătată (balonul apare o singură dată)
+    this.rerollTimer = null;     // fereastra în care omul poate rearunca zarul (modul ușor)
     this.rentIns = [];           // încasările de la robot, afișate în sertar: { pid, amount, until }
     this.botKey = null;
     this.endKey = null;
@@ -484,12 +486,17 @@ export class GameScreen {
   onDieTap() {
     const g = this.game;
     if (this.die.busy || !this.dieEnabled()) return;
+    if (this.rerollTimer) {   // a doua apăsare în fereastra de reroll: rearuncă
+      clearTimeout(this.rerollTimer);
+      this.rerollTimer = null;
+      g.useReroll();
+    }
     sound.unlock();
     sound.dice();
     this.die.startRolling();
     const two = g.diceCount === 2 && !g.isGuest;   // online rămâne la un singur zar
     if (two) this.die2.startRolling();
-    const values = Array.from({ length: two ? 2 : 1 }, () => rollBotDie(Math.random, g.humanLuck));
+    const values = Array.from({ length: two ? 2 : 1 }, () => rollDie());
     if (g.isGuest) {
       // oaspetele așteaptă zarul oficial de la gazdă: rostogolirea ține până sosește starea
       g.roll(values[0]);
@@ -503,10 +510,25 @@ export class GameScreen {
     }
     setTimeout(() => {
       this.settleDice(values);
-      this.lastShownNonce = g.rollNonce + 1;   // aruncarea locală nu se mai animă a doua oară
-      setTimeout(() => g.roll(values), 300);
+      if (g.easyMode && !g.rerolled) this.openRerollWindow(values);
+      else this.commitRoll(values);
     }, ROLL_ANIM_MS);
     this.pump();
+  }
+
+  /** Modul ușor: zarul stă la dispoziția omului câteva secunde ca să-l rearunce (o dată pe tură). */
+  openRerollWindow(values) {
+    this.toast('Nu-ți place? Atinge zarul ca să rearunci (o dată pe tură)');
+    this.rerollTimer = setTimeout(() => {
+      this.rerollTimer = null;
+      this.commitRoll(values);
+    }, REROLL_WINDOW_MS);
+  }
+
+  /** Aruncarea oficială: pionul pornește după ce zarul a fost citit. */
+  commitRoll(values) {
+    this.lastShownNonce = this.game.rollNonce + 1;   // aruncarea locală nu se mai animă a doua oară
+    setTimeout(() => this.game.roll(values), 300);
   }
 
   dieEnabled() {

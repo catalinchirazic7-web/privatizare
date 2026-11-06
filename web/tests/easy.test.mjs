@@ -1,42 +1,43 @@
-// Robotul ușor: omul are noroc 33% la zar, robotul ușor are 0.
+// Modul ușor: omul și robotul ușor pot rearunca zarul, o dată pe tură.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { rollBotDie, EASY_HUMAN_LUCK } from '../js/core/dice.js';
+import { Game } from '../js/game/game.js';
+import { PAWN_COLORS } from '../js/core/model.js';
+import { isLowRoll } from '../js/core/dice.js';
+import { loadRealCatalog } from './helpers.mjs';
 
-/** Generator determinist (mulberry32), ca testul să nu depindă de Math.random. */
-function seeded(seed) {
-  let a = seed;
-  return () => {
-    a |= 0; a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+const cat = loadRealCatalog();
 
-function mean(luck, n = 60000) {
-  const rng = seeded(42);
-  let sum = 0;
-  for (let i = 0; i < n; i += 1) sum += rollBotDie(rng, luck);
-  return sum / n;
-}
-
-test('noroc omului în robotul ușor: 0,5', () => {
-  assert.equal(EASY_HUMAN_LUCK, 0.5);
+test('aruncarea e mică dacă media pe zar e cel mult 2', () => {
+  assert.equal(isLowRoll([1]), true);
+  assert.equal(isLowRoll([2]), true);
+  assert.equal(isLowRoll([3]), false);
+  assert.equal(isLowRoll([1, 3]), true);
+  assert.equal(isLowRoll([3, 3]), false);
 });
 
-test('fără noroc zarul e uniform (media ~3,5)', () => {
-  assert.ok(Math.abs(mean(0) - 3.5) < 0.05);
+test('robotul ușor își rearunca zarul o dată pe tură', () => {
+  const queue = [1, 5, 2];
+  const game = new Game(cat, { botDie: () => queue.shift() });
+  game.startGame([
+    { name: 'Om', colorKey: PAWN_COLORS[0].key, isBot: false, catalin: false, easy: false },
+    { name: 'Robot', colorKey: PAWN_COLORS[1].key, isBot: true, catalin: false, easy: true },
+  ], null, null, 1, 'old');
+  const robot = game.game.players[1];
+  assert.deepEqual(game.easyBotRoll(robot), [5]);   // 1 e mic: rearuncă și iese 5
+  assert.deepEqual(game.easyBotRoll(robot), [2]);   // deja a rearuncat în tura asta: rămâne 2
 });
 
-test('cu noroc 0,5 media urcă (cel mai bun din două aruncări, ~3,99)', () => {
-  const lucky = mean(EASY_HUMAN_LUCK);
-  assert.ok(lucky > mean(0) + 0.2, `medie ${lucky}`);
-  assert.ok(Math.abs(lucky - 3.99) < 0.05, `medie ${lucky}`);
-});
-
-test('noroc 0 dă exact aceeași secvență ca zarul normal', () => {
-  const a = seeded(7);
-  const b = seeded(7);
-  for (let i = 0; i < 1000; i += 1) assert.equal(rollBotDie(a, 0), 1 + Math.floor(b() * 6));
+test('în modul ușor e activat, fără robot ușor nu', () => {
+  const game = new Game(cat, { botDie: () => 3 });
+  game.startGame([
+    { name: 'Om', colorKey: PAWN_COLORS[0].key, isBot: false, catalin: false, easy: false },
+    { name: 'Robot', colorKey: PAWN_COLORS[1].key, isBot: true, catalin: false, easy: false },
+  ], null, null, 1, 'old');
+  assert.equal(game.easyMode, false);
+  game.startGame([
+    { name: 'Om', colorKey: PAWN_COLORS[0].key, isBot: false, catalin: false, easy: false },
+    { name: 'Robot', colorKey: PAWN_COLORS[1].key, isBot: true, catalin: false, easy: true },
+  ], null, null, 1, 'old');
+  assert.equal(game.easyMode, true);
 });
