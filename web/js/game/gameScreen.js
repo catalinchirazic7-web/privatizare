@@ -905,8 +905,8 @@ export class GameScreen {
 
   /** Clipul de victorie se redă pe tot ecranul; apoi apare fereastra cu câștigătorul. */
   playWinVideo() {
-    const overlay = $('win-overlay');
-    const video = $('win-video');
+    const overlay = this.$('win-overlay');
+    const video = this.$('win-video');
     this.winVideoPlaying = true;
     overlay.hidden = false;
     const finish = () => {
@@ -919,7 +919,7 @@ export class GameScreen {
       this.renderWinner();
     };
     video.onended = finish;
-    $('win-skip').onclick = finish;
+    this.$('win-skip').onclick = finish;
     video.currentTime = 0;
     video.play().catch(finish);
   }
