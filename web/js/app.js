@@ -46,6 +46,7 @@ const app = {
     this.screen = name;
     this.updateRotateHint();
     if (name === 'home') {
+      $('toggle-cover')?.remove(); // elimină butonul din paginile mai vechi aflate în cache
       menus.refreshHome();
       const cover = $('home-cover');
       cover.muted = true;

@@ -585,3 +585,6 @@ input { -webkit-user-select: text; user-select: text; }
   #scr-home .home-menu { grid-column: 1; align-self: end; }
   #scr-home::after { background: linear-gradient(180deg, rgba(4, 8, 12, .45), rgba(4, 8, 12, .18) 30%, rgba(4, 8, 12, .75)); }
 }
+
+/* Compatibilitate cu paginile memorate ale versiunilor vechi. */
+#toggle-cover { display: none !important; }
