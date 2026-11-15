@@ -115,7 +115,7 @@ export const PROPERTY_STORIES = {
     "https://www.timisoara-info.ro/infocentru/premiereletimi%C8%99oarei"
   ],
   "continental": [
-    "🎮",
+    "🏨🌊✨",
     "Continental Hotels S.A., lanț hotelier românesc, a fost înființat în 1991 și privatizat în 1995. Grand Hotel Continental București se află pe Calea Victoriei, într-o clădire din 1886. La Cluj, fostul Continental a fost inițial Hotel New York. Hotelul Continental din Timișoara (1971) nu a intrat efectiv în rețea.",
     "https://continentalhotels.ro/corporate"
   ],

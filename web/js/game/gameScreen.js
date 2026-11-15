@@ -695,7 +695,7 @@ export class GameScreen {
     const position = this.catalog.positions[index];
     if (!story || !position) return;
     const pos = this.board.toScreen(position[0], position[1]);
-    const effect = el('div', { class: 'arrival-effect', 'aria-hidden': 'true', text: story[0] });
+    const effect = this.propertyAnimation(propertyId, story, 'arrival-effect');
     effect.style.left = `${pos.x}px`;
     effect.style.top = `${pos.y}px`;
     this.$('board-wrap').append(effect);
@@ -756,7 +756,7 @@ export class GameScreen {
         el('h4', { text: prop ? prop.name : v.shortName }),
         el('p', { text: info }),
         story ? el('div', { class: 'landing-story' },
-          el('span', { class: 'landing-motion', 'aria-hidden': 'true', text: story[0] }),
+          this.propertyAnimation(prop.id, story, 'landing-motion'),
           el('p', { text: story[1] }),
           story[2] ? el('a', { href: story[2], target: '_blank', rel: 'noopener noreferrer', class: 'landing-source', onclick: (e) => e.stopPropagation(), text: 'Sursă' }) : null,
         ) : null,
@@ -956,12 +956,21 @@ export class GameScreen {
     }
   }
 
+  propertyAnimation(propertyId, story, className) {
+    if (propertyId !== 'continental') return el('span', { class: className, 'aria-hidden': 'true', text: story[0] });
+    return el('span', { class: `${className} continental-animation`, 'aria-hidden': 'true' },
+      el('span', { class: 'continental-hotel', text: '🏨' }),
+      el('span', { class: 'continental-waves', text: '🌊' }),
+      el('span', { class: 'continental-sparkle', text: '✨' }),
+    );
+  }
+
   propertyInfo(prop) {
     const story = PROPERTY_STORIES[prop.id];
     if (!story) return null;
     return el('section', { class: 'purchase-story' },
       el('div', { class: 'purchase-story-heading' },
-        el('span', { class: 'landing-motion', 'aria-hidden': 'true', text: story[0] }),
+        this.propertyAnimation(prop.id, story, 'landing-motion'),
         el('strong', { text: 'Despre această acțiune' }),
       ),
       el('p', { text: story[1] }),

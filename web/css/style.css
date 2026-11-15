@@ -558,3 +558,13 @@ input { -webkit-user-select: text; user-select: text; }
 .card-mood span { display: inline-block; animation: card-mood-bounce .65s ease-in-out calc(var(--mood-index) * .08s) 3 alternate both; }
 @keyframes card-mood-bounce { from { transform: translateY(4px) rotate(-10deg) scale(.85); } to { transform: translateY(-6px) rotate(10deg) scale(1.12); } }
 @media (prefers-reduced-motion: reduce) { .card-mood span { animation: none; } }
+
+/* Hotelul Continental: apă, valuri și strălucire. */
+.continental-animation { position: relative; display: inline-flex; align-items: end; white-space: nowrap; }
+.continental-animation span { display: inline-block; }
+.continental-waves { margin-left: -.25em; animation: continental-wave 1s ease-in-out infinite alternate; }
+.continental-sparkle { font-size: .55em; align-self: start; margin-left: -.2em; animation: continental-sparkle 1.2s ease-in-out infinite alternate; }
+@keyframes continental-wave { from { transform: translate(-2px, 2px); } to { transform: translate(3px, -2px); } }
+@keyframes continental-sparkle { from { opacity: .45; transform: scale(.8); } to { opacity: 1; transform: scale(1.2); } }
+.effects-off .continental-animation span { animation: none; }
+@media (prefers-reduced-motion: reduce) { .continental-animation span { animation: none; } }
