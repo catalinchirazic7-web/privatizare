@@ -199,6 +199,7 @@ export class GameScreen {
     this.resultPlayerName = this.game.isOnline
       ? humans.find((p) => p.id === this.game.myPlayerId)?.name ?? null
       : humans.length === 1 ? humans[0].name : null;
+    this.previousBotProperties = this.botProperties();
     this.lastShownNonce = this.game.rollNonce;
     this.prevMoney = new Map((this.game.game?.players ?? []).map((p) => [p.id, p.money]));
     this.shownMoney = new Map(this.prevMoney);
@@ -279,6 +280,7 @@ export class GameScreen {
     const myId = g.myPlayerId;
     const myTurn = this.myTurn;
     const dialog = this.visibleDialog();
+    this.showBotPurchase();
 
     if (this.viewedId && !players.some((p) => p.id === this.viewedId)) this.viewedId = null;
     const me = players.find((p) => p.id === myId) ?? null;
@@ -656,7 +658,7 @@ export class GameScreen {
     this.$('landing-card').hidden = true;
   }
 
-  showLanding(tile) {
+  showLanding(tile, purchaseMessage = null) {
     const g = this.game;
     const box = this.$('landing-card');
     const v = tileVisual(tile, this.catalog.actions);
@@ -678,6 +680,7 @@ export class GameScreen {
     box.append(
       el('div', { class: 'ico' }, iconImg ?? v.icon),
       el('div', { class: 'txt' },
+        purchaseMessage ? el('p', { class: 'purchase-label', text: purchaseMessage }) : null,
         el('h4', { text: prop ? prop.name : v.shortName }),
         el('p', { text: info }),
         story ? el('div', { class: 'landing-story' },
@@ -685,6 +688,7 @@ export class GameScreen {
           el('p', { text: story[1] }),
           story[2] ? el('a', { href: story[2], target: '_blank', rel: 'noopener noreferrer', class: 'landing-source', onclick: (e) => e.stopPropagation(), text: 'Sursă' }) : null,
         ) : null,
+        prop ? el('p', { class: 'landing-details', text: `În joc: ${prop.annexes.map((a) => a.name).join(' • ')}` }) : null,
         prop ? el('p', { class: 'muted', text: 'Atinge pentru fișa acțiunii' }) : null,
       ),
     );
@@ -692,6 +696,37 @@ export class GameScreen {
     box.hidden = true;
     void box.offsetWidth;
     box.hidden = false;
+  }
+
+  botProperties() {
+    const result = new Map();
+    for (const p of this.game.game?.players ?? []) {
+      if (!p.isBot) continue;
+      for (const [id, level] of Object.entries(p.ownedProperties ?? {})) result.set(`${p.id}:${id}`, level);
+    }
+    return result;
+  }
+
+  showBotPurchase() {
+    const before = this.previousBotProperties;
+    const after = this.botProperties();
+    this.previousBotProperties = after;
+    if (!before) return;
+    for (const p of this.game.game?.players ?? []) {
+      if (!p.isBot) continue;
+      for (const [id, level] of Object.entries(p.ownedProperties ?? {})) {
+        const key = `${p.id}:${id}`;
+        const old = before.get(key);
+        if (old !== undefined && level <= old) continue;
+        const tile = this.catalog.board.find((t) => t.type === TILE.PROPERTY && t.propertyId === id);
+        if (!tile) continue;
+        const annex = level > 0 ? this.catalog.actions[id]?.annexes.find((a) => a.index === level) : null;
+        this.showLanding(tile, `${p.name} a cumpărat ${annex ? `anexa: ${annex.name}` : 'titlul'}`);
+        clearTimeout(this.landingTimer);
+        this.landingTimer = setTimeout(() => this.hideLanding(), LANDING_MS);
+        return;
+      }
+    }
   }
 
   onLandingTap() {
@@ -730,6 +765,7 @@ export class GameScreen {
       if (this.modalKey && this.modalKey.startsWith('dlg:')) this.closeModal();
       return;
     }
+    if (d.type === 'BUY') this.hideLanding();
     const key = this.dialogKey(d);
     if (key === this.modalKey) return;
     this.sheetProperty = null;   // fișa se închide când apare un dialog de joc
@@ -770,6 +806,7 @@ export class GameScreen {
           fallbackIcon: v.icon,
           accent: v.accent,
           body: [
+            this.propertyInfo(prop),
             el('p', { text: `Cost achiziție: ${fmt(price)} ECU` }),
             el('p', { text: `Sold: ${fmt(buyer.money)} ECU` }),
             isTitle ? el('p', { class: 'muted', text: `Atenție: dacă nu cumperi, achiți Băncii taxa de ${fmt(prop.titleTax)} ECU.` }) : null,
@@ -823,6 +860,20 @@ export class GameScreen {
       default:
         return el('div');
     }
+  }
+
+  propertyInfo(prop) {
+    const story = PROPERTY_STORIES[prop.id];
+    if (!story) return null;
+    return el('section', { class: 'purchase-story' },
+      el('div', { class: 'purchase-story-heading' },
+        el('span', { class: 'landing-motion', 'aria-hidden': 'true', text: story[0] }),
+        el('strong', { text: 'Despre această acțiune' }),
+      ),
+      el('p', { text: story[1] }),
+      el('p', { class: 'purchase-annexes', text: `În joc: ${prop.annexes.map((a) => a.name).join(' • ')}` }),
+      story[2] ? el('a', { href: story[2], target: '_blank', rel: 'noopener noreferrer', text: 'Citește sursa' }) : null,
+    );
   }
 
   dialogBox({ title, icon, fallbackIcon, accent, body, actions }) {

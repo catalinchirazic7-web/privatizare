@@ -483,3 +483,17 @@ input { -webkit-user-select: text; user-select: text; }
 .landing-source { color: #ffda91; font-size: .75rem; }
 @keyframes story-move { from { transform: translateX(-3px) rotate(-5deg); } to { transform: translateX(5px) rotate(5deg); } }
 @media (prefers-reduced-motion: reduce) { .landing-motion, .landing-card { animation: none; } }
+
+/* Povestea firmei se citește în fereastra de cumpărare și la achizițiile robotului. */
+.landing-card { width: min(94vw, 560px); padding: 14px 18px; }
+.landing-card h4 { font-size: 1.1rem; }
+.landing-card p { font-size: .95rem; }
+.landing-card .ico { width: 68px; height: 68px; }
+.purchase-label { color: #ffda91; font-weight: 800; }
+.landing-details { color: #ead6bd; }
+.purchase-story { margin: 10px 0; padding: 12px; border-radius: 12px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,218,145,.25); }
+.purchase-story-heading { display: flex; align-items: center; gap: 10px; color: #ffda91; }
+.purchase-story p { line-height: 1.4; }
+.purchase-annexes { color: #ead6bd; font-size: .9rem; }
+.purchase-story a { color: #ffda91; }
+@media (max-height: 500px) { .landing-card { max-height: 42dvh; overflow-y: auto; } .landing-card .ico { width: 48px; height: 48px; } }
