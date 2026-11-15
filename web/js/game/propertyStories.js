@@ -20,7 +20,7 @@ export const PROPERTY_STORIES = {
   ],
   "timisoreana": [
     "🧥",
-    "În joc: Timișoreana are sectoare de îmbrăcăminte, aparate electrice și bijuterii. Caut în continuare date despre magazinul sau societatea de la care provine numele; anul deschiderii nu a fost încă stabilit."
+    "În joc: Timișoreana are sectoare de îmbrăcăminte, aparate electrice și bijuterii. Anul deschiderii magazinului sau societății nu a fost încă stabilit."
   ],
   "unirii": [
     "💊",
