@@ -4,6 +4,7 @@
 
 import { loadImage } from '../ui/dom.js';
 import { PAWN_BY_KEY, TILE, applyLayout } from '../core/model.js';
+import { calculateRent } from '../core/actions.js';
 
 const STEP_MS = 430;          // durata unui pas pe tablă
 const WALK_MS = 240;          // un pas din mersul forțat (RECHEMAT URGENT), mai rapid
@@ -86,6 +87,7 @@ export class BoardView {
     this.pointers = new Map();
     this.gesture = null;
     this.dragged = false;
+    this.hoverTile = null;
     this.running = true;
 
     this.boardImg = null;
@@ -252,7 +254,15 @@ export class BoardView {
     });
     c.addEventListener('pointermove', (e) => {
       const p = this.pointers.get(e.pointerId);
-      if (!p) return;
+      if (!p) {
+        if (e.pointerType === 'mouse' || e.pointerType === 'pen') {
+          const rect = c.getBoundingClientRect();
+          const i = this.tileAt(e.clientX - rect.left, e.clientY - rect.top);
+          this.hoverTile = i >= 0 && this.catalog.board[i]?.type === TILE.PROPERTY ? i : null;
+        }
+        return;
+      }
+      this.hoverTile = null;
       const dx = e.clientX - p.x;
       const dy = e.clientY - p.y;
       p.x = e.clientX;
@@ -287,6 +297,7 @@ export class BoardView {
       this.hitTest(e.clientX - this.canvas.getBoundingClientRect().left, e.clientY - this.canvas.getBoundingClientRect().top);
     };
     c.addEventListener('pointerup', end);
+    c.addEventListener('pointerleave', () => { this.hoverTile = null; });
     c.addEventListener('pointercancel', (e) => {
       this.pointers.delete(e.pointerId);
       this.gesture = null;
@@ -322,6 +333,22 @@ export class BoardView {
         return;
       }
     }
+    const best = this.tileAt(px, py);
+    if (best >= 0) {
+      if (this.catalog.board[best]?.type === TILE.PROPERTY && this.hoverTile !== best) {
+        this.hoverTile = best;
+        clearTimeout(this.rentTimer);
+        this.rentTimer = setTimeout(() => { this.hoverTile = null; }, 5000);
+      } else if (this.catalog.board[best]?.type === TILE.PROPERTY) {
+        // Un al doilea click deschide fișa completă a acțiunii.
+        this.hoverTile = null;
+        this.onTileTap(best);
+      } else this.onTileTap(best);
+    }
+  }
+
+  tileAt(px, py) {
+    const { fx, fy } = this.fromScreen(px, py);
     let best = -1;
     let bestDist = 1;
     this.catalog.positions.forEach(([x, y], i) => {
@@ -333,7 +360,7 @@ export class BoardView {
         best = i;
       }
     });
-    if (best >= 0) this.onTileTap(best);
+    return best;
   }
 
   /* ---------- animația pionilor ---------- */
@@ -445,6 +472,38 @@ export class BoardView {
     this.drawHighlight(ctx, bx, by, bw, bh);
     this.drawMarkers(ctx, bx, by, bw, bh);
     this.drawPawns(ctx, bx, by, bw, bh);
+    this.drawRentTooltip(ctx, dpr, cssW, cssH);
+  }
+
+  drawRentTooltip(ctx, dpr, cssW, cssH) {
+    const index = this.hoverTile;
+    const tile = this.catalog.board[index];
+    const pos = this.catalog.positions[index];
+    if (!tile || tile.type !== TILE.PROPERTY || !pos) return;
+    const prop = this.catalog.actions[tile.propertyId];
+    if (!prop) return;
+    const owner = this.model.players.find((p) => Object.prototype.hasOwnProperty.call(p.ownedProperties, prop.id));
+    const text = owner
+      ? `Chirie actuală: ${calculateRent(prop, owner.ownedProperties[prop.id]).toLocaleString('ro-RO')} ECU`
+      : 'Proprietate liberă · fără chirie';
+    const point = this.toScreen(pos[0], pos[1]);
+    ctx.save();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.font = 'bold 14px sans-serif';
+    const w = Math.min(cssW - 12, Math.max(170, ctx.measureText(text).width + 24));
+    const h = 38;
+    const x = Math.max(6, Math.min(cssW - w - 6, point.x - w / 2));
+    const y = point.y < 65 ? point.y + 30 : point.y - 65;
+    ctx.fillStyle = 'rgba(25, 25, 22, .94)';
+    ctx.strokeStyle = '#f4d360';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(x, Math.max(6, Math.min(cssH-h-6, y)), w, h, 8);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(text, x + w / 2, Math.max(6, Math.min(cssH-h-6, y)) + h / 2, w - 12);
+    ctx.restore();
   }
 
   drawDecks(ctx, bx, by, bw, bh) {
