@@ -104,8 +104,8 @@ export const PROPERTY_STORIES = {
   ],
   "continental": [
     "🎮",
-    "Continental: nume purtat de hoteluri din mai multe orașe ale României. La Timișoara, Hotelul Continental, o clădire cu 12 niveluri proiectată de Gheorghe Gârleanu, a fost finalizat în 1971. Nu este confirmat că acțiunea se referă exclusiv la acest hotel.",
-    "https://cartipostale.cimec.ro/Detaliu.php?criteriu=con&id=10367"
+    "Continental Hotels S.A., lanț hotelier românesc, a fost înființat în 1991 și privatizat în 1995. Grand Hotel Continental București se află pe Calea Victoriei, într-o clădire din 1886. La Cluj, fostul Continental a fost inițial Hotel New York. Hotelul Continental din Timișoara (1971) nu a intrat efectiv în rețea.",
+    "https://continentalhotels.ro/corporate"
   ],
   "celuloza": [
     "📜",
