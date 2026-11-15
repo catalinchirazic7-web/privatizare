@@ -113,7 +113,7 @@ input { -webkit-user-select: text; user-select: text; }
 .code-input { letter-spacing: 6px; text-transform: uppercase; font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 800; }
 
 /* ---------- ecranul principal ---------- */
-#scr-home { background: radial-gradient(ellipse at 48% 48%, #13823f 0%, #075729 48%, #10351f 100%); }
+#scr-home { background: #171a1b; isolation: isolate; }
 .home-layout {
   flex: 1;
   display: grid;
@@ -569,3 +569,19 @@ input { -webkit-user-select: text; user-select: text; }
 @keyframes continental-sparkle { from { opacity: .45; transform: scale(.8); } to { opacity: 1; transform: scale(1.2); } }
 .effects-off .continental-animation span { animation: none; }
 @media (prefers-reduced-motion: reduce) { .continental-animation span { animation: none; } }
+
+/* Coperta video umple meniul, iar comenzile rămân lizibile deasupra ei. */
+#scr-home .home-logo { position: absolute; inset: 0; width: 100%; height: 100%; max-height: none; overflow: hidden; z-index: 0; pointer-events: none; }
+#scr-home .home-cover { width: 100%; height: 100%; max-width: none; max-height: none; aspect-ratio: auto; object-fit: cover; border-radius: 0; }
+#scr-home::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(90deg, rgba(4, 8, 12, .12) 0%, rgba(4, 8, 12, .22) 45%, rgba(4, 8, 12, .66) 100%), linear-gradient(180deg, rgba(4, 8, 12, .48), transparent 24%, transparent 70%, rgba(4, 8, 12, .38)); }
+#scr-home .topbar, #scr-home .home-menu { position: relative; z-index: 2; }
+#scr-home .home-layout { grid-template-columns: 1fr 1fr; }
+#scr-home .home-menu { grid-column: 2; }
+#scr-home .home-menu .btn, #scr-home .topbar .btn { color: #fff; background: rgba(255, 255, 255, .13); border-color: rgba(255, 255, 255, .48); text-shadow: 0 1px 5px rgba(0, 0, 0, .9); backdrop-filter: blur(5px); }
+#scr-home .home-menu .btn:hover, #scr-home .topbar .btn:hover { background: rgba(255, 255, 255, .25); border-color: rgba(255, 255, 255, .8); }
+#scr-home .brand, #scr-home .version { text-shadow: 0 2px 7px #000; }
+@media (orientation: portrait) {
+  #scr-home .home-layout { grid-template-columns: 1fr; }
+  #scr-home .home-menu { grid-column: 1; align-self: end; }
+  #scr-home::after { background: linear-gradient(180deg, rgba(4, 8, 12, .45), rgba(4, 8, 12, .18) 30%, rgba(4, 8, 12, .75)); }
+}
