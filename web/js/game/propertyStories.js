@@ -11,7 +11,7 @@ export const PROPERTY_STORIES = {
   ],
   "helicon": [
     "📰",
-    "Helicon Banat, Timișoara: tipografie și editură. Regulamentul jocului original precizează că Privatizare a fost editat și imprimat de S.C. „Helicon” Banat S.A. În 1991, Întreprinderea Poligrafică „Banatul” a devenit „Helicon”-Banat S.A.",
+    "Helicon Banat, Timișoara: regulamentul jocului spune că Privatizare a fost editat și imprimat de această tipografie. În 1991, Întreprinderea Poligrafică „Banatul”, unde s-au tipărit jocuri precum Piticot și Dacii și Romanii, a devenit „Helicon” Banat S.A.",
     "https://legislatie.just.ro/public/DetaliiDocument/1656"
   ],
   "televiziune": [
@@ -30,7 +30,7 @@ export const PROPERTY_STORIES = {
   ],
   "padurea_verde": [
     "🌳",
-    "Pădurea Verde, Timișoara: zonă de agrement din nord-estul orașului. Aici se află Muzeul Satului Bănățean, a cărui secție în aer liber a fost deschisă publicului la 20 august 1971.",
+    "Pădurea Verde, Timișoara: zonă de agrement unde se află Muzeul Satului Bănățean, deschis în aer liber în 1971. În Timișoara a existat și un restaurant numit „La Pădurea Verde”; legătura sa cu societatea din joc nu este confirmată.",
     "https://www.cjtimis.ro/wp-content/uploads/2020/07/Anunt-Legea52-site.pdf"
   ],
   "lipscani": [
