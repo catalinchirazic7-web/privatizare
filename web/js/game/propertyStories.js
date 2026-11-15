@@ -1,113 +1,122 @@
 export const PROPERTY_STORIES = {
   "poli": [
     "⚽",
-    "În joc: O bază sportivă cu sală de gimnastică și terenuri de tenis și fotbal."
+    "Context timișorean: Societatea Sportivă Politehnica s-a constituit oficial în 1921; rădăcinile sportului studențesc coboară în 1920. Acțiunea „POLI S.R.L.” din joc nu este identificată juridic cu clubul.",
+    "https://www.radiotimisoara.ro/sport/saptamana-centenarului-politehnica-timisoara-cu-editie-speciala-arena-radio-audio-273356.html"
   ],
   "electromotor": [
     "⚙️",
-    "Electromotor Timișoara a produs motoare electrice; originile sale includ fabricile Friedrich și Britania.",
+    "Electromotor, Timișoara: uzină de motoare electrice, cu rădăcini în fabrica Friedrich și fabrica Britania, reunite în 1944. În 1948 întreprinderea a primit numele Electromotor; sursele nu sunt unanime asupra începuturilor, așa că nu atribuim aici un an unic de fondare.",
     "https://www.researchgate.net/publication/350558849_O_istorie_a_masinilor_electrice_in_Romania"
   ],
   "helicon": [
     "📰",
-    "În joc: O tipografie cu tipar ofset și rotativă de ziare."
+    "Helicon Banat, Timișoara: tipografie și editură. Regulamentul jocului original precizează că Privatizare a fost editat și imprimat de S.C. „Helicon” Banat S.A. În 1991, Întreprinderea Poligrafică „Banatul” a devenit „Helicon”-Banat S.A.",
+    "https://legislatie.just.ro/public/DetaliiDocument/1656"
   ],
   "televiziune": [
     "📺",
-    "În joc: Studiouri locale, teritoriale și de televiziune prin satelit."
+    "În joc: Studiouri locale, teritoriale și de televiziune prin satelit. Identificarea cu o firmă sau un loc real nu este încă verificată."
   ],
   "timisoreana": [
     "🧥",
-    "În joc: Confecții, aparate electrice și bijuterii. Acțiunea nu este identificată cu fabrica de bere."
+    "În joc: Confecții, aparate electrice și bijuterii. Acțiunea nu este identificată cu fabrica de bere. Identificarea cu o firmă sau un loc real nu este încă verificată."
   ],
   "unirii": [
     "💊",
-    "În joc: O farmacie și o cofetărie."
+    "În joc: O farmacie și o cofetărie. Identificarea cu o firmă sau un loc real nu este încă verificată."
   ],
   "padurea_verde": [
     "🌳",
-    "În joc: Cabane, bufet și băi termale, într-un decor de pădure."
+    "În joc: Cabane, bufet și băi termale, într-un decor de pădure. Identificarea cu o firmă sau un loc real nu este încă verificată."
   ],
   "lipscani": [
     "🍽️",
-    "În joc: Un bar de zi și un restaurant."
+    "În joc: Un bar de zi și un restaurant. Identificarea cu o firmă sau un loc real nu este încă verificată."
   ],
   "maria": [
     "🏙️",
-    "În joc: Locuințe, birouri și o discotecă."
+    "Context local: Monumentul Sfânta Maria din Timișoara a fost construit în 1906, în Piața Sfânta Maria din Elisabetin. Nu am confirmat dacă acțiunea din joc desemnează această zonă.",
+    "https://heritageoftimisoara.ro/ro/cladiri/Elisabetin/adresa/Sf%C3%A2nta%2BMaria/%28monum.%29"
   ],
   "circumvalatiunii": [
     "🏨",
-    "În joc: Un complex de fizioterapie și un hotel."
+    "În joc: Un complex de fizioterapie și un hotel. Identificarea cu o firmă sau un loc real nu este încă verificată."
   ],
   "ohm": [
     "🔌",
-    "În joc: Micromotoare, prototipuri și aparate de măsură."
+    "În joc: Micromotoare, prototipuri și aparate de măsură. Identificarea cu o firmă sau un loc real nu este încă verificată."
   ],
   "atelier_cfr": [
     "🚂",
-    "În joc: Ateliere de revizie și reparații feroviare: arcuri, osii și boghiuri."
+    "Atelierele feroviare din Timișoara reparau material rulant, locomotive și vagoane. O istorie a tehnicii românești datează atelierul de reparații din 1858; nu am confirmat anul încetării activității exact pentru unitatea din joc.",
+    "https://academiaromana.ro/sectii/sectia08_tehnica/doc2020/IstoriaTehnicii/24IstoriaTehnicii-Vol1.pdf"
   ],
   "calea_sagului": [
     "⛸️",
-    "În joc: Un bloc pentru turiști și o sală de patinaj."
+    "În joc: Un bloc pentru turiști și o sală de patinaj. Identificarea cu o firmă sau un loc real nu este încă verificată."
   ],
   "piata_romana": [
     "🧵",
-    "În joc: O casă, o agenție de turism și o croitorie de lux."
+    "În joc: O casă, o agenție de turism și o croitorie de lux. Identificarea cu o firmă sau un loc real nu este încă verificată."
   ],
   "metalo_tim": [
     "🔨",
-    "În joc: Construcții pentru sere și containere."
+    "În joc: Construcții pentru sere și containere. Identificarea cu o firmă sau un loc real nu este încă verificată."
   ],
   "piata_victoriei": [
     "🛍️",
-    "În joc: Un supermarket și un hotel într-un bloc turn."
+    "Context istoric: Piața Victoriei, fostă Piața Operei, este centrul simbolic al Revoluției din Timișoara; la 20 decembrie 1989, orașul a fost proclamat liber de la balconul Operei. Societatea din joc nu este identificată.",
+    "https://spotlight-timisoara.eu/pf/cladirea-operei-a-teatrelor/"
   ],
   "taberei": [
     "🌷",
-    "În joc: O casă cu grădină, locuințe și o casă de odihnă."
+    "În joc: O casă cu grădină, locuințe și o casă de odihnă. Identificarea cu o firmă sau un loc real nu este încă verificată."
   ],
   "aviatica": [
     "✈️",
-    "În joc: Zboruri cu elicopterul, avion particular și transport aerian."
+    "În joc: Zboruri cu elicopterul, avion particular și transport aerian. Identificarea cu o firmă sau un loc real nu este încă verificată."
   ],
   "memorii": [
     "💾",
-    "În joc: Plăci cu circuite, blocuri de memorii și microprocesoare."
+    "Posibilă referință: Fabrica de Memorii din Timișoara producea memorii pentru calculatoare, inclusiv module cu ferite pentru FELIX. Producția a început ca secție ITC, devenită fabrică autonomă în 1976; după 1990 activitatea industrială a continuat prin DATATIM și asocierea cu Alcatel.",
+    "https://cronica-it.github.io/evenimente/1976/fabrica-de-memorii-timisoara/"
   ],
   "prichindel": [
     "🧸",
-    "În joc: Confecții realizate manual și mecanizat."
+    "Posibilă legătură: presa din 1961 descrie la Timișoara complexul pentru copii „Prichindel”, cu îmbrăcăminte, încălțăminte și servicii. Identitatea juridică cu acțiunea din joc nu este încă verificată.",
+    "https://www.bibliotecadeva.ro/periodice/scinteiapi/1961/04/scinteia_pionierului_1961_04_17.pdf"
   ],
   "lahovary": [
     "🏡",
-    "În joc: O pensiune și o mezelărie."
+    "În joc: O pensiune și o mezelărie. Identificarea cu o firmă sau un loc real nu este încă verificată."
   ],
   "guban": [
     "👞",
-    "Guban a început la Timișoara cu cremă de ghete; societatea a fost înființată în 1937 și a produs ulterior încălțăminte.",
+    "Guban, Timișoara: Blaziu Guban a început cu cremă de ghete; societatea a fost înregistrată în 1937. Din 1959 fabrica a produs și pantofi, deveniți cunoscuți în România și peste hotare.",
     "https://guban.ro/pages/despre-noi"
   ],
   "telefoane": [
     "☎️",
-    "În joc: Centrale telefonice urbane și interurbane."
+    "Context local: rețeaua și prima centrală telefonică din Timișoara au fost instalate în 1881. Acțiunea din joc se referă la centrale urbane și interurbane; operatorul exact nu a fost identificat.",
+    "https://www.timisoara-info.ro/infocentru/premiereletimi%C8%99oarei"
   ],
   "continental": [
     "🎮",
-    "În joc: Jocuri electronice, piscină cu bar și hotel-restaurant."
+    "Posibilă legătură: Hotelul Continental din Timișoara, clădire cu 12 niveluri proiectată de arhitectul Gheorghe Gârleanu, a fost finalizat în 1971. Identitatea exactă cu societatea de pe cartonaș nu este confirmată.",
+    "https://cartipostale.cimec.ro/Detaliu.php?criteriu=con&id=10367"
   ],
   "celuloza": [
     "📜",
-    "În joc: Secții pentru fabricarea hârtiei și a cartonului."
+    "În joc: Secții pentru fabricarea hârtiei și a cartonului. Identificarea cu o firmă sau un loc real nu este încă verificată."
   ],
   "dura": [
     "🔋",
-    "Fabrica de baterii Dura a fost înființată în 1920, la Timișoara.",
-    "https://assets.primariatm.ro/507d5ace-c36f-4a54-9fd9-bbae2cc041d9/ANEXA%20FISE%20E3%20monumente%20propuse%20prin%20PUG.pdf"
+    "Dura, Timișoara: producție de baterii și produse electrotehnice. O fișă istorică a Primăriei datează începuturile în 1920; după 1990 secția de baterii a revenit la numele Dura. În 2000 a fost deschisă procedura de reorganizare și faliment.",
+    "https://www.unpir.ro/documents/phoenix/pdf/revista-pilot.pdf"
   ],
   "ambasador": [
     "🛎️",
-    "În joc: Un hotel, restaurant, bar și club de noapte."
+    "În joc: Un hotel, restaurant, bar și club de noapte. Identificarea cu o firmă sau un loc real nu este încă verificată."
   ]
 };
