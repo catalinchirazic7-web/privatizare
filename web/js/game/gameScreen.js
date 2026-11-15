@@ -990,12 +990,18 @@ export class GameScreen {
       : el('div', { class: 'card-text-only', text: card.text });
     const result = amountTxt ? el('p', { class: `card-result ${outcomeCls}`, text: amountTxt }) : null;
     const dest = card.destination ? el('p', { class: 'card-note', text: card.destination }) : null;
+    const mood = this.effectsEnabled && card.amount > 0 && (card.outcome === CardOutcome.GAIN || card.outcome === CardOutcome.LOSS)
+      ? el('div', { class: 'card-mood', 'aria-hidden': 'true' },
+          ...(card.outcome === CardOutcome.GAIN ? ['💸', '🤑', '💰', '🤑', '💸'] : ['😂', '🤣', '😂', '🤣', '😂'])
+            .map((face, i) => el('span', { style: { '--mood-index': i }, text: face })))
+      : null;
     // cartonașul robotului se închide la atingere: nu mai aștepți timpul afișării
     const skip = byBot ? { onclick: () => this.game.dismissCard() } : {};
     return el('div', { class: 'modal wide', role: 'dialog', 'aria-modal': 'true', ...skip },
       el('h3', { text: card.kind === 'LOTO' ? 'Cartonaș LOTO' : 'Cartonaș TELEX' }),
       visual,
       result,
+      mood,
       dest,
       byBot
         ? el('p', { class: 'muted', text: 'Robotul a tras cartonașul și îl citește…' })

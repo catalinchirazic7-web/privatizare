@@ -59,7 +59,7 @@ const HINT = {
   BANK: 'Primești 5.000 ECU de la bancă.',
   BANK_DIVIDEND: 'Banca îți achită dividendele cuvenite.',
   CASA: 'Stai două ture: pionul se odihnește. Ieși în ordinea în care ai ajuns.',
-  SALA: 'Ședință la consiliu: urmează instrucțiunile.',
+  SALA: 'Primești sfaturi de 1.000 ECU. Atât plătești!',
   RECHEMAT: 'Te întorci urgent la START.',
 };
 

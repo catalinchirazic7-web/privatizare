@@ -387,7 +387,12 @@ export class BoardView {
           const rechemat = this.catalog.board.findIndex((t) => t.type === TILE.RECHEMAT);
           const toRechemat = mod(rechemat - start, N);
           if (!(await this.walk(a, toRechemat, token))) return;
-          a.v = target;   // teleportat la START, după ce a ajuns pe RECHEMAT
+          if (localStorage.getItem('privatizare.effects') !== 'off' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            await tween(900, (t) => { a.recallFlight = t; }, () => token === a.token && this.running);
+            if (token !== a.token || !this.running) return;
+          }
+          a.recallFlight = null;
+          a.v = target;
         }
       } else if (forward >= 1 && forward <= 12) {
         if (!(await this.walk(a, forward, token))) return;
@@ -487,10 +492,33 @@ export class BoardView {
     }
 
     this.drawDecks(ctx, bx, by, bw, bh);
+    this.drawSpecialDecorations(ctx, bx, by, bw, bh);
     this.drawHighlight(ctx, bx, by, bw, bh);
     this.drawMarkers(ctx, bx, by, bw, bh);
     this.drawPawns(ctx, bx, by, bw, bh);
     this.drawRentTooltip(ctx, dpr, cssW, cssH);
+  }
+
+  drawSpecialDecorations(ctx, bx, by, bw, bh) {
+    if (localStorage.getItem('privatizare.effects') === 'off') return;
+    const pos = (type) => {
+      const i = this.catalog.board.findIndex((tile) => tile.type === type);
+      return this.catalog.positions[i];
+    };
+    const casa = pos(TILE.CASA);
+    if (casa) {
+      ctx.save();
+      ctx.font = `900 ${Math.max(13, bh * .026)}px system-ui, sans-serif`;
+      ctx.fillStyle = '#fff3a6';
+      ctx.strokeStyle = '#3d2672';
+      ctx.lineWidth = 3;
+      ctx.textAlign = 'center';
+      const x = bx + bw * casa[0], y = by + bh * casa[1] - bh * .035;
+      ctx.strokeText('z Z Z', x, y); ctx.fillText('z Z Z', x, y);
+      ctx.restore();
+    }
+    const recall = pos(TILE.RECHEMAT);
+    if (recall) drawSpeedBird(ctx, bx + bw * recall[0], by + bh * recall[1] - bh * .045, bh * .055, performance.now());
   }
 
   drawRentTooltip(ctx, dpr, cssW, cssH) {
@@ -706,7 +734,17 @@ export class BoardView {
         fx0 = q0[0] + (q1[0] - q0[0]) * frac;
         fy0 = q0[1] + (q1[1] - q0[1]) * frac;
       }
-      const hop = Math.min(1, Math.max(0, Math.sin(Math.PI * (v - Math.floor(v)))));
+      if (a.recallFlight != null) {
+        const fromIndex = this.catalog.board.findIndex((tile) => tile.type === TILE.RECHEMAT);
+        const origin = this.catalog.positions[fromIndex];
+        const end = this.catalog.startMarker;
+        if (origin && end) {
+          const t = a.recallFlight;
+          fx0 = origin[0] + (end[0] - origin[0]) * t;
+          fy0 = origin[1] + (end[1] - origin[1]) * t - Math.sin(t * Math.PI) * .07;
+        }
+      }
+      const hop = a.recallFlight != null ? 0 : Math.min(1, Math.max(0, Math.sin(Math.PI * (v - Math.floor(v)))));
       const anchorX = bx + bw * (fx0 + dx);
       const anchorY = by + bh * (fy0 + dy + 0.008);
 
@@ -733,6 +771,10 @@ export class BoardView {
       ctx.restore();
       ctx.globalAlpha = 1;
 
+      if (a.recallFlight != null) {
+        drawSpeedBird(ctx, -pawnW * 1.1, -pawnH * .45, pawnH * .7, performance.now());
+      }
+
       // pionul: zboară (alungire) și aterizează (turtire)
       const lift = -bh * (0.03 * hop + bob);
       const sy = (1 + 0.06 * hop) * (1 - 0.1 * a.squash);
@@ -743,6 +785,28 @@ export class BoardView {
       ctx.restore();
     }
   }
+}
+
+// O pasăre sprintenă și dâre de viteză, desenate direct pe tablă.
+function drawSpeedBird(ctx, x, y, size, now) {
+  const bob = Math.sin(now / 90) * size * .06;
+  ctx.save(); ctx.translate(x, y + bob);
+  ctx.lineWidth = Math.max(1, size * .04); ctx.lineCap = 'round';
+  ctx.strokeStyle = '#eef7ff';
+  for (let i = 0; i < 3; i++) {
+    ctx.beginPath(); ctx.moveTo(size * (.35 + i * .09), size * (i * .12));
+    ctx.lineTo(size * (1 + i * .15), size * (i * .12)); ctx.stroke();
+  }
+  ctx.fillStyle = '#1976c9'; ctx.beginPath(); ctx.ellipse(0, 0, size * .34, size * .20, -.18, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#5142a0'; ctx.beginPath(); ctx.moveTo(size * .22, 0); ctx.lineTo(size * .67, -size * .3); ctx.lineTo(size * .42, size * .06); ctx.fill();
+  ctx.fillStyle = '#219de1'; ctx.beginPath(); ctx.arc(-size * .25, -size * .22, size * .16, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#f6bd39'; ctx.beginPath(); ctx.moveTo(-size * .38, -size * .24); ctx.lineTo(-size * .7, -size * .17); ctx.lineTo(-size * .38, -size * .12); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(-size * .30, -size * .25, size * .06, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(-size * .32, -size * .25, size * .025, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#f6bd39'; ctx.lineWidth = Math.max(1, size * .04);
+  ctx.beginPath(); ctx.moveTo(-size * .05, size * .15); ctx.lineTo(-size * .18, size * .4); ctx.lineTo(-size * .34, size * .4); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(size * .08, size * .15); ctx.lineTo(size * .22, size * .37); ctx.lineTo(size * .4, size * .37); ctx.stroke();
+  ctx.restore();
 }
 
 function withAlpha(hex, a) {

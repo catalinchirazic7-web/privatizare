@@ -552,3 +552,9 @@ input { -webkit-user-select: text; user-select: text; }
 .flying-bill { position: absolute; z-index: 14; pointer-events: none; font-size: clamp(22px, 3vw, 38px); animation: bill-flight 1.5s ease-in-out forwards; }
 @keyframes bill-flight { 0% { opacity: 0; left: var(--from-x); top: var(--from-y); transform: scale(.5) rotate(-18deg); } 20% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; left: var(--to-x); top: var(--to-y); transform: scale(1) rotate(12deg); } }
 @media (prefers-reduced-motion: reduce) { .arrival-effect, .flying-bill { display: none; } }
+
+/* Reacții jucăușe la câștiguri și pierderi. */
+.card-mood { display: flex; justify-content: center; gap: .35em; margin: .25em 0; font-size: clamp(1.35rem, 4vw, 2.1rem); pointer-events: none; }
+.card-mood span { display: inline-block; animation: card-mood-bounce .65s ease-in-out calc(var(--mood-index) * .08s) 3 alternate both; }
+@keyframes card-mood-bounce { from { transform: translateY(4px) rotate(-10deg) scale(.85); } to { transform: translateY(-6px) rotate(10deg) scale(1.12); } }
+@media (prefers-reduced-motion: reduce) { .card-mood span { animation: none; } }
