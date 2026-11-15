@@ -16,7 +16,8 @@ export const PROPERTY_STORIES = {
   ],
   "televiziune": [
     "📺",
-    "În joc: Studiouri locale, teritoriale și de televiziune prin satelit."
+    "Context timișorean: Televiziunea Liberă Timișoara a fost înființată la 22 decembrie 1989, pentru a prezenta imagini ale evenimentelor din oraș. În joc apar studiouri de televiziune; nu este confirmat că se referă la această televiziune.",
+    "https://www.g4media.ro/povestea-primei-televiziuni-libere-din-romania-infiintata-la-timisoara-chiar-in-decembrie-1989-fiecare-a-adus-de-acasa-ce-credea-ca-e-necesar-casete-aparate-video-cabluri-trepieduri-lumini-be.html"
   ],
   "timisoreana": [
     "🧥",
@@ -24,7 +25,8 @@ export const PROPERTY_STORIES = {
   ],
   "unirii": [
     "💊",
-    "În joc: O farmacie și o cofetărie."
+    "Context timișorean: Piața Unirii, cunoscută odinioară ca Domplatz, apare pe un plan al cetății din 1733 și este renumită pentru clădirile sale baroce. În joc, Unirii are o farmacie și o cofetărie; firma exactă nu este identificată.",
+    "https://spotlight-timisoara.eu/pf/piata-unirii-sf-treime/"
   ],
   "padurea_verde": [
     "🌳",
@@ -37,12 +39,13 @@ export const PROPERTY_STORIES = {
   ],
   "maria": [
     "🏙️",
-    "Context local: Monumentul Sfânta Maria din Timișoara a fost construit în 1906, în Piața Sfânta Maria din Elisabetin. Nu am confirmat dacă acțiunea din joc desemnează această zonă.",
+    "Context timișorean: în Piața Sfânta Maria din Elisabetin se află monumentul ridicat în 1906. În decembrie 1989, zona a devenit unul dintre locurile de început ale Revoluției. Legătura exactă cu societatea din joc nu este confirmată.",
     "https://heritageoftimisoara.ro/ro/cladiri/Elisabetin/adresa/Sf%C3%A2nta%2BMaria/%28monum.%29"
   ],
   "circumvalatiunii": [
     "🏨",
-    "În joc: Un complex de fizioterapie și un hotel."
+    "Context timișorean: Strada Circumvalațiunii se află în Timișoara. În joc, acțiunea cu acest nume cuprinde un complex de fizioterapie și un hotel; legătura cu o anumită firmă de pe stradă nu este confirmată.",
+    "https://www.primariatm.ro/anunturi/etapa1/2026/07/07/puz-elaborare-puz---restructurarea-zonelor-cu-caracter-industrial-centrale-zona-mixta---dezvoltare-proiect-imobiliar-mixt-incluzand-locuinte-colective-si-servicii-str--circumvalatiunii-nr--35"
   ],
   "ohm": [
     "🔌",
@@ -55,11 +58,13 @@ export const PROPERTY_STORIES = {
   ],
   "calea_sagului": [
     "⛸️",
-    "În joc: Un bloc pentru turiști și o sală de patinaj."
+    "Context timișorean: Calea Șagului este o arteră a orașului Timișoara, iar numele este folosit și pentru zona din jur. În joc, acțiunea cuprinde un bloc pentru turiști și o sală de patinaj; firma exactă nu este identificată.",
+    "https://www.primariatm.ro/"
   ],
   "piata_romana": [
     "🧵",
-    "În joc: O casă, o agenție de turism și o croitorie de lux."
+    "Context timișorean: există o Piață Romană în Timișoara; Primăria indică aici, la numărul 2, un corp al Liceului William Shakespeare. Societatea și proprietățile din joc nu au fost identificate cu certitudine.",
+    "https://www.primariatm.ro/hcl/2018/116"
   ],
   "metalo_tim": [
     "🔨",
@@ -90,7 +95,8 @@ export const PROPERTY_STORIES = {
   ],
   "lahovary": [
     "🏡",
-    "În joc: O pensiune și o mezelărie."
+    "Context timișorean: Piața Lahovary din cartierul Elisabetin se numește astăzi Piața Nicolae Bălcescu. Biserica romano-catolică din piață a fost construită între 1912 și 1919. Legătura cu societatea din joc nu este confirmată.",
+    "https://cjraetm.ro/alemele/cli/moisil.pdf"
   ],
   "guban": [
     "👞",
@@ -113,11 +119,12 @@ export const PROPERTY_STORIES = {
   ],
   "dura": [
     "🔋",
-    "Dura, Timișoara: producție de baterii și produse electrotehnice. O fișă istorică a Primăriei datează începuturile în 1920; după 1990 secția de baterii a revenit la numele Dura. În 2000 a fost deschisă procedura de reorganizare și faliment.",
-    "https://www.unpir.ro/documents/phoenix/pdf/revista-pilot.pdf"
+    "Dura, Timișoara: fabrica de baterii și produse electrotehnice datează din 1920–1921, potrivit unor surse diferite. În 1930 a fuzionat cu Lumina; naționalizată în 1948, a devenit Electrobanat, iar din 1990 ELBA. Secția de baterii a revenit ulterior la numele Dura.",
+    "https://www.elba.ro/companie/istoric/"
   ],
   "ambasador": [
     "🛎️",
-    "În joc: Un hotel, restaurant, bar și club de noapte."
+    "În joc: un hotel, restaurant, bar și club de noapte. Există hoteluri cu nume asemănătoare în Timișoara și București, dar nu este confirmat care a inspirat acțiunea.",
+    "https://2014-2020.adrbi.ro/media/2885/lista-monumentelor-istorice-din-bucuresti.pdf"
   ]
 };
