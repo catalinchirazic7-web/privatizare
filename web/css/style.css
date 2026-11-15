@@ -113,6 +113,7 @@ input { -webkit-user-select: text; user-select: text; }
 .code-input { letter-spacing: 6px; text-transform: uppercase; font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 800; }
 
 /* ---------- ecranul principal ---------- */
+#scr-home { background: radial-gradient(ellipse at 48% 48%, #13823f 0%, #075729 48%, #10351f 100%); }
 .home-layout {
   flex: 1;
   display: grid;
