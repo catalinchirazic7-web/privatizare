@@ -49,7 +49,7 @@ const app = {
       menus.refreshHome();
       const cover = $('home-cover');
       cover.muted = true;
-      if (!this.coverPaused && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) cover.play().catch(() => {});
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) cover.play().catch(() => {});
     }
     if (name === 'setup') this.setupView.render();
     if (name === 'online') this.onlineView.enter();
@@ -246,12 +246,6 @@ async function boot() {
   window.addEventListener('sound-changed', syncSoundFab);
   syncSoundFab();
 
-  $('toggle-cover').addEventListener('click', () => {
-    app.coverPaused = !app.coverPaused;
-    const cover = $('home-cover');
-    if (app.coverPaused) cover.pause(); else cover.play().catch(() => {});
-    $('toggle-cover').textContent = app.coverPaused ? 'Redă coperta' : 'Pauză copertă';
-  });
   $('intro-skip').addEventListener('click', () => app.show('home'));
   $('intro-start').addEventListener('click', () => {
     $('intro-start').hidden = true;
