@@ -186,7 +186,10 @@ export class GameScreen {
     });
     $('btn-game-exit').addEventListener('click', () => this.exitToMenu());
     $('drawer').addEventListener('pointerdown', () => this.touchDrawer());
-    $('landing-card').addEventListener('click', () => this.onLandingTap());
+    $('landing-card').addEventListener('mouseenter', () => this.hideLanding());
+    document.addEventListener('click', () => {
+      if (this.active && !this.$('landing-card').hidden) this.hideLanding();
+    }, true);
     this.tableThemes = ['classic', 'wood', 'modern'];
     this.themeIndex = Math.max(0, this.tableThemes.indexOf(localStorage.getItem('privatizare.tableTheme') || 'classic'));
     this.applyTableTheme();
@@ -761,7 +764,6 @@ export class GameScreen {
           story[2] ? el('a', { href: story[2], target: '_blank', rel: 'noopener noreferrer', class: 'landing-source', onclick: (e) => e.stopPropagation(), text: 'Sursă' }) : null,
         ) : null,
         prop ? el('p', { class: 'landing-details', text: `În joc: ${prop.annexes.map((a) => a.name).join(' • ')}` }) : null,
-        prop ? el('p', { class: 'muted', text: 'Atinge pentru fișa acțiunii' }) : null,
       ),
     );
     box.dataset.property = prop ? tile.propertyId : '';
