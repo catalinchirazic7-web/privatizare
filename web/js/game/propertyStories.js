@@ -104,7 +104,7 @@ export const PROPERTY_STORIES = {
   ],
   "continental": [
     "🎮",
-    "Hotel Continental, Timișoara: clădirea cu 12 niveluri a fost finalizată în 1971, după proiectul arhitectului Gheorghe Gârleanu. Hotelul a devenit un reper al centrului orașului.",
+    "Continental: nume purtat de hoteluri din mai multe orașe ale României. La Timișoara, Hotelul Continental, o clădire cu 12 niveluri proiectată de Gheorghe Gârleanu, a fost finalizat în 1971. Nu este confirmat că acțiunea se referă exclusiv la acest hotel.",
     "https://cartipostale.cimec.ro/Detaliu.php?criteriu=con&id=10367"
   ],
   "celuloza": [
