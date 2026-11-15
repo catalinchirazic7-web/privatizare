@@ -55,7 +55,7 @@ const app = {
     if (name === 'online') this.onlineView.enter();
     if (name === 'lobby') menus.renderLobby(this);
     // intro-ul cu sunet pornește doar după o atingere (browserul blochează sunetul altfel)
-    if (name === 'intro') $('intro-start').hidden = false;
+    if (name === 'intro') this.playVideo('intro-video', () => { if (this.screen === 'intro') this.show('home'); });
     if (name === 'outro') this.playVideo('outro-video', () => this.show('home'));
   },
 
@@ -247,11 +247,7 @@ async function boot() {
   syncSoundFab();
 
   $('intro-skip').addEventListener('click', () => app.show('home'));
-  $('intro-start').addEventListener('click', () => {
-    $('intro-start').hidden = true;
-    sound.unlock();
-    app.playVideo('intro-video', () => app.show('home'));
-  });
+  $('intro-video').addEventListener('error', () => { if (app.screen === 'intro') app.show('home'); });
   $('outro-done').addEventListener('click', () => app.show('home'));
 
   // butoanele „← Înapoi” (configurare, JOC ONLINE, regulament) merg la ecranul indicat în data-back
