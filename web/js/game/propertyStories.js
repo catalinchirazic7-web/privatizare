@@ -1,12 +1,12 @@
 export const PROPERTY_STORIES = {
   "poli": [
     "⚽",
-    "Context timișorean: Societatea Sportivă Politehnica s-a constituit oficial în 1921; rădăcinile sportului studențesc coboară în 1920. Acțiunea „POLI S.R.L.” din joc nu este identificată juridic cu clubul.",
-    "https://www.radiotimisoara.ro/sport/saptamana-centenarului-politehnica-timisoara-cu-editie-speciala-arena-radio-audio-273356.html"
+    "Politehnica Timișoara: clubul studențesc își are rădăcinile în 1920, iar Societatea Sportivă Politehnica s-a constituit oficial la 4 decembrie 1921. Echipa de fotbal a devenit unul dintre simbolurile orașului.",
+    "https://arhiva.upt.ro/Informatii_UPT_1632_ro.html"
   ],
   "electromotor": [
     "⚙️",
-    "Electromotor, Timișoara: uzină de motoare electrice, cu rădăcini în fabrica Friedrich și fabrica Britania, reunite în 1944. În 1948 întreprinderea a primit numele Electromotor; sursele nu sunt unanime asupra începuturilor, așa că nu atribuim aici un an unic de fondare.",
+    "Electromotor Timișoara: uzină de motoare electrice, cu origini în fabricile Friedrich și Britania, reunite în 1944. Din 1948 a funcționat sub numele Electromotor, producând motoare electrice și alte echipamente industriale.",
     "https://www.researchgate.net/publication/350558849_O_istorie_a_masinilor_electrice_in_Romania"
   ],
   "helicon": [
@@ -28,7 +28,8 @@ export const PROPERTY_STORIES = {
   ],
   "padurea_verde": [
     "🌳",
-    "În joc: Cabane, bufet și băi termale, într-un decor de pădure."
+    "Pădurea Verde, Timișoara: zonă de agrement din nord-estul orașului. Aici se află Muzeul Satului Bănățean, a cărui secție în aer liber a fost deschisă publicului la 20 august 1971.",
+    "https://www.cjtimis.ro/wp-content/uploads/2020/07/Anunt-Legea52-site.pdf"
   ],
   "lipscani": [
     "🍽️",
@@ -103,7 +104,7 @@ export const PROPERTY_STORIES = {
   ],
   "continental": [
     "🎮",
-    "Posibilă legătură: Hotelul Continental din Timișoara, clădire cu 12 niveluri proiectată de arhitectul Gheorghe Gârleanu, a fost finalizat în 1971. Identitatea exactă cu societatea de pe cartonaș nu este confirmată.",
+    "Hotel Continental, Timișoara: clădirea cu 12 niveluri a fost finalizată în 1971, după proiectul arhitectului Gheorghe Gârleanu. Hotelul a devenit un reper al centrului orașului.",
     "https://cartipostale.cimec.ro/Detaliu.php?criteriu=con&id=10367"
   ],
   "celuloza": [
