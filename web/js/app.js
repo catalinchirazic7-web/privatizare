@@ -59,9 +59,10 @@ const app = {
   /* ---------- meniuri ---------- */
 
   /** @param {1|2} dice  modul de joc ales din meniu: un zar sau două zaruri */
-  openSetup(dice = 1) {
+  openSetup(dice = 1, rapid = false) {
     this.requestLandscape();
     this.setupView.dice = dice;
+    this.setupView.rapidMode = rapid;
     this.show('setup');
   },
 
@@ -97,11 +98,11 @@ const app = {
 
   /* ---------- partide ---------- */
 
-  startLocal(setup, money, time, diceCount = 1, boardLayout = 'old') {
+  startLocal(setup, money, time, diceCount = 1, boardLayout = 'old', rapidMode = false) {
     sound.unlock();
     this.requestLandscape();
     this.gameScreen.setLayout(boardLayout);
-    this.game.startGame(setup, money, time, diceCount, boardLayout);
+    this.game.startGame(setup, money, time, diceCount, boardLayout, rapidMode);
     this.gameScreen.board.resetPawns();   // joc nou: pionii pornesc instant de la start
     this.enterGame(false);
   },

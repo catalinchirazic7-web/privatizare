@@ -31,6 +31,7 @@ function cycleSeat(seat) {
 
 export function initHome(app) {
   $('btn-new').addEventListener('click', () => app.openSetup(1));
+  $('btn-rapid').addEventListener('click', () => app.openSetup(1, true));
   $('btn-new-dice').addEventListener('click', () => app.openSetup(2));
   $('btn-online').addEventListener('click', () => app.openOnline());
   $('btn-rules').addEventListener('click', () => app.show('rules'));
@@ -69,7 +70,7 @@ function openAbout(app) {
     el('p', { text: 'Joc de societate românesc, pentru tineret și adulți. Se joacă în 2–4 persoane.' }),
     el('p', { html: '<strong>Proiect independent realizat de Chirazic Catalin</strong>' }),
     el('p', { class: 'muted', text: 'Contact: catalinchirazic7@gmail.com' }),
-    el('p', { class: 'muted', text: 'Versiune 1.04 (web)' }),
+    el('p', { class: 'muted', text: 'Versiune 1.05 (web)' }),
     el('div', { class: 'actions' }, el('button', { class: 'btn primary', type: 'button', text: 'Închide', onclick: closeModal })),
   ));
 }
@@ -220,7 +221,7 @@ export class SetupView {
     const config = { count: this.count, money: this.money, time: this.time, dice: this.dice, layout: this.layout, seats: this.seats.map((s) => ({ ...s })) };
     storage.saveSetup(config);
     const setup = this.active().map((s) => ({ name: s.name.trim(), colorKey: s.colorKey, isBot: s.isBot, catalin: s.catalin, easy: s.easy }));
-    this.app.startLocal(setup, this.money, this.time, this.dice, this.layout);
+    this.app.startLocal(setup, this.money, this.time, this.dice, this.layout, !!this.rapidMode);
   }
 }
 

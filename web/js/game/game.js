@@ -36,6 +36,7 @@ export class Game {
     this.rerolled = false;    // s-a rearuncat deja în tura curentă (omul sau robotul)
     this.rentSeq = 0;
     this.lastRent = null;     // ultima chirie plătită: { payerId, ownerId, amount, n }
+    this.rapidMode = false;
     this.boardLayout = 'old';  // tabla: 'old' (veche) sau 'new' (nouă)
     this.winnerName = null;
 
@@ -195,6 +196,7 @@ export class Game {
       easyMode: this.easyMode,
       rerolled: this.rerolled,
       boardLayout: this.boardLayout,
+      rapidMode: this.rapidMode,
       lastDice: this.lastDice,
       winnerName: this.winnerName,
       turnAwaitingEnd: this.turnAwaitingEnd,
@@ -226,6 +228,7 @@ export class Game {
     this.diceCount = s.diceCount === 2 ? 2 : 1;   // salvările vechi au un singur zar
     this.easyMode = !!s.easyMode;                 // salvările vechi nu au mod ușor
     this.rerolled = !!s.rerolled;
+    this.rapidMode = !!s.rapidMode;
     this.boardLayout = s.boardLayout === 'new' ? 'new' : 'old';   // salvările vechi sunt pe tabla veche
     if (!sameDice(s.lastDice, this.lastDice)) this.rollNonce++;
     this.lastDice = s.lastDice;
@@ -270,9 +273,10 @@ export class Game {
    * @param {number|null} moneyPerPlayer  null = împărțire egală a tirajului
    * @param {number|null} timeLimitMinutes
    */
-  startGame(setup, moneyPerPlayer = null, timeLimitMinutes = null, diceCount = 1, boardLayout = 'old') {
+  startGame(setup, moneyPerPlayer = null, timeLimitMinutes = null, diceCount = 1, boardLayout = 'old', rapidMode = false) {
     if (diceCount !== 1 && diceCount !== 2) throw new Error('Un zar sau două');
     this.diceCount = diceCount;
+    this.rapidMode = !!rapidMode;
     this.boardLayout = boardLayout === 'new' ? 'new' : 'old';
     this.deadlineMs = timeLimitMinutes ? Date.now() + timeLimitMinutes * 60_000 : null;
     this.finalRanking = [];
@@ -391,6 +395,41 @@ export class Game {
     this.turnAwaitingEnd = true;
     this.checkWinner();
     this.emit();
+  }
+
+  remainingAnnexes() {
+    const o = this.offer;
+    if (!this.rapidMode || this.isOnline || o?.option.type !== 'ANNEX' || !this.game) return [];
+    const player = this.game.players.find((p) => p.id === o.playerId);
+    const property = this.catalog.actions[o.propertyId];
+    if (!player || !property || player.ownedProperties[o.propertyId] == null) return [];
+    const level = player.ownedProperties[o.propertyId];
+    if (o.option.annex.index !== level + 1) return [];
+    return property.annexes.filter((a) => a.index > level).sort((a, b) => a.index - b.index);
+  }
+
+  buyAnnexes(count) {
+    const remaining = this.remainingAnnexes();
+    if (!Number.isInteger(count) || count < 1 || count > remaining.length) return false;
+    const annexes = remaining.slice(0, count);
+    const offer = this.offer;
+    const buyer = this.game.players.find((p) => p.id === offer.playerId);
+    const total = annexes.reduce((sum, a) => sum + a.price, 0);
+    if (buyer.money < total) return false;
+    let state = this.game;
+    for (const annex of annexes) {
+      state = this.engine.applyBuy(state, { playerId: offer.playerId, propertyId: offer.propertyId, option: { type: 'ANNEX', annex } });
+    }
+    this.game = state;
+    this.offer = null;
+    this.turnAwaitingEnd = true;
+    this.checkWinner();
+    this.emit();
+    return true;
+  }
+
+  buyAllAnnexes() {
+    return this.buyAnnexes(this.remainingAnnexes().length);
   }
 
   /** NU la titlu deschide balonul cu taxa; NU la anexă nu are taxă. */
@@ -590,7 +629,9 @@ export class Game {
           state: this.game, botIdx: this.game.players.indexOf(p), board: this.catalog.board,
           actions: this.catalog.actions, propertyId: d.offer.propertyId, option: opt, diceCount: this.diceCount,
         });
-        if (accept) this.acceptOffer();
+        if (accept) {
+          if (!this.buyAllAnnexes()) this.acceptOffer();
+        }
         else this.refuseOffer();
         break;
       }

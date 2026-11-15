@@ -799,6 +799,8 @@ export class GameScreen {
         const isTitle = d.offer.option.type === 'TITLE';
         const price = isTitle ? d.offer.option.price : d.offer.option.annex.price;
         const canAfford = buyer.money >= price;
+        const remaining = isTitle ? [] : g.remainingAnnexes();
+        const allPrice = remaining.reduce((sum, annex) => sum + annex.price, 0);
         const v = propertyVisual(prop.id, prop.name);
         return this.dialogBox({
           title: isTitle ? prop.name : `Anexa ${d.offer.option.annex.index} — ${prop.name}`,
@@ -808,12 +810,19 @@ export class GameScreen {
           body: [
             this.propertyInfo(prop),
             el('p', { text: `Cost achiziție: ${fmt(price)} ECU` }),
+            remaining.length > 1 ? el('p', { class: 'rapid-offer', text: `Mod rapid: ${remaining.length} anexe rămase, în total ${fmt(allPrice)} ECU.` }) : null,
             el('p', { text: `Sold: ${fmt(buyer.money)} ECU` }),
             isTitle ? el('p', { class: 'muted', text: `Atenție: dacă nu cumperi, achiți Băncii taxa de ${fmt(prop.titleTax)} ECU.` }) : null,
             !canAfford ? el('p', { class: 'error', text: 'Fonduri insuficiente pentru cumpărare.' }) : null,
           ],
           actions: [
             btn('NU', 'ghost', () => this.game.refuseOffer()),
+            ...remaining.slice(1).map((_, index) => {
+              const count = index + 2;
+              const cost = remaining.slice(0, count).reduce((sum, annex) => sum + annex.price, 0);
+              const label = count === remaining.length ? 'TOATE ANEXELE' : `${count} ANEXE`;
+              return btn(`${label} · ${fmt(cost)} ECU`, 'rapid', () => this.game.buyAnnexes(count), buyer.money < cost);
+            }),
             btn('DA, CUMPĂR', 'primary', () => this.game.acceptOffer(), !canAfford),
           ],
         });

@@ -497,3 +497,7 @@ input { -webkit-user-select: text; user-select: text; }
 .purchase-annexes { color: #ead6bd; font-size: .9rem; }
 .purchase-story a { color: #ffda91; }
 @media (max-height: 500px) { .landing-card { max-height: 42dvh; overflow-y: auto; } .landing-card .ico { width: 48px; height: 48px; } }
+
+.btn.rapid { background: #278c4d; border-color: #278c4d; color: #fff; }
+.btn.rapid:hover { background: #1d713d; }
+.rapid-offer { color: #9ee9b5; font-weight: 700; }
