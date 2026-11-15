@@ -450,8 +450,7 @@ export class BoardView {
     const { dpr, cssW, cssH } = layout;
     if (this.canvas.clientWidth && (this.canvas.clientWidth !== cssW || this.canvas.clientHeight !== cssH)) this.resize();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = '#173a22';
-    ctx.fillRect(0, 0, cssW, cssH);
+    ctx.clearRect(0, 0, cssW, cssH);
 
     const t = this.transform();
     ctx.setTransform(dpr * t.A, 0, 0, dpr * t.A, dpr * t.E, dpr * t.F);
@@ -461,6 +460,9 @@ export class BoardView {
       // pânza tablei: culori mai vii, verdele mai natural (fără să se schimbe desenul)
       ctx.save();
       ctx.filter = BOARD_FILTER;
+      ctx.shadowColor = 'rgba(0,0,0,.6)';
+      ctx.shadowBlur = 18;
+      ctx.shadowOffsetY = 7;
       ctx.drawImage(this.boardImg, bx, by, bw, bh);
       ctx.restore();
     } else {

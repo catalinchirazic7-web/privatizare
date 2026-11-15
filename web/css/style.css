@@ -516,3 +516,33 @@ input { -webkit-user-select: text; user-select: text; }
 .home-logo { width: 100%; min-width: 0; overflow: hidden; }
 .home-cover { width: 100%; max-width: 100%; }
 .home-menu { min-width: 0; }
+
+/* Masa de joc și dosarul de privatizare. */
+.board-wrap[data-theme="classic"] { background: #173a22; }
+.board-wrap[data-theme="wood"] { background: repeating-linear-gradient(3deg, #382018 0, #4a291b 12px, #573120 14px, #392018 30px); }
+.board-wrap[data-theme="modern"] { background: radial-gradient(ellipse at center, #333a42, #15191f 75%); }
+.purchase-story, .purchase-summary { background: #f3e6c8; color: #362b24; border: 1px solid #aa8b61; border-radius: 8px; padding: 10px 13px; }
+.purchase-story-heading, .purchase-story a { color: #704523; }
+.purchase-summary { margin: 10px 0; }
+.purchase-summary p { margin: 4px 0; }
+.purchase-annexes { color: #5b4639; }
+.final-stats { max-height: 34dvh; overflow-y: auto; padding: 8px 12px; background: #ffffff10; border-radius: 10px; }
+.final-stats h4 { margin: 3px 0; color: #ffda91; }
+.journal-button { pointer-events: auto; position: fixed; left: 12px; bottom: 12px; z-index: 20; background: #29231fdd; color: #fff; border: 1px solid #e2c573; border-radius: 10px; padding: 8px 12px; cursor: pointer; }
+.journal-list { max-height: 55dvh; overflow-y: auto; padding-left: 24px; line-height: 1.4; }
+.journal-list li { margin: 5px 0; }
+.rent-transfer { display: block; color: #ffe3a2; background: #34291cf0; padding: 8px 12px; border: 1px solid #d9bc70; border-radius: 9px; animation: rent-note 3.5s ease both; }
+@keyframes rent-note { 0% { opacity: 0; transform: translateY(12px); } 15%, 85% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; } }
+.opening-game #board-wrap { animation: board-arrive 2s ease-out both; }
+@keyframes board-arrive { from { opacity: 0; transform: scale(.91) translateY(-18px); } to { opacity: 1; transform: none; } }
+.skip-opening { position: fixed; z-index: 60; right: 12px; bottom: 12px; background: #201a16e8 !important; }
+.cover-toggle { position: absolute; z-index: 3; left: 14px; bottom: 12px; background: #211913dd !important; }
+.home-layout { position: relative; }
+@media (prefers-reduced-motion: reduce) { .opening-game #board-wrap, .rent-transfer { animation: none; } }
+
+.rapid-cards { display: flex; gap: 8px; overflow-x: auto; padding: 5px 0; }
+.rapid-card { display: flex; flex-direction: column; min-width: 130px; flex: 1; gap: 3px; padding: 8px; border-radius: 8px; border: 1px solid #d9bf8d; background: #fbf0d8; color: #3a2c21; font-size: .84rem; }
+.purchase-stamp { position: fixed; z-index: 60; top: 30%; left: 50%; transform: translate(-50%, -50%) rotate(-12deg); padding: 10px 20px; border: 4px solid #bd3838; border-radius: 8px; color: #d34242; background: #fff8e7ee; font-size: clamp(24px, 5vw, 46px); font-weight: 900; pointer-events: none; animation: stamp-pop 1.1s ease-out both; }
+@keyframes stamp-pop { 0% { opacity: 0; transform: translate(-50%, -50%) rotate(-12deg) scale(1.6); } 20%, 75% { opacity: 1; transform: translate(-50%, -50%) rotate(-12deg) scale(1); } 100% { opacity: 0; } }
+.landing-card.effects-off .landing-motion { animation: none; }
+@media (prefers-reduced-motion: reduce) { .purchase-stamp { animation: none; } }

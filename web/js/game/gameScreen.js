@@ -6,7 +6,7 @@ import { sound } from '../audio.js';
 import { storage } from '../storage.js';
 import { el, clear, fmt, ecu } from '../ui/dom.js';
 import { PAWN_BY_KEY, TILE } from '../core/model.js';
-import { calculateRent, nextAnnex, sellBackValue, wholeSaleValue } from '../core/actions.js';
+import { calculateRent, nextAnnex, sellBackValue, wholeSaleValue, holdingsValue } from '../core/actions.js';
 import { GameRules } from '../core/rules.js';
 import { rollDie } from '../core/dice.js';
 import { tileVisual, tileHint, propertyVisual } from './visuals.js';
@@ -187,6 +187,41 @@ export class GameScreen {
     $('btn-game-exit').addEventListener('click', () => this.exitToMenu());
     $('drawer').addEventListener('pointerdown', () => this.touchDrawer());
     $('landing-card').addEventListener('click', () => this.onLandingTap());
+    this.tableThemes = ['classic', 'wood', 'modern'];
+    this.themeIndex = Math.max(0, this.tableThemes.indexOf(localStorage.getItem('privatizare.tableTheme') || 'classic'));
+    this.applyTableTheme();
+    $('table-theme').addEventListener('click', () => {
+      this.themeIndex = (this.themeIndex + 1) % this.tableThemes.length;
+      localStorage.setItem('privatizare.tableTheme', this.tableThemes[this.themeIndex]);
+      this.applyTableTheme();
+    });
+    this.effectsEnabled = localStorage.getItem('privatizare.effects') !== 'off';
+    const effectsButton = $('toggle-effects');
+    const updateEffects = () => { effectsButton.textContent = `Efecte: ${this.effectsEnabled ? 'pornite' : 'oprite'}`; };
+    updateEffects();
+    effectsButton.addEventListener('click', () => { this.effectsEnabled = !this.effectsEnabled; localStorage.setItem('privatizare.effects', this.effectsEnabled ? 'on' : 'off'); updateEffects(); });
+    const videoSound = $('toggle-video-sound');
+    const updateVideoSound = () => { videoSound.textContent = `Sunet videoclip: ${localStorage.getItem('privatizare.videoSound') === 'off' ? 'oprit' : 'pornit'}`; };
+    updateVideoSound();
+    videoSound.addEventListener('click', () => { localStorage.setItem('privatizare.videoSound', localStorage.getItem('privatizare.videoSound') === 'off' ? 'on' : 'off'); updateVideoSound(); });
+    $('open-journal').addEventListener('click', () => this.showJournal());
+  }
+
+  applyTableTheme() {
+    const theme = this.tableThemes[this.themeIndex];
+    this.$('board-wrap').dataset.theme = theme;
+    this.$('table-theme').textContent = `Masă: ${{ classic: 'Clasic', wood: 'Lemn închis', modern: 'Modern' }[theme]}`;
+  }
+
+  showJournal() {
+    if (this.visibleDialog() || this.game.winnerName) return;
+    const history = this.game.game?.history ?? [];
+    const node = el('div', { class: 'modal journal-modal', role: 'dialog', 'aria-modal': 'true' },
+      el('h3', { text: 'Ce s-a întâmplat?' }),
+      history.length ? el('ol', { class: 'journal-list' }, ...history.slice(-50).reverse().map((line) => el('li', { text: line }))) : el('p', { text: 'Nu există încă evenimente.' }),
+      el('div', { class: 'actions' }, el('button', { class: 'btn primary', type: 'button', text: 'Închide', onclick: () => this.closeModal() })),
+    );
+    this.openModal('journal', node);
   }
 
   /* ---------- ciclu de viață ---------- */
@@ -675,6 +710,7 @@ export class GameScreen {
     }
     const story = prop ? PROPERTY_STORIES[prop.id] : null;
     const iconImg = prop ? el('img', { alt: '', src: propertyIconPath(prop.id), onerror: (e) => e.target.replaceWith(el('span', { text: v.icon })) }) : null;
+    box.classList.toggle('effects-off', !this.effectsEnabled);
     box.style.setProperty('--accent', v.accent);
     clear(box);
     box.append(
@@ -696,6 +732,13 @@ export class GameScreen {
     box.hidden = true;
     void box.offsetWidth;
     box.hidden = false;
+  }
+
+  showPurchaseStamp() {
+    if (!this.effectsEnabled) return;
+    const stamp = el('div', { class: 'purchase-stamp', 'aria-hidden': 'true', text: 'PRIVATIZAT' });
+    this.$('scr-game').append(stamp);
+    setTimeout(() => stamp.remove(), 1100);
   }
 
   botProperties() {
@@ -721,6 +764,7 @@ export class GameScreen {
         const tile = this.catalog.board.find((t) => t.type === TILE.PROPERTY && t.propertyId === id);
         if (!tile) continue;
         const annex = level > 0 ? this.catalog.actions[id]?.annexes.find((a) => a.index === level) : null;
+        this.showPurchaseStamp();
         this.showLanding(tile, `${p.name} a cumpărat ${annex ? `anexa: ${annex.name}` : 'titlul'}`);
         clearTimeout(this.landingTimer);
         this.landingTimer = setTimeout(() => this.hideLanding(), LANDING_MS);
@@ -810,8 +854,13 @@ export class GameScreen {
           body: [
             this.propertyInfo(prop),
             el('p', { text: `Cost achiziție: ${fmt(price)} ECU` }),
+            remaining.length > 1 ? el('div', { class: 'rapid-cards' }, ...remaining.map((annex, idx) => { const count = idx + 1; const cost = remaining.slice(0, count).reduce((sum, item) => sum + item.price, 0); return el('div', { class: 'rapid-card' }, el('strong', { text: `${count} ${count === 1 ? 'anexă' : 'anexe'}` }), el('span', { text: `${fmt(cost)} ECU` }), el('span', { text: `Rămân: ${buyer.money >= cost ? fmt(buyer.money - cost) + ' ECU' : 'fonduri insuficiente'}` }), el('span', { text: `Chirie: ${fmt(calculateRent(prop, annex.index))} ECU` })); })) : null,
             remaining.length > 1 ? el('p', { class: 'rapid-offer', text: `Mod rapid: ${remaining.length} anexe rămase, în total ${fmt(allPrice)} ECU.` }) : null,
-            el('p', { text: `Sold: ${fmt(buyer.money)} ECU` }),
+            el('div', { class: 'purchase-summary' },
+              el('p', { text: `Bani disponibili: ${fmt(buyer.money)} ECU` }),
+              el('p', { text: `După această achiziție: ${canAfford ? fmt(buyer.money - price) + ' ECU' : 'fonduri insuficiente'}` }),
+              el('p', { text: `Chirie după cumpărare: ${fmt(calculateRent(prop, isTitle ? 0 : d.offer.option.annex.index))} ECU` }),
+            ),
             isTitle ? el('p', { class: 'muted', text: `Atenție: dacă nu cumperi, achiți Băncii taxa de ${fmt(prop.titleTax)} ECU.` }) : null,
             !canAfford ? el('p', { class: 'error', text: 'Fonduri insuficiente pentru cumpărare.' }) : null,
           ],
@@ -821,9 +870,9 @@ export class GameScreen {
               const count = index + 2;
               const cost = remaining.slice(0, count).reduce((sum, annex) => sum + annex.price, 0);
               const label = count === remaining.length ? 'TOATE ANEXELE' : `${count} ANEXE`;
-              return btn(`${label} · ${fmt(cost)} ECU`, 'rapid', () => this.game.buyAnnexes(count), buyer.money < cost);
+              return btn(`${label} · ${fmt(cost)} ECU`, 'rapid', () => { if (this.game.buyAnnexes(count)) this.showPurchaseStamp(); }, buyer.money < cost);
             }),
-            btn('DA, CUMPĂR', 'primary', () => this.game.acceptOffer(), !canAfford),
+            btn('DA, CUMPĂR', 'primary', () => { this.game.acceptOffer(); this.showPurchaseStamp(); }, !canAfford),
           ],
         });
       }
@@ -981,6 +1030,11 @@ export class GameScreen {
       g.finalRanking.length
         ? el('div', null, el('p', { class: 'muted', text: 'Clasament (bani + acțiuni la 80%):' }), ...g.finalRanking.map((line, i) => el('p', { text: `${i + 1}. ${line}` })))
         : null,
+      el('div', { class: 'final-stats' },
+        el('h4', { text: 'Statistici la final' }),
+        ...g.game.players.map((p) => el('p', { text: `${p.name}: ${fmt(p.money)} ECU lichid + ${fmt(holdingsValue(p, this.catalog.actions))} ECU acțiuni (valoare de răscumpărare)` })),
+        (() => { const top = Object.entries(g.game.stats ?? {}).sort((a,b) => b[1].collected - a[1].collected)[0]; return top && top[1].collected > 0 ? el('p', { text: `Cea mai profitabilă proprietate: ${this.catalog.actions[top[0]]?.name ?? top[0]} · ${fmt(top[1].collected)} ECU încasați` }) : null; })(),
+      ),
       el('div', { class: 'actions' }, el('button', { class: 'btn primary', type: 'button', text: 'Meniu', onclick: () => this.exitToMenu() })),
     );
     this.openModal('winner', node);
@@ -1006,7 +1060,7 @@ export class GameScreen {
     this.winVideoPlaying = true;
     overlay.hidden = false;
     retry.hidden = true;
-    video.muted = false;
+    video.muted = localStorage.getItem('privatizare.videoSound') === 'off';
     const finish = () => {
       if (!this.winVideoPlaying) return;
       this.winVideoPlaying = false;
@@ -1022,7 +1076,7 @@ export class GameScreen {
     this.$('win-skip').onclick = finish;
     retry.onclick = () => {
       retry.hidden = true;
-      video.muted = false;
+      video.muted = localStorage.getItem('privatizare.videoSound') === 'off';
       video.play().catch(() => { retry.hidden = false; });
     };
     video.currentTime = 0;
@@ -1183,7 +1237,16 @@ export class GameScreen {
     const float = this.$('money-float');
     const rent = this.game.lastRent;
     const rentNew = !!rent && rent.n !== this.lastRentN;
-    if (rentNew) this.lastRentN = rent.n;
+    if (rentNew) {
+      this.lastRentN = rent.n;
+      if (this.effectsEnabled) {
+        const from = players.find((p) => p.id === rent.payerId)?.name ?? 'Jucător';
+        const to = players.find((p) => p.id === rent.ownerId)?.name ?? 'Jucător';
+        const note = el('span', { class: 'rent-transfer', text: `${from} → ${to} · ${fmt(rent.amount)} ECU` });
+        float.append(note);
+        setTimeout(() => note.remove(), 3500);
+      }
+    }
     const robotRent = rentNew ? this.robotRentParties(rent, players) : null;
     if (robotRent) this.showRentBalloon(robotRent, rent.amount, float);
     for (const p of players) {

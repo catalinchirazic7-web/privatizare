@@ -49,7 +49,7 @@ const app = {
       menus.refreshHome();
       const cover = $('home-cover');
       cover.muted = true;
-      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) cover.play().catch(() => {});
+      if (!this.coverPaused && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) cover.play().catch(() => {});
     }
     if (name === 'setup') this.setupView.render();
     if (name === 'online') this.onlineView.enter();
@@ -62,6 +62,7 @@ const app = {
   playVideo(id, onEnd) {
     const v = $(id);
     v.currentTime = 0;
+    v.muted = localStorage.getItem('privatizare.videoSound') === 'off';
     v.preload = 'auto';
     v.onended = onEnd;
     const p = v.play();
@@ -122,7 +123,7 @@ const app = {
     this.gameScreen.setLayout(boardLayout);
     this.game.startGame(setup, money, time, diceCount, boardLayout, rapidMode);
     this.gameScreen.board.resetPawns();   // joc nou: pionii pornesc instant de la start
-    this.enterGame(false);
+    this.enterGame(false, true);
   },
 
   continueGame() {
@@ -133,8 +134,20 @@ const app = {
     this.enterGame(false);
   },
 
-  enterGame(online) {
+  enterGame(online, opening = false) {
     this.show('game');
+    const gameScreen = $('scr-game');
+    const skip = $('skip-opening');
+    gameScreen.classList.remove('opening-game');
+    skip.hidden = true;
+    if (opening && localStorage.getItem('privatizare.effects') !== 'off' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      void gameScreen.offsetWidth;
+      gameScreen.classList.add('opening-game');
+      skip.hidden = false;
+      const finish = () => { gameScreen.classList.remove('opening-game'); skip.hidden = true; };
+      skip.onclick = finish;
+      setTimeout(finish, 2200);
+    }
     this.gameScreen.start({ online: online ? this.online : null });
     try {
       history.pushState({ game: true }, '');
@@ -232,6 +245,12 @@ async function boot() {
   window.addEventListener('sound-changed', syncSoundFab);
   syncSoundFab();
 
+  $('toggle-cover').addEventListener('click', () => {
+    app.coverPaused = !app.coverPaused;
+    const cover = $('home-cover');
+    if (app.coverPaused) cover.pause(); else cover.play().catch(() => {});
+    $('toggle-cover').textContent = app.coverPaused ? 'Redă coperta' : 'Pauză copertă';
+  });
   $('intro-skip').addEventListener('click', () => app.show('home'));
   $('intro-start').addEventListener('click', () => {
     $('intro-start').hidden = true;

@@ -39,7 +39,7 @@
         <span class="spacer"></span>
         <button id="btn-donate" class="btn ghost small" type="button">Donează</button>
         <button id="btn-about" class="btn ghost small" type="button">Despre</button>
-        <span class="version">v1.05 web</span>
+        <span class="version">v1.06 web</span>
       </header>
       <div class="home-layout">
         <div class="home-logo">
@@ -47,6 +47,7 @@
             <source src="media/coperta.mp4" type="video/mp4">
           </video>
         </div>
+        <button id="toggle-cover" class="btn ghost small cover-toggle" type="button">Pauză copertă</button>
         <nav class="home-menu">
           <button id="btn-resume" class="btn primary wide" type="button" hidden>Continuă jocul</button>
           <button id="btn-new" class="btn primary wide" type="button">Joc nou</button>
@@ -157,6 +158,7 @@
     <section id="scr-game" class="screen" data-screen="game">
       <div id="board-wrap" class="board-wrap">
         <canvas id="board" aria-label="Tabla de joc Privatizare"></canvas>
+        <button id="skip-opening" class="btn ghost small skip-opening" type="button" hidden>Sari peste animație</button>
         <div id="die" class="die" aria-label="Zarul">
           <div class="die-face"></div>
         </div>
@@ -167,6 +169,7 @@
       </div>
 
       <div id="hud" class="hud">
+        <button id="open-journal" class="journal-button" type="button">Ce s-a întâmplat?</button>
         <button id="hud-toggle" class="hud-bar" type="button" aria-expanded="false">
           <span class="turn-dot" id="hud-dot"></span>
           <span id="hud-turn">LA RÂND: -</span>
@@ -191,6 +194,12 @@
             <button id="toggle-tilt" class="btn ghost small" type="button">Înclinare: pornit</button>
             <button id="toggle-sound" class="btn ghost small" type="button">Sunet: pornit</button>
           <button id="test-sound" class="btn ghost small" type="button">Testează sunetul</button>
+          </div>
+          <div class="drawer-row settings-row">
+            <span class="drawer-label">Masă:</span>
+            <button id="table-theme" class="btn ghost small" type="button">Clasic</button>
+            <button id="toggle-effects" class="btn ghost small" type="button">Efecte: pornite</button>
+            <button id="toggle-video-sound" class="btn ghost small" type="button">Sunet videoclip: pornit</button>
           </div>
           <div id="drawer-tabs" class="drawer-row tabs"></div>
           <div id="portfolio" class="portfolio"></div>
