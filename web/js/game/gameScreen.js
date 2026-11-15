@@ -12,6 +12,7 @@ import { rollDie } from '../core/dice.js';
 import { tileVisual, tileHint, propertyVisual } from './visuals.js';
 import { actionArtPath, propertyIconPath } from '../core/model.js';
 import { CardOutcome } from '../core/cards.js';
+import { PROPERTY_STORIES } from './propertyStories.js';
 
 const DECISION_DIALOGS = ['BUY', 'BANK_FEE', 'RENT', 'DEBT', 'LIQUIDATION_HANDOVER', 'HANDOVER'];
 const DIE_PIPS = {
@@ -24,7 +25,7 @@ const DIE_PIPS = {
 };
 const DIE_POS = { fx: 0.63, fy: 0.34 };   // zarul stă în zona liberă din centrul tablei
 const DIE2_DX = 0.075;                     // al doilea zar (mod cu două zaruri), lângă primul
-const LANDING_MS = 3800;
+const LANDING_MS = 6500;
 const BOT_DELAY_MS = 600;
 const CARD_SHOW_MS = 2200;   // cât stă pe ecran cartonașul tras de un robot (apăsat = se închide imediat)
 const SKIP_SHOW_MS = 1600;   // cât stă vizibil bannerul „staționează” al unui robot, ca să-l vezi
@@ -194,6 +195,10 @@ export class GameScreen {
   start({ online = null } = {}) {
     this.active = true;
     this.online = online;
+    const humans = (this.game.game?.players ?? []).filter((p) => !p.isBot);
+    this.resultPlayerName = this.game.isOnline
+      ? humans.find((p) => p.id === this.game.myPlayerId)?.name ?? null
+      : humans.length === 1 ? humans[0].name : null;
     this.lastShownNonce = this.game.rollNonce;
     this.prevMoney = new Map((this.game.game?.players ?? []).map((p) => [p.id, p.money]));
     this.shownMoney = new Map(this.prevMoney);
@@ -213,6 +218,11 @@ export class GameScreen {
     clearTimeout(this.endTimer);
     clearTimeout(this.landingTimer);
     this.closeModal();
+    if (this.winVideoPlaying) {
+      this.winVideoPlaying = false;
+      this.$('win-video').pause();
+      this.$('win-overlay').hidden = true;
+    }
     this.sheetProperty = null;
   }
 
@@ -661,6 +671,7 @@ export class GameScreen {
     } else {
       info = tileHint(tile) ?? '';
     }
+    const story = prop ? PROPERTY_STORIES[prop.id] : null;
     const iconImg = prop ? el('img', { alt: '', src: propertyIconPath(prop.id), onerror: (e) => e.target.replaceWith(el('span', { text: v.icon })) }) : null;
     box.style.setProperty('--accent', v.accent);
     clear(box);
@@ -669,10 +680,17 @@ export class GameScreen {
       el('div', { class: 'txt' },
         el('h4', { text: prop ? prop.name : v.shortName }),
         el('p', { text: info }),
+        story ? el('div', { class: 'landing-story' },
+          el('span', { class: 'landing-motion', 'aria-hidden': 'true', text: story[0] }),
+          el('p', { text: story[1] }),
+          story[2] ? el('a', { href: story[2], target: '_blank', rel: 'noopener noreferrer', class: 'landing-source', onclick: (e) => e.stopPropagation(), text: 'Sursă' }) : null,
+        ) : null,
         prop ? el('p', { class: 'muted', text: 'Atinge pentru fișa acțiunii' }) : null,
       ),
     );
     box.dataset.property = prop ? tile.propertyId : '';
+    box.hidden = true;
+    void box.offsetWidth;
     box.hidden = false;
   }
 
@@ -888,7 +906,12 @@ export class GameScreen {
     }
     if (this.modalKey === 'winner' || this.winVideoPlaying) return;
     if (!this.winVideoWatched) {
-      this.playWinVideo();
+      if (this.resultPlayerName && this.resultPlayerName !== g.winnerName) {
+        this.winVideoWatched = true;
+        this.showDefeat();
+      } else {
+        this.playWinVideo();
+      }
       return;
     }
     sound.buy();
@@ -904,24 +927,51 @@ export class GameScreen {
   }
 
   /** Clipul de victorie se redă pe tot ecranul; apoi apare fereastra cu câștigătorul. */
+  showDefeat() {
+    this.closeModal();
+    const node = el('div', { class: 'modal defeat-modal', role: 'dialog', 'aria-modal': 'true' },
+      el('h3', { text: 'De data aceasta ai pierdut' }),
+      el('p', { text: `Câștigător: ${this.game.winnerName}` }),
+      el('p', { text: 'O nouă partidă, o nouă șansă!' }),
+      el('div', { class: 'actions' }, el('button', { class: 'btn primary', type: 'button', text: 'Continuă', onclick: () => { this.closeModal(); this.renderWinner(); } })),
+    );
+    this.openModal('defeat', node);
+  }
+
   playWinVideo() {
     const overlay = this.$('win-overlay');
     const video = this.$('win-video');
+    const retry = this.$('win-play');
+    this.closeModal();
     this.winVideoPlaying = true;
     overlay.hidden = false;
+    retry.hidden = true;
+    video.muted = false;
     const finish = () => {
       if (!this.winVideoPlaying) return;
       this.winVideoPlaying = false;
       this.winVideoWatched = true;
       video.onended = null;
+      video.onerror = null;
       video.pause();
       overlay.hidden = true;
       this.renderWinner();
     };
     video.onended = finish;
+    video.onerror = finish;
     this.$('win-skip').onclick = finish;
+    retry.onclick = () => {
+      retry.hidden = true;
+      video.muted = false;
+      video.play().catch(() => { retry.hidden = false; });
+    };
     video.currentTime = 0;
-    video.play().catch(finish);
+    // Browserele pot bloca redarea cu sunet fara o atingere recenta.
+    video.play().catch(() => {
+      if (!this.winVideoPlaying) return;
+      video.muted = true;
+      video.play().catch(() => { if (this.winVideoPlaying) retry.hidden = false; });
+    });
   }
 
   /* ---------- fișa acțiunii ---------- */

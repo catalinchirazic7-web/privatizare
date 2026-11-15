@@ -469,3 +469,17 @@ input { -webkit-user-select: text; user-select: text; }
   cursor: pointer;
 }
 .sound-fab.on { background: #2E7D32; }
+
+/* Mesajul de final pentru jucatorul invins. */
+.defeat-modal { text-align: center; animation: defeat-appear .6s ease-out both; }
+.defeat-modal h3 { color: #f2c98b; }
+@keyframes defeat-appear { from { opacity: 0; transform: translateY(18px) scale(.96); } to { opacity: 1; transform: none; } }
+
+/* Informațiile la sosire apar deasupra ferestrei de cumpărare. */
+.landing-card { position: fixed; top: 10px; bottom: auto; width: min(92vw, 460px); z-index: 55; padding: 9px 12px; }
+.landing-story { display: flex; align-items: center; gap: 8px; border-top: 1px solid #ffffff2b; margin-top: 6px; padding-top: 5px; }
+.landing-story p { flex: 1; line-height: 1.25; }
+.landing-motion { display: inline-block; font-size: 25px; animation: story-move 1.5s ease-in-out infinite alternate; }
+.landing-source { color: #ffda91; font-size: .75rem; }
+@keyframes story-move { from { transform: translateX(-3px) rotate(-5deg); } to { transform: translateX(5px) rotate(5deg); } }
+@media (prefers-reduced-motion: reduce) { .landing-motion, .landing-card { animation: none; } }

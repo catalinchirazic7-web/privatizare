@@ -4,7 +4,7 @@
 // - videourile și Firebase nu se cache-uiesc (sunt mari sau sunt live).
 // La o schimbare de cod, mărește VERSION.
 
-const VERSION = 'privatizare-web-v1.18';
+const VERSION = 'privatizare-web-v1.20';
 
 const SHELL = [
   './',
@@ -25,6 +25,7 @@ const SHELL = [
   './js/game/game.js',
   './js/game/gameScreen.js',
   './js/game/visuals.js',
+  './js/game/propertyStories.js',
   './js/online/controller.js',
   './js/online/events.js',
   './js/online/protocol.js',
