@@ -143,8 +143,9 @@ const app = {
     if (opening && localStorage.getItem('privatizare.effects') !== 'off' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       void gameScreen.offsetWidth;
       gameScreen.classList.add('opening-game');
+      this.gameScreen.board.openingAt = performance.now();
       skip.hidden = false;
-      const finish = () => { gameScreen.classList.remove('opening-game'); skip.hidden = true; };
+      const finish = () => { gameScreen.classList.remove('opening-game'); this.gameScreen.board.openingAt = null; skip.hidden = true; };
       skip.onclick = finish;
       setTimeout(finish, 2200);
     }

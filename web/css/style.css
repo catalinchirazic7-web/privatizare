@@ -546,3 +546,9 @@ input { -webkit-user-select: text; user-select: text; }
 @keyframes stamp-pop { 0% { opacity: 0; transform: translate(-50%, -50%) rotate(-12deg) scale(1.6); } 20%, 75% { opacity: 1; transform: translate(-50%, -50%) rotate(-12deg) scale(1); } 100% { opacity: 0; } }
 .landing-card.effects-off .landing-motion { animation: none; }
 @media (prefers-reduced-motion: reduce) { .purchase-stamp { animation: none; } }
+
+.arrival-effect { position: absolute; z-index: 12; pointer-events: none; font-size: clamp(25px, 4vw, 54px); animation: arrival-flight 1.5s ease-out forwards; }
+@keyframes arrival-flight { 0% { opacity: 0; transform: translate(-90%, -20%) scale(.45) rotate(-10deg); } 25% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(25%, -100%) scale(1.15) rotate(8deg); } }
+.flying-bill { position: absolute; z-index: 14; pointer-events: none; font-size: clamp(22px, 3vw, 38px); animation: bill-flight 1.5s ease-in-out forwards; }
+@keyframes bill-flight { 0% { opacity: 0; left: var(--from-x); top: var(--from-y); transform: scale(.5) rotate(-18deg); } 20% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; left: var(--to-x); top: var(--to-y); transform: scale(1) rotate(12deg); } }
+@media (prefers-reduced-motion: reduce) { .arrival-effect, .flying-bill { display: none; } }

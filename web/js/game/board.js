@@ -662,7 +662,8 @@ export class BoardView {
       byTile.set(p.position, arr);
     }
     const phase = (performance.now() / 2600) * 2 * Math.PI;
-    for (const p of players) {
+    for (const [playerIndex, p] of players.entries()) {
+      if (this.openingAt != null && performance.now() - this.openingAt < 500 + playerIndex * 300) continue;
       const a = this.anims.get(p.id);
       if (!a) continue;
       const mates = byTile.get(p.position) ?? [p];

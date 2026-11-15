@@ -685,8 +685,44 @@ export class GameScreen {
       return;
     }
     this.showLanding(tile);
+    if (this.effectsEnabled && tile.type === TILE.PROPERTY) this.showArrivalEffect(tile.propertyId, p.position);
     clearTimeout(this.landingTimer);
     this.landingTimer = setTimeout(() => this.hideLanding(), LANDING_MS);
+  }
+
+  showArrivalEffect(propertyId, index) {
+    const story = PROPERTY_STORIES[propertyId];
+    const position = this.catalog.positions[index];
+    if (!story || !position) return;
+    const pos = this.board.toScreen(position[0], position[1]);
+    const effect = el('div', { class: 'arrival-effect', 'aria-hidden': 'true', text: story[0] });
+    effect.style.left = `${pos.x}px`;
+    effect.style.top = `${pos.y}px`;
+    this.$('board-wrap').append(effect);
+    setTimeout(() => effect.remove(), 1500);
+  }
+
+  flyMoney(from, to) {
+    if (!this.effectsEnabled || !from || !to) return;
+    const token = el('span', { class: 'flying-bill', 'aria-hidden': 'true', text: '💵' });
+    token.style.setProperty('--from-x', `${from.x}px`);
+    token.style.setProperty('--from-y', `${from.y}px`);
+    token.style.setProperty('--to-x', `${to.x}px`);
+    token.style.setProperty('--to-y', `${to.y}px`);
+    this.$('board-wrap').append(token);
+    setTimeout(() => token.remove(), 1500);
+  }
+
+  playerPoint(player) {
+    if (!player) return null;
+    const pos = player.position < 0 ? this.catalog.startMarker : this.catalog.positions[player.position];
+    return pos ? this.board.toScreen(pos[0], pos[1]) : null;
+  }
+
+  bankPoint() {
+    const index = this.catalog.board.findIndex((tile) => tile.type === TILE.BANK);
+    const pos = this.catalog.positions[index];
+    return pos ? this.board.toScreen(pos[0], pos[1]) : null;
   }
 
   hideLanding() {
@@ -1242,6 +1278,7 @@ export class GameScreen {
       if (this.effectsEnabled) {
         const from = players.find((p) => p.id === rent.payerId)?.name ?? 'Jucător';
         const to = players.find((p) => p.id === rent.ownerId)?.name ?? 'Jucător';
+        this.flyMoney(this.playerPoint(players.find((p) => p.id === rent.payerId)), this.playerPoint(players.find((p) => p.id === rent.ownerId)));
         const note = el('span', { class: 'rent-transfer', text: `${from} → ${to} · ${fmt(rent.amount)} ECU` });
         float.append(note);
         setTimeout(() => note.remove(), 3500);
@@ -1259,7 +1296,11 @@ export class GameScreen {
       const chip = el('span', { class: diff > 0 ? 'plus' : 'minus', text: `${p.name} ${diff > 0 ? '+' : '−'}${fmt(Math.abs(diff))}` });
       float.append(chip);
       setTimeout(() => chip.remove(), 3000);
-      if (diff > 0) sound.coin();
+      if (diff > 0) {
+        const bankCredit = this.game.game.history.slice(-5).some((line) => line.includes(p.name) && line.includes('de la bancă'));
+        if (!rentNew && bankCredit) this.flyMoney(this.bankPoint(), this.playerPoint(p));
+        sound.coin();
+      }
     }
     for (const id of [...this.prevMoney.keys()]) if (!players.some((p) => p.id === id)) this.prevMoney.delete(id);
   }
