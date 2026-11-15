@@ -511,3 +511,8 @@ input { -webkit-user-select: text; user-select: text; }
 @keyframes menu-glow { 0%, 100% { opacity: .12; transform: scale(.75); } 50% { opacity: .8; transform: scale(1.35); } }
 @media (orientation: portrait) { .home-cover { max-height: 35dvh; } }
 @media (prefers-reduced-motion: reduce) { .home-menu .btn::after { animation: none; opacity: .12; } }
+
+/* Coperta ocupă lățimea disponibilă din coloana ei, fără să intre peste meniu. */
+.home-logo { width: 100%; min-width: 0; overflow: hidden; }
+.home-cover { width: 100%; max-width: 100%; }
+.home-menu { min-width: 0; }
