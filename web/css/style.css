@@ -501,3 +501,13 @@ input { -webkit-user-select: text; user-select: text; }
 .btn.rapid { background: #278c4d; border-color: #278c4d; color: #fff; }
 .btn.rapid:hover { background: #1d713d; }
 .rapid-offer { color: #9ee9b5; font-weight: 700; }
+
+/* Copertă video și lumină pulsantă în interiorul butoanelor meniului. */
+.home-cover { display: block; width: 100%; max-height: 78dvh; aspect-ratio: 16 / 9; object-fit: contain; background: #191313; border-radius: 14px; }
+.home-menu .btn { position: relative; overflow: hidden; isolation: isolate; }
+.home-menu .btn::after { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; background: radial-gradient(ellipse at 50% 50%, rgba(255,255,255,.28), transparent 68%); opacity: .15; animation: menu-glow 3s ease-in-out infinite; }
+.home-menu .btn:nth-child(2n)::after { animation-delay: -.9s; }
+.home-menu .btn:nth-child(3n)::after { animation-delay: -1.7s; }
+@keyframes menu-glow { 0%, 100% { opacity: .12; transform: scale(.75); } 50% { opacity: .8; transform: scale(1.35); } }
+@media (orientation: portrait) { .home-cover { max-height: 35dvh; } }
+@media (prefers-reduced-motion: reduce) { .home-menu .btn::after { animation: none; opacity: .12; } }

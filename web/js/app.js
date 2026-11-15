@@ -14,6 +14,18 @@ const $ = (id) => document.getElementById(id);
 const SCREENS = ['intro', 'home', 'setup', 'online', 'lobby', 'rules', 'game', 'outro'];
 const DECISION_DIALOGS = ['BUY', 'BANK_FEE', 'RENT', 'DEBT', 'LIQUIDATION_HANDOVER', 'HANDOVER'];
 
+const coverClips = ['media/coperta.mp4', 'media/coperta_lunga.mp4'];
+let coverIndex = 0;
+function nextCover() {
+  const cover = $('home-cover');
+  coverIndex = (coverIndex + 1) % coverClips.length;
+  cover.src = coverClips[coverIndex];
+  cover.load();
+  if (app.screen === 'home') cover.play().catch(() => {});
+}
+$('home-cover').addEventListener('ended', nextCover);
+
+
 const app = {
   catalog: null,
   game: null,
@@ -27,12 +39,18 @@ const app = {
   /* ---------- ecrane ---------- */
 
   show(name) {
+    if (this.screen === 'home' && name !== 'home') $('home-cover').pause();
     if (this.screen === 'intro' && name !== 'intro') $('intro-video').pause();
     if (this.screen === 'outro' && name !== 'outro') $('outro-video').pause();
     for (const s of SCREENS) $(`scr-${s}`).classList.toggle('active', s === name);
     this.screen = name;
     this.updateRotateHint();
-    if (name === 'home') menus.refreshHome();
+    if (name === 'home') {
+      menus.refreshHome();
+      const cover = $('home-cover');
+      cover.muted = true;
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) cover.play().catch(() => {});
+    }
     if (name === 'setup') this.setupView.render();
     if (name === 'online') this.onlineView.enter();
     if (name === 'lobby') menus.renderLobby(this);
