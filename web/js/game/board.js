@@ -7,7 +7,6 @@ import { PAWN_BY_KEY, TILE, applyLayout } from '../core/model.js';
 import { calculateRent } from '../core/actions.js';
 
 const STEP_MS = 430;          // durata unui pas pe tablă
-const WALK_MS = 240;          // un pas din mersul forțat (RECHEMAT URGENT), mai rapid
 const TILT_SCALE = 0.93;      // înclinarea: tabla e puțin mai mică și ridicată
 const TILT_LIFT = -0.022;     // (fracție din înălțime)
 const BOARD_FILTER = 'saturate(1.6) contrast(1.06) brightness(1.06)';   // tabla: verde mai viu (ctx.filter; fără efect pe browserele vechi)
@@ -387,19 +386,13 @@ export class BoardView {
         if (start !== target) {
           const rechemat = this.catalog.board.findIndex((t) => t.type === TILE.RECHEMAT);
           const toRechemat = mod(rechemat - start, N);
-          for (let i = 1; i <= toRechemat; i++) {
-            if (!(await this.step(a, start + i, token))) return;
-          }
+          if (!(await this.walk(a, toRechemat, token))) return;
           a.v = target;   // teleportat la START, după ce a ajuns pe RECHEMAT
         }
       } else if (forward >= 1 && forward <= 12) {
-        for (let i = 1; i <= forward; i++) {
-          if (!(await this.step(a, start + i, token))) return;
-        }
+        if (!(await this.walk(a, forward, token))) return;
       } else if (backward >= 1 && backward <= 6) {
-        for (let i = 1; i <= backward; i++) {
-          if (!(await this.step(a, start - i, token))) return;
-        }
+        if (!(await this.walk(a, -backward, token))) return;
       } else {
         a.v = target;   // salt de rezervă, dacă distanța nu e plauzibilă pentru un zar
       }
@@ -418,12 +411,22 @@ export class BoardView {
     }
   }
 
-  async step(a, to, token, ms = STEP_MS) {
+  async walk(a, steps, token) {
     const from = a.v;
-    if (token !== a.token) return false;
+    const count = Math.abs(steps);
+    if (!count || token !== a.token) return token === a.token;
+    let announced = 0;
     this.onStep?.();
-    await tween(ms, (t) => (a.v = from + (to - from) * t), () => token === a.token);
-    return token === a.token;
+    await tween(count * STEP_MS, (t) => {
+      const progress = t * count;
+      const currentStep = Math.min(count - 1, Math.floor(progress));
+      if (currentStep > announced) {
+        announced = currentStep;
+        this.onStep?.();
+      }
+      a.v = from + steps * t;
+    }, () => token === a.token && this.running);
+    return token === a.token && this.running;
   }
 
   setMoving(a, flag) {
@@ -458,13 +461,26 @@ export class BoardView {
 
     if (this.boardImg) {
       // pânza tablei: culori mai vii, verdele mai natural (fără să se schimbe desenul)
-      ctx.save();
-      ctx.filter = BOARD_FILTER;
-      ctx.shadowColor = 'rgba(0,0,0,.6)';
-      ctx.shadowBlur = 18;
-      ctx.shadowOffsetY = 7;
-      ctx.drawImage(this.boardImg, bx, by, bw, bh);
-      ctx.restore();
+      // Filtrul ?i umbra se calculeaza o singura data, nu la fiecare cadru.
+      const margin = 32;
+      const scale = Math.min(dpr, 2);
+      const width = Math.ceil((bw + margin * 2) * scale);
+      const height = Math.ceil((bh + margin * 2) * scale);
+      let cache = this.boardCache;
+      if (!cache || cache.image !== this.boardImg || cache.width !== width || cache.height !== height || cache.bw !== bw || cache.bh !== bh) {
+        const surface = document.createElement('canvas');
+        surface.width = width;
+        surface.height = height;
+        const c = surface.getContext('2d');
+        c.scale(scale, scale);
+        c.filter = BOARD_FILTER;
+        c.shadowColor = 'rgba(0,0,0,.6)';
+        c.shadowBlur = 18;
+        c.shadowOffsetY = 7;
+        c.drawImage(this.boardImg, margin, margin, bw, bh);
+        cache = this.boardCache = { image: this.boardImg, width, height, bw, bh, surface };
+      }
+      ctx.drawImage(cache.surface, bx - margin, by - margin, width / scale, height / scale);
     } else {
       ctx.fillStyle = '#2d4d32';
       ctx.fillRect(bx, by, bw, bh);
