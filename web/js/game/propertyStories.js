@@ -16,23 +16,23 @@ export const PROPERTY_STORIES = {
   ],
   "televiziune": [
     "📺",
-    "În joc: Studiouri locale, teritoriale și de televiziune prin satelit. Identificarea cu o firmă sau un loc real nu este încă verificată."
+    "În joc: Studiouri locale, teritoriale și de televiziune prin satelit."
   ],
   "timisoreana": [
     "🧥",
-    "În joc: Confecții, aparate electrice și bijuterii. Acțiunea nu este identificată cu fabrica de bere. Identificarea cu o firmă sau un loc real nu este încă verificată."
+    "În joc: Timișoreana are sectoare de îmbrăcăminte, aparate electrice și bijuterii. Caut în continuare date despre magazinul sau societatea de la care provine numele; anul deschiderii nu a fost încă stabilit."
   ],
   "unirii": [
     "💊",
-    "În joc: O farmacie și o cofetărie. Identificarea cu o firmă sau un loc real nu este încă verificată."
+    "În joc: O farmacie și o cofetărie."
   ],
   "padurea_verde": [
     "🌳",
-    "În joc: Cabane, bufet și băi termale, într-un decor de pădure. Identificarea cu o firmă sau un loc real nu este încă verificată."
+    "În joc: Cabane, bufet și băi termale, într-un decor de pădure."
   ],
   "lipscani": [
     "🍽️",
-    "În joc: Un bar de zi și un restaurant. Identificarea cu o firmă sau un loc real nu este încă verificată."
+    "În joc: Un bar de zi și un restaurant."
   ],
   "maria": [
     "🏙️",
@@ -41,11 +41,11 @@ export const PROPERTY_STORIES = {
   ],
   "circumvalatiunii": [
     "🏨",
-    "În joc: Un complex de fizioterapie și un hotel. Identificarea cu o firmă sau un loc real nu este încă verificată."
+    "În joc: Un complex de fizioterapie și un hotel."
   ],
   "ohm": [
     "🔌",
-    "În joc: Micromotoare, prototipuri și aparate de măsură. Identificarea cu o firmă sau un loc real nu este încă verificată."
+    "În joc: Micromotoare, prototipuri și aparate de măsură."
   ],
   "atelier_cfr": [
     "🚂",
@@ -54,15 +54,15 @@ export const PROPERTY_STORIES = {
   ],
   "calea_sagului": [
     "⛸️",
-    "În joc: Un bloc pentru turiști și o sală de patinaj. Identificarea cu o firmă sau un loc real nu este încă verificată."
+    "În joc: Un bloc pentru turiști și o sală de patinaj."
   ],
   "piata_romana": [
     "🧵",
-    "În joc: O casă, o agenție de turism și o croitorie de lux. Identificarea cu o firmă sau un loc real nu este încă verificată."
+    "În joc: O casă, o agenție de turism și o croitorie de lux."
   ],
   "metalo_tim": [
     "🔨",
-    "În joc: Construcții pentru sere și containere. Identificarea cu o firmă sau un loc real nu este încă verificată."
+    "În joc: Construcții pentru sere și containere."
   ],
   "piata_victoriei": [
     "🛍️",
@@ -71,11 +71,11 @@ export const PROPERTY_STORIES = {
   ],
   "taberei": [
     "🌷",
-    "În joc: O casă cu grădină, locuințe și o casă de odihnă. Identificarea cu o firmă sau un loc real nu este încă verificată."
+    "În joc: O casă cu grădină, locuințe și o casă de odihnă."
   ],
   "aviatica": [
     "✈️",
-    "În joc: Zboruri cu elicopterul, avion particular și transport aerian. Identificarea cu o firmă sau un loc real nu este încă verificată."
+    "În joc: Zboruri cu elicopterul, avion particular și transport aerian."
   ],
   "memorii": [
     "💾",
@@ -84,12 +84,12 @@ export const PROPERTY_STORIES = {
   ],
   "prichindel": [
     "🧸",
-    "Posibilă legătură: presa din 1961 descrie la Timișoara complexul pentru copii „Prichindel”, cu îmbrăcăminte, încălțăminte și servicii. Identitatea juridică cu acțiunea din joc nu este încă verificată.",
+    "La Timișoara, presa consemna în 1961 deschiderea complexului pentru copii „Prichindel”: îmbrăcăminte, încălțăminte, tricotaje și servicii. Este o posibilă legătură cu acțiunea din joc; identitatea societății nu este încă confirmată.",
     "https://www.bibliotecadeva.ro/periodice/scinteiapi/1961/04/scinteia_pionierului_1961_04_17.pdf"
   ],
   "lahovary": [
     "🏡",
-    "În joc: O pensiune și o mezelărie. Identificarea cu o firmă sau un loc real nu este încă verificată."
+    "În joc: O pensiune și o mezelărie."
   ],
   "guban": [
     "👞",
@@ -108,7 +108,7 @@ export const PROPERTY_STORIES = {
   ],
   "celuloza": [
     "📜",
-    "În joc: Secții pentru fabricarea hârtiei și a cartonului. Identificarea cu o firmă sau un loc real nu este încă verificată."
+    "În joc: Secții pentru fabricarea hârtiei și a cartonului."
   ],
   "dura": [
     "🔋",
@@ -117,6 +117,6 @@ export const PROPERTY_STORIES = {
   ],
   "ambasador": [
     "🛎️",
-    "În joc: Un hotel, restaurant, bar și club de noapte. Identificarea cu o firmă sau un loc real nu este încă verificată."
+    "În joc: Un hotel, restaurant, bar și club de noapte."
   ]
 };
