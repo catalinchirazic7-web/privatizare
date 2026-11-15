@@ -19,6 +19,8 @@ let coverIndex = 0;
 function nextCover() {
   const cover = $('home-cover');
   coverIndex = (coverIndex + 1) % coverClips.length;
+  const title = document.querySelector('#scr-home .cover-title');
+  if (title) title.hidden = coverIndex !== 0;
   cover.src = coverClips[coverIndex];
   cover.load();
   if (app.screen === 'home') cover.play().catch(() => {});
