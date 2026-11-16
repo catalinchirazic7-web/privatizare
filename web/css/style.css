@@ -592,3 +592,5 @@ input { -webkit-user-select: text; user-select: text; }
 /* Titlul complet acoperă banda deja decupată din videoclipul original. */
 #scr-home .cover-title { position: absolute; z-index: 2; top: 0; bottom: 0; left: 47.55%; width: 6.25%; display: flex; flex-direction: column; align-items: center; justify-content: space-evenly; overflow: hidden; pointer-events: none; background: linear-gradient(90deg, #a54a27, #d9783d 25%, #df8042 70%, #9d4024); box-shadow: inset 3px 0 4px #542b1c, inset -3px 0 4px #542b1c; }
 #scr-home .cover-title span { flex: 1 1 0; min-height: 0; display: flex; align-items: center; justify-content: center; color: #f0c932; font-family: Georgia, serif; font-size: min(7.3dvh, 4.4vw); font-weight: 900; line-height: 1; -webkit-text-stroke: 1.5px #3b241a; text-shadow: 1px 2px 0 #3b241a; }
+
+.outro-message { position: absolute; inset: 0; z-index: 4; display: grid; place-items: center; padding: 24px; background: #141919; text-align: center; font-size: 1.2rem; }

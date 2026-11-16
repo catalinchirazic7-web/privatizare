@@ -59,7 +59,23 @@ const app = {
     if (name === 'lobby') menus.renderLobby(this);
     // intro-ul cu sunet pornește doar după o atingere (browserul blochează sunetul altfel)
     if (name === 'intro') this.playVideo('intro-video', () => { if (this.screen === 'intro') this.show('home'); });
-    if (name === 'outro') this.playVideo('outro-video', () => this.show('home'));
+    if (name === 'outro') {
+      $('outro-message').hidden = true;
+      $('outro-done').hidden = false;
+      $('outro-video').onerror = () => this.finishExit();
+      this.playVideo('outro-video', () => this.finishExit());
+    }
+  },
+
+  finishExit() {
+    if (this.screen !== 'outro') return;
+    const video = $('outro-video');
+    video.onended = null;
+    video.onerror = null;
+    video.pause();
+    $('outro-done').hidden = true;
+    $('outro-message').hidden = false;
+    window.close();
   },
 
   playVideo(id, onEnd) {
@@ -251,7 +267,7 @@ async function boot() {
 
   $('intro-skip').addEventListener('click', () => app.show('home'));
   $('intro-video').addEventListener('error', () => { if (app.screen === 'intro') app.show('home'); });
-  $('outro-done').addEventListener('click', () => app.show('home'));
+  $('outro-done').addEventListener('click', () => app.finishExit());
 
   // butoanele „← Înapoi” (configurare, JOC ONLINE, regulament) merg la ecranul indicat în data-back
   document.querySelectorAll('[data-back]').forEach((btn) => {

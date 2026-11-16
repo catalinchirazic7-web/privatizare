@@ -4,7 +4,7 @@
 // - videourile și Firebase nu se cache-uiesc (sunt mari sau sunt live).
 // La o schimbare de cod, mărește VERSION.
 
-const VERSION = 'privatizare-web-v1.44';
+const VERSION = 'privatizare-web-v1.45';
 
 const SHELL = [
   './',

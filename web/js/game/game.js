@@ -355,7 +355,10 @@ export class Game {
     }
     const result = this.engine.skipTurn(g, this.currentIndex);
     this.game = result.state;
-    this.skipBanner = `${p.name} staționează la Casa de Odihnă! Ture rămase de sărit: ${p.skipTurns - 1}`;
+    const house = g.players[this.currentIndex].position >= 0 && this.catalog.board[p.position]?.type === TILE.CASA;
+    this.skipBanner = house
+      ? `${p.name} se odihnește: tura ${GameRules.CASA_ODIHNA_SKIP_TURNS - p.skipTurns + 1} din ${GameRules.CASA_ODIHNA_SKIP_TURNS}.`
+      : `${p.name} stă pe loc. Ture rămase de sărit: ${p.skipTurns - 1}.`;
     this.turnAwaitingEnd = true;
   }
 
