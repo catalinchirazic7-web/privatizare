@@ -14,6 +14,20 @@ const $ = (id) => document.getElementById(id);
 const SCREENS = ['intro', 'home', 'setup', 'online', 'lobby', 'rules', 'game', 'outro'];
 const DECISION_DIALOGS = ['BUY', 'BANK_FEE', 'RENT', 'DEBT', 'LIQUIDATION_HANDOVER', 'HANDOVER'];
 
+const coverClips = ['media/coperta.mp4', 'media/coperta_lunga.mp4'];
+let coverIndex = 0;
+function nextCover() {
+  const cover = $('home-cover');
+  coverIndex = (coverIndex + 1) % coverClips.length;
+  const title = document.querySelector('#scr-home .cover-title');
+  if (title) title.hidden = coverIndex !== 0;
+  cover.src = coverClips[coverIndex];
+  cover.load();
+  if (app.screen === 'home') cover.play().catch(() => {});
+}
+$('home-cover').addEventListener('ended', nextCover);
+
+
 const app = {
   catalog: null,
   game: null,
@@ -27,23 +41,47 @@ const app = {
   /* ---------- ecrane ---------- */
 
   show(name) {
+    if (this.screen === 'home' && name !== 'home') $('home-cover').pause();
     if (this.screen === 'intro' && name !== 'intro') $('intro-video').pause();
     if (this.screen === 'outro' && name !== 'outro') $('outro-video').pause();
     for (const s of SCREENS) $(`scr-${s}`).classList.toggle('active', s === name);
     this.screen = name;
     this.updateRotateHint();
-    if (name === 'home') menus.refreshHome();
+    if (name === 'home') {
+      $('toggle-cover')?.remove(); // elimină butonul din paginile mai vechi aflate în cache
+      menus.refreshHome();
+      const cover = $('home-cover');
+      cover.muted = true;
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) cover.play().catch(() => {});
+    }
     if (name === 'setup') this.setupView.render();
     if (name === 'online') this.onlineView.enter();
     if (name === 'lobby') menus.renderLobby(this);
     // intro-ul cu sunet pornește doar după o atingere (browserul blochează sunetul altfel)
-    if (name === 'intro') $('intro-start').hidden = false;
-    if (name === 'outro') this.playVideo('outro-video', () => this.show('home'));
+    if (name === 'intro') this.playVideo('intro-video', () => { if (this.screen === 'intro') this.show('home'); });
+    if (name === 'outro') {
+      $('outro-message').hidden = true;
+      $('outro-done').hidden = false;
+      $('outro-video').onerror = () => this.finishExit();
+      this.playVideo('outro-video', () => this.finishExit());
+    }
+  },
+
+  finishExit() {
+    if (this.screen !== 'outro') return;
+    const video = $('outro-video');
+    video.onended = null;
+    video.onerror = null;
+    video.pause();
+    $('outro-done').hidden = true;
+    $('outro-message').hidden = false;
+    window.close();
   },
 
   playVideo(id, onEnd) {
     const v = $(id);
     v.currentTime = 0;
+    v.muted = localStorage.getItem('privatizare.videoSound') === 'off';
     v.preload = 'auto';
     v.onended = onEnd;
     const p = v.play();
@@ -59,9 +97,10 @@ const app = {
   /* ---------- meniuri ---------- */
 
   /** @param {1|2} dice  modul de joc ales din meniu: un zar sau două zaruri */
-  openSetup(dice = 1) {
+  openSetup(dice = 1, rapid = false) {
     this.requestLandscape();
     this.setupView.dice = dice;
+    this.setupView.rapidMode = rapid;
     this.show('setup');
   },
 
@@ -93,17 +132,18 @@ const app = {
     }
     if (this.screen === 'lobby') this.show('home');
     else if (this.screen === 'online') this.onlineView.render();
+    else if (this.screen === 'home' && c.error) this.toast(c.error);
   },
 
   /* ---------- partide ---------- */
 
-  startLocal(setup, money, time, diceCount = 1, boardLayout = 'old') {
+  startLocal(setup, money, time, diceCount = 1, boardLayout = 'old', rapidMode = false) {
     sound.unlock();
     this.requestLandscape();
     this.gameScreen.setLayout(boardLayout);
-    this.game.startGame(setup, money, time, diceCount, boardLayout);
+    this.game.startGame(setup, money, time, diceCount, boardLayout, rapidMode);
     this.gameScreen.board.resetPawns();   // joc nou: pionii pornesc instant de la start
-    this.enterGame(false);
+    this.enterGame(false, true);
   },
 
   continueGame() {
@@ -114,8 +154,21 @@ const app = {
     this.enterGame(false);
   },
 
-  enterGame(online) {
+  enterGame(online, opening = false) {
     this.show('game');
+    const gameScreen = $('scr-game');
+    const skip = $('skip-opening');
+    gameScreen.classList.remove('opening-game');
+    skip.hidden = true;
+    if (opening && localStorage.getItem('privatizare.effects') !== 'off' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      void gameScreen.offsetWidth;
+      gameScreen.classList.add('opening-game');
+      this.gameScreen.board.openingAt = performance.now();
+      skip.hidden = false;
+      const finish = () => { gameScreen.classList.remove('opening-game'); this.gameScreen.board.openingAt = null; skip.hidden = true; };
+      skip.onclick = finish;
+      setTimeout(finish, 2200);
+    }
     this.gameScreen.start({ online: online ? this.online : null });
     try {
       history.pushState({ game: true }, '');
@@ -214,12 +267,8 @@ async function boot() {
   syncSoundFab();
 
   $('intro-skip').addEventListener('click', () => app.show('home'));
-  $('intro-start').addEventListener('click', () => {
-    $('intro-start').hidden = true;
-    sound.unlock();
-    app.playVideo('intro-video', () => app.show('home'));
-  });
-  $('outro-done').addEventListener('click', () => app.show('home'));
+  $('intro-video').addEventListener('error', () => { if (app.screen === 'intro') app.show('home'); });
+  $('outro-done').addEventListener('click', () => app.finishExit());
 
   // butoanele „← Înapoi” (configurare, JOC ONLINE, regulament) merg la ecranul indicat în data-back
   document.querySelectorAll('[data-back]').forEach((btn) => {

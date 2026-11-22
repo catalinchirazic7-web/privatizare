@@ -27,6 +27,22 @@ export class CardDeck {
     return this.pile.length;
   }
 
+  snapshot() {
+    return {
+      pile: this.pile.map((card) => card.id),
+      discard: this.discard.map((card) => card.id),
+    };
+  }
+
+  restore(snapshot, cards) {
+    if (!Array.isArray(snapshot?.pile) || !Array.isArray(snapshot.discard)) return;
+    const ids = [...snapshot.pile, ...snapshot.discard];
+    const byId = new Map(cards.map((card) => [card.id, card]));
+    if (ids.length !== cards.length || new Set(ids).size !== ids.length || !ids.every((id) => byId.has(id))) return;
+    this.pile = snapshot.pile.map((id) => byId.get(id));
+    this.discard = snapshot.discard.map((id) => byId.get(id));
+  }
+
   draw() {
     if (this.pile.length === 0) {
       this.pile = shuffled(this.discard, this.rng);

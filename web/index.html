@@ -28,26 +28,28 @@
     <!-- INTRO -->
     <section id="scr-intro" class="screen" data-screen="intro">
       <video id="intro-video" class="fullvideo" playsinline preload="none" src="media/intro_video.mp4"></video>
-      <button id="intro-start" class="btn yellow big intro-start" type="button" hidden>Atinge pentru a porni</button>
       <button id="intro-skip" class="btn ghost skip-btn" type="button">Sari peste ›</button>
     </section>
 
     <!-- HOME -->
     <section id="scr-home" class="screen" data-screen="home">
+      <div class="cover-title" aria-hidden="true"><span>P</span><span>R</span><span>I</span><span>V</span><span>A</span><span>T</span><span>I</span><span>Z</span><span>A</span><span>R</span><span>E</span></div>
       <header class="topbar">
         <span class="brand">Privatizare</span>
         <span class="spacer"></span>
-        <button id="btn-donate" class="btn ghost small" type="button">Donează</button>
         <button id="btn-about" class="btn ghost small" type="button">Despre</button>
-        <span class="version">v1.04 web</span>
+        <span class="version">v1.07 web</span>
       </header>
       <div class="home-layout">
         <div class="home-logo">
-          <img src="img/logo_privatizare.webp" alt="Logo Privatizare" draggable="false">
+          <video id="home-cover" class="home-cover" muted playsinline preload="metadata" poster="img/logo_privatizare.webp" aria-label="Coperta animată a jocului Privatizare">
+            <source src="media/coperta.mp4" type="video/mp4">
+          </video>
         </div>
         <nav class="home-menu">
           <button id="btn-resume" class="btn primary wide" type="button" hidden>Continuă jocul</button>
           <button id="btn-new" class="btn primary wide" type="button">Joc nou</button>
+          <button id="btn-rapid" class="btn rapid wide" type="button">MOD RAPID</button>
           <button id="btn-new-dice" class="btn yellow wide" type="button">Joc nou cu 2 zaruri</button>
           <button id="btn-online" class="btn yellow wide" type="button">JOC ONLINE</button>
           <button id="btn-rules" class="btn ghost wide" type="button">Regulament</button>
@@ -152,8 +154,10 @@
 
     <!-- GAME -->
     <section id="scr-game" class="screen" data-screen="game">
+      <button id="btn-abandon" class="btn danger small abandon-button" type="button">Abandon</button>
       <div id="board-wrap" class="board-wrap">
         <canvas id="board" aria-label="Tabla de joc Privatizare"></canvas>
+        <button id="skip-opening" class="btn ghost small skip-opening" type="button" hidden>Sari peste animație</button>
         <div id="die" class="die" aria-label="Zarul">
           <div class="die-face"></div>
         </div>
@@ -164,6 +168,7 @@
       </div>
 
       <div id="hud" class="hud">
+        <button id="open-journal" class="journal-button" type="button">Ce s-a întâmplat?</button>
         <button id="hud-toggle" class="hud-bar" type="button" aria-expanded="false">
           <span class="turn-dot" id="hud-dot"></span>
           <span id="hud-turn">LA RÂND: -</span>
@@ -189,6 +194,12 @@
             <button id="toggle-sound" class="btn ghost small" type="button">Sunet: pornit</button>
           <button id="test-sound" class="btn ghost small" type="button">Testează sunetul</button>
           </div>
+          <div class="drawer-row settings-row">
+            <span class="drawer-label">Masă:</span>
+            <button id="table-theme" class="btn ghost small" type="button">Clasic</button>
+            <button id="toggle-effects" class="btn ghost small" type="button">Efecte: pornite</button>
+            <button id="toggle-video-sound" class="btn ghost small" type="button">Sunet videoclip: pornit</button>
+          </div>
           <div id="drawer-tabs" class="drawer-row tabs"></div>
           <div id="portfolio" class="portfolio"></div>
           <p id="history-label" class="drawer-label">Jurnal</p>
@@ -203,7 +214,8 @@
     <!-- OUTRO -->
     <section id="scr-outro" class="screen" data-screen="outro">
       <video id="outro-video" class="fullvideo" playsinline preload="none" src="media/outro_video.mp4"></video>
-      <button id="outro-done" class="btn ghost skip-btn" type="button">Înapoi în meniu ›</button>
+      <button id="outro-done" class="btn ghost skip-btn" type="button">Ieșire acum ›</button>
+      <div id="outro-message" class="outro-message" hidden><p>Jocul s-a încheiat. Poți închide această fereastră.</p></div>
     </section>
   </main>
 
@@ -211,6 +223,7 @@
   <!-- Video de victorie, înainte de fereastra „Joc terminat” -->
   <div id="win-overlay" class="win-overlay" hidden>
     <video id="win-video" class="fullvideo" playsinline preload="auto" src="media/win_video.mp4"></video>
+    <button id="win-play" class="btn primary intro-start" type="button" hidden>Redă videoclipul</button>
     <button id="win-skip" class="btn ghost skip-btn" type="button">Continuă ›</button>
   </div>
   <div id="modal-root" class="modal-root" hidden></div>

@@ -1,5 +1,5 @@
 // Ecranele din afara jocului: meniul principal, configurarea, JOC ONLINE, camera de așteptare,
-// regulamentul și dialogurile „Despre” / „Donează”. Port din HomeScreen.kt, SetupScreen (GameScreen.kt),
+// regulamentul și dialogul „Despre”. Port din HomeScreen.kt, SetupScreen (GameScreen.kt),
 // OnlineScreens.kt și RulesScreen.kt.
 
 import { el, clear } from './dom.js';
@@ -8,7 +8,7 @@ import { sound } from '../audio.js';
 import { PAWN_COLORS, PAWN_BY_KEY } from '../core/model.js';
 import { STARTING_MONEY_STEP, maxCustomStartingMoney } from '../core/rules.js';
 import { RoomRole } from '../online/protocol.js';
-import { CONNECT_TIMEOUT_MS, DONATE } from '../config.js';
+import { CONNECT_TIMEOUT_MS } from '../config.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -31,13 +31,13 @@ function cycleSeat(seat) {
 
 export function initHome(app) {
   $('btn-new').addEventListener('click', () => app.openSetup(1));
+  $('btn-rapid').addEventListener('click', () => app.openSetup(1, true));
   $('btn-new-dice').addEventListener('click', () => app.openSetup(2));
   $('btn-online').addEventListener('click', () => app.openOnline());
   $('btn-rules').addEventListener('click', () => app.show('rules'));
   $('btn-exit').addEventListener('click', () => app.show('outro'));
   $('btn-resume').addEventListener('click', () => app.continueGame());
   $('btn-about').addEventListener('click', () => openAbout(app));
-  $('btn-donate').addEventListener('click', () => openDonate(app));
 }
 
 export function refreshHome() {
@@ -69,21 +69,8 @@ function openAbout(app) {
     el('p', { text: 'Joc de societate românesc, pentru tineret și adulți. Se joacă în 2–4 persoane.' }),
     el('p', { html: '<strong>Proiect independent realizat de Chirazic Catalin</strong>' }),
     el('p', { class: 'muted', text: 'Contact: catalinchirazic7@gmail.com' }),
-    el('p', { class: 'muted', text: 'Versiune 1.04 (web)' }),
+    el('p', { class: 'muted', text: 'Versiune 1.07 (web)' }),
     el('div', { class: 'actions' }, el('button', { class: 'btn primary', type: 'button', text: 'Închide', onclick: closeModal })),
-  ));
-}
-
-function openDonate(app) {
-  openModal(app, el('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true' },
-    el('h3', null, el('span', { text: 'Donează' })),
-    el('p', { text: 'Dacă îți place jocul, poți susține dezvoltarea lui:' }),
-    el('img', { src: 'img/donate_qr.png', alt: 'Cod QR pentru donații', style: { width: '200px', display: 'block', margin: '8px auto', borderRadius: '10px', background: '#fff' } }),
-    el('p', { class: 'muted', text: DONATE.url }),
-    el('div', { class: 'actions' },
-      el('a', { class: 'btn yellow', href: DONATE.url, target: '_blank', rel: 'noopener', text: 'Deschide link-ul' }),
-      el('button', { class: 'btn ghost', type: 'button', text: 'Închide', onclick: closeModal }),
-    ),
   ));
 }
 
@@ -220,7 +207,7 @@ export class SetupView {
     const config = { count: this.count, money: this.money, time: this.time, dice: this.dice, layout: this.layout, seats: this.seats.map((s) => ({ ...s })) };
     storage.saveSetup(config);
     const setup = this.active().map((s) => ({ name: s.name.trim(), colorKey: s.colorKey, isBot: s.isBot, catalin: s.catalin, easy: s.easy }));
-    this.app.startLocal(setup, this.money, this.time, this.dice, this.layout);
+    this.app.startLocal(setup, this.money, this.time, this.dice, this.layout, !!this.rapidMode);
   }
 }
 

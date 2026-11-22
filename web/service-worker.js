@@ -4,7 +4,7 @@
 // - videourile și Firebase nu se cache-uiesc (sunt mari sau sunt live).
 // La o schimbare de cod, mărește VERSION.
 
-const VERSION = 'privatizare-web-v1.18';
+const VERSION = 'privatizare-web-v1.47';
 
 const SHELL = [
   './',
@@ -25,6 +25,7 @@ const SHELL = [
   './js/game/game.js',
   './js/game/gameScreen.js',
   './js/game/visuals.js',
+  './js/game/propertyStories.js',
   './js/online/controller.js',
   './js/online/events.js',
   './js/online/protocol.js',
@@ -38,7 +39,6 @@ const SHELL = [
   './img/deck_back_loto.webp',
   './img/deck_back_telex.webp',
   './img/regulament.jpg',
-  './img/donate_qr.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-180.png',
@@ -69,7 +69,7 @@ self.addEventListener('fetch', (event) => {
 
   if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(req)
+      fetch(req, { cache: 'no-cache' })
         .then((res) => {
           const copy = res.clone();
           caches.open(VERSION).then((c) => c.put('./index.html', copy));

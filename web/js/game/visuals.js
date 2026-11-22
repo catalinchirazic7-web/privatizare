@@ -56,10 +56,10 @@ const HINT = {
   START: 'Treci pe aici și încasezi banii de la Bancă.',
   LOTO: 'Trage un cartonaș LOTO: câștig sau pierdere, după noroc.',
   TELEX: 'Trage un cartonaș TELEX: mutări, plăți și beneficii.',
-  BANK: 'Aici se fac plățile și încasările către Bancă.',
+  BANK: 'Primești 5.000 ECU de la bancă.',
   BANK_DIVIDEND: 'Banca îți achită dividendele cuvenite.',
   CASA: 'Stai două ture: pionul se odihnește. Ieși în ordinea în care ai ajuns.',
-  SALA: 'Ședință la consiliu: urmează instrucțiunile.',
+  SALA: 'Primești sfaturi de 1.000 ECU. Atât plătești!',
   RECHEMAT: 'Te întorci urgent la START.',
 };
 

@@ -36,8 +36,10 @@ export class Game {
     this.rerolled = false;    // s-a rearuncat deja în tura curentă (omul sau robotul)
     this.rentSeq = 0;
     this.lastRent = null;     // ultima chirie plătită: { payerId, ownerId, amount, n }
+    this.rapidMode = false;
     this.boardLayout = 'old';  // tabla: 'old' (veche) sau 'new' (nouă)
     this.winnerName = null;
+    this.abandonedBy = null;
 
     this.offer = null;           // { playerId, propertyId, option }
     this.feeOffer = null;
@@ -195,6 +197,7 @@ export class Game {
       easyMode: this.easyMode,
       rerolled: this.rerolled,
       boardLayout: this.boardLayout,
+      rapidMode: this.rapidMode,
       lastDice: this.lastDice,
       winnerName: this.winnerName,
       turnAwaitingEnd: this.turnAwaitingEnd,
@@ -204,7 +207,9 @@ export class Game {
       rentDue: this.rentDue,
       debt: this.debt,
       card: this.shownCard,
+      pendingMove: this.pendingMove,
       pendingDraw: this.pendingDraw,
+      decks: { loto: this.engine.lotoDeck.snapshot(), telex: this.engine.telexDeck.snapshot() },
     };
   }
 
@@ -226,10 +231,12 @@ export class Game {
     this.diceCount = s.diceCount === 2 ? 2 : 1;   // salvările vechi au un singur zar
     this.easyMode = !!s.easyMode;                 // salvările vechi nu au mod ușor
     this.rerolled = !!s.rerolled;
+    this.rapidMode = !!s.rapidMode;
     this.boardLayout = s.boardLayout === 'new' ? 'new' : 'old';   // salvările vechi sunt pe tabla veche
     if (!sameDice(s.lastDice, this.lastDice)) this.rollNonce++;
     this.lastDice = s.lastDice;
     this.winnerName = s.winnerName;
+    this.abandonedBy = null;
     this.turnAwaitingEnd = s.turnAwaitingEnd;
     this.skipBanner = s.skipBanner;
     this.offer = toOffer(s.offer);
@@ -238,6 +245,9 @@ export class Game {
     this.debt = s.debt;
     this.pendingDraw = s.pendingDraw;
     this.shownCard = s.card;
+    this.pendingMove = s.pendingMove ?? null;
+    this.engine.lotoDeck.restore(s.decks?.loto, this.catalog.loto);
+    this.engine.telexDeck.restore(s.decks?.telex, this.catalog.telex);
     this.handoverTo = null;
     this.debtAcknowledged = null;
     this.emit();
@@ -266,13 +276,14 @@ export class Game {
   }
 
   /**
-   * @param {{name, colorKey, isBot}[]} setup
+   * @param {{id?: string, name: string, colorKey: string, isBot?: boolean}[]} setup
    * @param {number|null} moneyPerPlayer  null = împărțire egală a tirajului
    * @param {number|null} timeLimitMinutes
    */
-  startGame(setup, moneyPerPlayer = null, timeLimitMinutes = null, diceCount = 1, boardLayout = 'old') {
+  startGame(setup, moneyPerPlayer = null, timeLimitMinutes = null, diceCount = 1, boardLayout = 'old', rapidMode = false) {
     if (diceCount !== 1 && diceCount !== 2) throw new Error('Un zar sau două');
     this.diceCount = diceCount;
+    this.rapidMode = !!rapidMode;
     this.boardLayout = boardLayout === 'new' ? 'new' : 'old';
     this.deadlineMs = timeLimitMinutes ? Date.now() + timeLimitMinutes * 60_000 : null;
     this.finalRanking = [];
@@ -281,7 +292,7 @@ export class Game {
     if (!setup.some((s) => !s.isBot)) throw new Error('Cel puțin un jucător trebuie să fie om');
     const dist = moneyPerPlayer == null ? distributeStartingMoney(setup.length) : distributeStartingMoney(setup.length, moneyPerPlayer);
     const players = setup.map((s, i) => ({
-      id: `p${i}`,
+      id: s.id ?? `p${i}`,
       name: s.name,
       color: s.colorKey,
       money: dist.playerMoney,
@@ -306,6 +317,7 @@ export class Game {
     this.pendingDraw = null;
     this.turnAwaitingEnd = false;
     this.winnerName = null;
+    this.abandonedBy = null;
     this.lastDice = [];
     this.skipBanner = null;
     this.handoverTo = null;
@@ -351,7 +363,10 @@ export class Game {
     }
     const result = this.engine.skipTurn(g, this.currentIndex);
     this.game = result.state;
-    this.skipBanner = `${p.name} staționează la Casa de Odihnă! Ture rămase de sărit: ${p.skipTurns - 1}`;
+    const house = g.players[this.currentIndex].position >= 0 && this.catalog.board[p.position]?.type === TILE.CASA;
+    this.skipBanner = house
+      ? `${p.name} se odihnește: tura ${GameRules.CASA_ODIHNA_SKIP_TURNS - p.skipTurns + 1} din ${GameRules.CASA_ODIHNA_SKIP_TURNS}.`
+      : `${p.name} stă pe loc. Ture rămase de sărit: ${p.skipTurns - 1}.`;
     this.turnAwaitingEnd = true;
   }
 
@@ -391,6 +406,41 @@ export class Game {
     this.turnAwaitingEnd = true;
     this.checkWinner();
     this.emit();
+  }
+
+  remainingAnnexes() {
+    const o = this.offer;
+    if (!this.rapidMode || this.isOnline || o?.option.type !== 'ANNEX' || !this.game) return [];
+    const player = this.game.players.find((p) => p.id === o.playerId);
+    const property = this.catalog.actions[o.propertyId];
+    if (!player || !property || player.ownedProperties[o.propertyId] == null) return [];
+    const level = player.ownedProperties[o.propertyId];
+    if (o.option.annex.index !== level + 1) return [];
+    return property.annexes.filter((a) => a.index > level).sort((a, b) => a.index - b.index);
+  }
+
+  buyAnnexes(count) {
+    const remaining = this.remainingAnnexes();
+    if (!Number.isInteger(count) || count < 1 || count > remaining.length) return false;
+    const annexes = remaining.slice(0, count);
+    const offer = this.offer;
+    const buyer = this.game.players.find((p) => p.id === offer.playerId);
+    const total = annexes.reduce((sum, a) => sum + a.price, 0);
+    if (buyer.money < total) return false;
+    let state = this.game;
+    for (const annex of annexes) {
+      state = this.engine.applyBuy(state, { playerId: offer.playerId, propertyId: offer.propertyId, option: { type: 'ANNEX', annex } });
+    }
+    this.game = state;
+    this.offer = null;
+    this.turnAwaitingEnd = true;
+    this.checkWinner();
+    this.emit();
+    return true;
+  }
+
+  buyAllAnnexes() {
+    return this.buyAnnexes(this.remainingAnnexes().length);
   }
 
   /** NU la titlu deschide balonul cu taxa; NU la anexă nu are taxă. */
@@ -507,16 +557,23 @@ export class Game {
     const res = this.engine.settleDebt(g, d, sales);
     this.game = res.state;
     if (res.pending === null) {
-      this.debt = null;
+      const [nextDebt = null, ...next] = d.next ?? [];
+      this.debt = nextDebt ? { ...nextDebt, next } : null;
       this.debtAcknowledged = null;
       if (res.bankrupt) {
-        // Jucătorul a fost eliminat: următorul jucător e deja la index.
-        const size = this.game.players.length;
-        if (size > 0) this.currentIndex %= size;
-        this.turnAwaitingEnd = false;
-        this.skipBanner = null;
-        this.prepareHandover();
-        this.beginTurnIfSkipping();
+        const activeId = g.players[this.currentIndex]?.id;
+        const players = this.game.players;
+        if (d.debtorId === activeId) {
+          if (players.length > 0) this.currentIndex %= players.length;
+          this.turnAwaitingEnd = false;
+          this.skipBanner = null;
+          this.shownCard = null;
+          this.pendingMove = null;
+          this.prepareHandover();
+          this.beginTurnIfSkipping();
+        } else {
+          this.currentIndex = players.findIndex((p) => p.id === activeId);
+        }
       } else {
         this.turnAwaitingEnd = true;
       }
@@ -590,7 +647,9 @@ export class Game {
           state: this.game, botIdx: this.game.players.indexOf(p), board: this.catalog.board,
           actions: this.catalog.actions, propertyId: d.offer.propertyId, option: opt, diceCount: this.diceCount,
         });
-        if (accept) this.acceptOffer();
+        if (accept) {
+          if (!this.buyAllAnnexes()) this.acceptOffer();
+        }
         else this.refuseOffer();
         break;
       }
@@ -625,6 +684,71 @@ export class Game {
   checkWinner() {
     const players = this.game?.players;
     if (players && players.length === 1) this.winnerName = players[0].name;
+  }
+
+  abandon(playerId) {
+    const game = this.game;
+    if (!game || this.isOnline || this.isOver) return false;
+    const leaving = game.players.find((player) => player.id === playerId && !player.isBot);
+    if (!leaving) return false;
+    const players = game.players.filter((player) => player.id !== playerId);
+    if (!players.length) return false;
+
+    const current = this.currentPlayer;
+    this.game = {
+      ...game,
+      players,
+      bankMoney: game.bankMoney + leaving.money,
+      history: [...game.history, `${leaving.name} a abandonat partida.`],
+    };
+    if (current?.id === playerId) {
+      this.currentIndex %= players.length;
+      this.offer = null;
+      this.feeOffer = null;
+      this.rentDue = null;
+      this.shownCard = null;
+      this.pendingMove = null;
+      this.pendingDraw = null;
+      this.turnAwaitingEnd = false;
+      this.rerolled = false;
+      this.skipBanner = null;
+    } else {
+      this.currentIndex = players.findIndex((player) => player.id === current?.id);
+      if (this.rentDue?.ownerId === playerId) this.rentDue = null;
+    }
+
+    if (this.debt) {
+      const [first, ...next] = [this.debt, ...(this.debt.next ?? [])]
+        .filter((debt) => debt.debtorId !== playerId && debt.creditorId !== playerId);
+      this.debt = first ? { ...first, next } : null;
+      this.debtAcknowledged = null;
+    }
+    if (players.length === 1 || players.every((player) => player.isBot)) {
+      this.abandonedBy = leaving.name;
+      this.winnerName = rankPlayers(players, this.catalog.actions)[0].name;
+      this.deadlineMs = null;
+      this.debt = null;
+      this.rentDue = null;
+    } else if (current?.id === playerId) {
+      this.prepareHandover();
+      this.beginTurnIfSkipping();
+    }
+    this.emit();
+    return true;
+  }
+
+  replaceOnlinePlayersWithBots(ids) {
+    if (!this.game) return;
+    const seats = new Set(ids);
+    let changed = false;
+    const players = this.game.players.map((player) => {
+      if (player.isBot || !seats.has(player.id)) return player;
+      changed = true;
+      return { ...player, isBot: true };
+    });
+    if (!changed) return;
+    this.game = { ...this.game, players };
+    this.emit();
   }
 }
 

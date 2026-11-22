@@ -6,12 +6,13 @@ import { sound } from '../audio.js';
 import { storage } from '../storage.js';
 import { el, clear, fmt, ecu } from '../ui/dom.js';
 import { PAWN_BY_KEY, TILE } from '../core/model.js';
-import { calculateRent, nextAnnex, sellBackValue, wholeSaleValue } from '../core/actions.js';
+import { calculateRent, nextAnnex, sellBackValue, wholeSaleValue, holdingsValue } from '../core/actions.js';
 import { GameRules } from '../core/rules.js';
 import { rollDie } from '../core/dice.js';
 import { tileVisual, tileHint, propertyVisual } from './visuals.js';
 import { actionArtPath, propertyIconPath } from '../core/model.js';
 import { CardOutcome } from '../core/cards.js';
+import { PROPERTY_STORIES } from './propertyStories.js';
 
 const DECISION_DIALOGS = ['BUY', 'BANK_FEE', 'RENT', 'DEBT', 'LIQUIDATION_HANDOVER', 'HANDOVER'];
 const DIE_PIPS = {
@@ -24,7 +25,7 @@ const DIE_PIPS = {
 };
 const DIE_POS = { fx: 0.63, fy: 0.34 };   // zarul stă în zona liberă din centrul tablei
 const DIE2_DX = 0.075;                     // al doilea zar (mod cu două zaruri), lângă primul
-const LANDING_MS = 3800;
+const LANDING_MS = 6500;
 const BOT_DELAY_MS = 600;
 const CARD_SHOW_MS = 2200;   // cât stă pe ecran cartonașul tras de un robot (apăsat = se închide imediat)
 const SKIP_SHOW_MS = 1600;   // cât stă vizibil bannerul „staționează” al unui robot, ca să-l vezi
@@ -66,12 +67,16 @@ class DieView {
     this.iv = setInterval(() => this.setFace(1 + Math.floor(Math.random() * 6)), 70);
   }
 
-  /** @param {string|null} badgeText  ce scrie insigna; null = zarul nu are insignă (al doilea zar) */
-  stopRolling(value, badgeText = String(value)) {
+  cancelRoll() {
     clearInterval(this.iv);
     this.iv = null;
     this.rolling = false;
     this.root.classList.remove('is-rolling');
+  }
+
+  /** @param {string|null} badgeText  ce scrie insigna; null = zarul nu are insignă (al doilea zar) */
+  stopRolling(value, badgeText = String(value)) {
+    this.cancelRoll();
     this.setFace(value);
     this.root.classList.remove('is-pop', 'is-flash');
     void this.root.offsetWidth;   // repornește animația
@@ -127,6 +132,7 @@ export class GameScreen {
     this.lastRentN = 0;          // ultima chirie deja arătată (balonul apare o singură dată)
     this.rerollTimer = null;     // fereastra în care zarul stă la dispoziția omului (modul ușor)
     this.rollHold = null;        // zarul așteptat: { values, commit } (al omului sau al robotului ușor)
+    this.rollTimers = new Set();
     this.rentIns = [];           // încasările de la robot, afișate în sertar: { pid, amount, until }
     this.botKey = null;
     this.endKey = null;
@@ -184,8 +190,47 @@ export class GameScreen {
       this.render();
     });
     $('btn-game-exit').addEventListener('click', () => this.exitToMenu());
+    $('btn-abandon').addEventListener('click', () => this.openAbandon());
     $('drawer').addEventListener('pointerdown', () => this.touchDrawer());
-    $('landing-card').addEventListener('click', () => this.onLandingTap());
+    $('landing-card').addEventListener('mouseenter', () => this.hideLanding());
+    document.addEventListener('click', () => {
+      if (this.active && !this.$('landing-card').hidden) this.hideLanding();
+    }, true);
+    this.tableThemes = ['classic', 'wood', 'modern'];
+    this.themeIndex = Math.max(0, this.tableThemes.indexOf(localStorage.getItem('privatizare.tableTheme') || 'classic'));
+    this.applyTableTheme();
+    $('table-theme').addEventListener('click', () => {
+      this.themeIndex = (this.themeIndex + 1) % this.tableThemes.length;
+      localStorage.setItem('privatizare.tableTheme', this.tableThemes[this.themeIndex]);
+      this.applyTableTheme();
+    });
+    this.effectsEnabled = localStorage.getItem('privatizare.effects') !== 'off';
+    const effectsButton = $('toggle-effects');
+    const updateEffects = () => { effectsButton.textContent = `Efecte: ${this.effectsEnabled ? 'pornite' : 'oprite'}`; };
+    updateEffects();
+    effectsButton.addEventListener('click', () => { this.effectsEnabled = !this.effectsEnabled; localStorage.setItem('privatizare.effects', this.effectsEnabled ? 'on' : 'off'); updateEffects(); });
+    const videoSound = $('toggle-video-sound');
+    const updateVideoSound = () => { videoSound.textContent = `Sunet videoclip: ${localStorage.getItem('privatizare.videoSound') === 'off' ? 'oprit' : 'pornit'}`; };
+    updateVideoSound();
+    videoSound.addEventListener('click', () => { localStorage.setItem('privatizare.videoSound', localStorage.getItem('privatizare.videoSound') === 'off' ? 'on' : 'off'); updateVideoSound(); });
+    $('open-journal').addEventListener('click', () => this.showJournal());
+  }
+
+  applyTableTheme() {
+    const theme = this.tableThemes[this.themeIndex];
+    this.$('board-wrap').dataset.theme = theme;
+    this.$('table-theme').textContent = `Masă: ${{ classic: 'Clasic', wood: 'Lemn închis', modern: 'Modern' }[theme]}`;
+  }
+
+  showJournal() {
+    if (this.visibleDialog() || this.game.winnerName) return;
+    const history = this.game.game?.history ?? [];
+    const node = el('div', { class: 'modal journal-modal', role: 'dialog', 'aria-modal': 'true' },
+      el('h3', { text: 'Ce s-a întâmplat?' }),
+      history.length ? el('ol', { class: 'journal-list' }, ...history.slice(-50).reverse().map((line) => el('li', { text: line }))) : el('p', { text: 'Nu există încă evenimente.' }),
+      el('div', { class: 'actions' }, el('button', { class: 'btn primary', type: 'button', text: 'Închide', onclick: () => this.closeModal() })),
+    );
+    this.openModal('journal', node);
   }
 
   /* ---------- ciclu de viață ---------- */
@@ -194,6 +239,11 @@ export class GameScreen {
   start({ online = null } = {}) {
     this.active = true;
     this.online = online;
+    const humans = (this.game.game?.players ?? []).filter((p) => !p.isBot);
+    this.resultPlayerName = this.game.isOnline
+      ? humans.find((p) => p.id === this.game.myPlayerId)?.name ?? null
+      : humans.length === 1 ? humans[0].name : null;
+    this.previousBotProperties = this.botProperties();
     this.lastShownNonce = this.game.rollNonce;
     this.prevMoney = new Map((this.game.game?.players ?? []).map((p) => [p.id, p.money]));
     this.shownMoney = new Map(this.prevMoney);
@@ -211,12 +261,38 @@ export class GameScreen {
     clearInterval(this.clockTimer);
     clearTimeout(this.botTimer);
     clearTimeout(this.endTimer);
+    this.botKey = null;
+    this.endKey = null;
+    this.cancelPendingRoll();
     clearTimeout(this.landingTimer);
     this.closeModal();
+    if (this.winVideoPlaying) {
+      this.winVideoPlaying = false;
+      this.$('win-video').pause();
+      this.$('win-overlay').hidden = true;
+    }
     this.sheetProperty = null;
   }
 
+  cancelPendingRoll() {
+    clearTimeout(this.rerollTimer);
+    this.rerollTimer = null;
+    this.rollHold = null;
+    for (const timer of this.rollTimers) clearTimeout(timer);
+    this.rollTimers.clear();
+    this.die.cancelRoll();
+    this.die2.cancelRoll();
+  }
+
   /* ---------- utilitare ---------- */
+
+  scheduleRoll(action, delay) {
+    const timer = setTimeout(() => {
+      this.rollTimers.delete(timer);
+      if (this.active) action();
+    }, delay);
+    this.rollTimers.add(timer);
+  }
 
   get myId() {
     return this.online && this.game.isOnline ? this.game.myPlayerId : null;
@@ -269,6 +345,7 @@ export class GameScreen {
     const myId = g.myPlayerId;
     const myTurn = this.myTurn;
     const dialog = this.visibleDialog();
+    this.showBotPurchase();
 
     if (this.viewedId && !players.some((p) => p.id === this.viewedId)) this.viewedId = null;
     const me = players.find((p) => p.id === myId) ?? null;
@@ -342,7 +419,8 @@ export class GameScreen {
 
     // --- drawer ---
     this.renderDrawer(viewed, me, current, dialog);
-    this.renderDialog(dialog);
+    this.$('btn-abandon').hidden = g.isOver || this.modalKey === 'abandon';
+    if (this.modalKey !== 'abandon') this.renderDialog(dialog);
     this.renderWinner();
     if (this.sheetProperty && !dialog && !g.winnerName) this.renderSheet(false);
     else if (this.sheetProperty) this.closeSheet();
@@ -482,7 +560,7 @@ export class GameScreen {
     } else {
       this.die.startRolling();
       if (values[1] != null) this.die2.startRolling();
-      setTimeout(() => this.settleDice(values), ROLL_ANIM_MS);
+      this.scheduleRoll(() => this.settleDice(values), ROLL_ANIM_MS);
     }
     this.pump();
   }
@@ -501,7 +579,7 @@ export class GameScreen {
     if (g.isGuest) {
       // oaspetele așteaptă zarul oficial de la gazdă: rostogolirea ține până sosește starea
       g.roll(values[0]);
-      setTimeout(() => {
+      this.scheduleRoll(() => {
         if (this.die.busy && g.rollNonce === this.lastShownNonce) {
           this.settleDice([g.lastDice[0] ?? values[0]]);
           this.pump();
@@ -509,7 +587,7 @@ export class GameScreen {
       }, 6000);
       return;
     }
-    setTimeout(() => {
+    this.scheduleRoll(() => {
       this.settleDice(values);
       if (g.easyMode) this.holdRoll(values, 'Nu-ți place? Atinge zarul ca să rearunci');
       else this.commitRoll(values);
@@ -547,7 +625,7 @@ export class GameScreen {
     const two = g.diceCount === 2;
     if (two) this.die2.startRolling();
     const values = Array.from({ length: two ? 2 : 1 }, () => rollDie());
-    setTimeout(() => {
+    this.scheduleRoll(() => {
       this.settleDice(values);
       this.holdRoll(values, 'Rearuncat. Atinge din nou dacă nu-ți place');
     }, ROLL_ANIM_MS);
@@ -561,7 +639,7 @@ export class GameScreen {
     sound.dice();
     this.die.startRolling();
     if (values[1] != null) this.die2.startRolling();
-    setTimeout(() => {
+    this.scheduleRoll(() => {
       this.settleDice(values);
       this.holdRoll(values, 'Robotul a dat. Nu-ți place? Atinge zarul ca să-l rearunci');
     }, ROLL_ANIM_MS);
@@ -585,7 +663,7 @@ export class GameScreen {
   /** Aruncarea oficială: pionul pornește după ce zarul a fost citit. */
   commitRoll(values) {
     this.lastShownNonce = this.game.rollNonce + 1;   // aruncarea locală nu se mai animă a doua oară
-    setTimeout(() => this.game.roll(values), 300);
+    this.scheduleRoll(() => this.game.roll(values), 300);
   }
 
   dieEnabled() {
@@ -638,15 +716,51 @@ export class GameScreen {
       return;
     }
     this.showLanding(tile);
+    if (this.effectsEnabled && tile.type === TILE.PROPERTY) this.showArrivalEffect(tile.propertyId, p.position);
     clearTimeout(this.landingTimer);
     this.landingTimer = setTimeout(() => this.hideLanding(), LANDING_MS);
+  }
+
+  showArrivalEffect(propertyId, index) {
+    const story = PROPERTY_STORIES[propertyId];
+    const position = this.catalog.positions[index];
+    if (!story || !position) return;
+    const pos = this.board.toScreen(position[0], position[1]);
+    const effect = this.propertyAnimation(propertyId, story, 'arrival-effect');
+    effect.style.left = `${pos.x}px`;
+    effect.style.top = `${pos.y}px`;
+    this.$('board-wrap').append(effect);
+    setTimeout(() => effect.remove(), 1500);
+  }
+
+  flyMoney(from, to) {
+    if (!this.effectsEnabled || !from || !to) return;
+    const token = el('span', { class: 'flying-bill', 'aria-hidden': 'true', text: '💵' });
+    token.style.setProperty('--from-x', `${from.x}px`);
+    token.style.setProperty('--from-y', `${from.y}px`);
+    token.style.setProperty('--to-x', `${to.x}px`);
+    token.style.setProperty('--to-y', `${to.y}px`);
+    this.$('board-wrap').append(token);
+    setTimeout(() => token.remove(), 1500);
+  }
+
+  playerPoint(player) {
+    if (!player) return null;
+    const pos = player.position < 0 ? this.catalog.startMarker : this.catalog.positions[player.position];
+    return pos ? this.board.toScreen(pos[0], pos[1]) : null;
+  }
+
+  bankPoint() {
+    const index = this.catalog.board.findIndex((tile) => tile.type === TILE.BANK);
+    const pos = this.catalog.positions[index];
+    return pos ? this.board.toScreen(pos[0], pos[1]) : null;
   }
 
   hideLanding() {
     this.$('landing-card').hidden = true;
   }
 
-  showLanding(tile) {
+  showLanding(tile, purchaseMessage = null) {
     const g = this.game;
     const box = this.$('landing-card');
     const v = tileVisual(tile, this.catalog.actions);
@@ -661,19 +775,68 @@ export class GameScreen {
     } else {
       info = tileHint(tile) ?? '';
     }
+    const story = prop ? PROPERTY_STORIES[prop.id] : null;
     const iconImg = prop ? el('img', { alt: '', src: propertyIconPath(prop.id), onerror: (e) => e.target.replaceWith(el('span', { text: v.icon })) }) : null;
+    box.classList.toggle('effects-off', !this.effectsEnabled);
     box.style.setProperty('--accent', v.accent);
     clear(box);
     box.append(
       el('div', { class: 'ico' }, iconImg ?? v.icon),
       el('div', { class: 'txt' },
+        purchaseMessage ? el('p', { class: 'purchase-label', text: purchaseMessage }) : null,
         el('h4', { text: prop ? prop.name : v.shortName }),
         el('p', { text: info }),
-        prop ? el('p', { class: 'muted', text: 'Atinge pentru fișa acțiunii' }) : null,
+        story ? el('div', { class: 'landing-story' },
+          this.propertyAnimation(prop.id, story, 'landing-motion'),
+          el('p', { text: story[1] }),
+          story[2] ? el('a', { href: story[2], target: '_blank', rel: 'noopener noreferrer', class: 'landing-source', onclick: (e) => e.stopPropagation(), text: 'Sursă' }) : null,
+        ) : null,
+        prop ? el('p', { class: 'landing-details', text: `În joc: ${prop.annexes.map((a) => a.name).join(' • ')}` }) : null,
       ),
     );
     box.dataset.property = prop ? tile.propertyId : '';
+    box.hidden = true;
+    void box.offsetWidth;
     box.hidden = false;
+  }
+
+  showPurchaseStamp() {
+    if (!this.effectsEnabled) return;
+    const stamp = el('div', { class: 'purchase-stamp', 'aria-hidden': 'true', text: 'PRIVATIZAT' });
+    this.$('scr-game').append(stamp);
+    setTimeout(() => stamp.remove(), 1100);
+  }
+
+  botProperties() {
+    const result = new Map();
+    for (const p of this.game.game?.players ?? []) {
+      if (!p.isBot) continue;
+      for (const [id, level] of Object.entries(p.ownedProperties ?? {})) result.set(`${p.id}:${id}`, level);
+    }
+    return result;
+  }
+
+  showBotPurchase() {
+    const before = this.previousBotProperties;
+    const after = this.botProperties();
+    this.previousBotProperties = after;
+    if (!before) return;
+    for (const p of this.game.game?.players ?? []) {
+      if (!p.isBot) continue;
+      for (const [id, level] of Object.entries(p.ownedProperties ?? {})) {
+        const key = `${p.id}:${id}`;
+        const old = before.get(key);
+        if (old !== undefined && level <= old) continue;
+        const tile = this.catalog.board.find((t) => t.type === TILE.PROPERTY && t.propertyId === id);
+        if (!tile) continue;
+        const annex = level > 0 ? this.catalog.actions[id]?.annexes.find((a) => a.index === level) : null;
+        this.showPurchaseStamp();
+        this.showLanding(tile, `${p.name} a cumpărat ${annex ? `anexa: ${annex.name}` : 'titlul'}`);
+        clearTimeout(this.landingTimer);
+        this.landingTimer = setTimeout(() => this.hideLanding(), LANDING_MS);
+        return;
+      }
+    }
   }
 
   onLandingTap() {
@@ -712,6 +875,7 @@ export class GameScreen {
       if (this.modalKey && this.modalKey.startsWith('dlg:')) this.closeModal();
       return;
     }
+    if (d.type === 'BUY') this.hideLanding();
     const key = this.dialogKey(d);
     if (key === this.modalKey) return;
     this.sheetProperty = null;   // fișa se închide când apare un dialog de joc
@@ -745,6 +909,8 @@ export class GameScreen {
         const isTitle = d.offer.option.type === 'TITLE';
         const price = isTitle ? d.offer.option.price : d.offer.option.annex.price;
         const canAfford = buyer.money >= price;
+        const remaining = isTitle ? [] : g.remainingAnnexes();
+        const allPrice = remaining.reduce((sum, annex) => sum + annex.price, 0);
         const v = propertyVisual(prop.id, prop.name);
         return this.dialogBox({
           title: isTitle ? prop.name : `Anexa ${d.offer.option.annex.index} — ${prop.name}`,
@@ -752,14 +918,27 @@ export class GameScreen {
           fallbackIcon: v.icon,
           accent: v.accent,
           body: [
+            this.propertyInfo(prop),
             el('p', { text: `Cost achiziție: ${fmt(price)} ECU` }),
-            el('p', { text: `Sold: ${fmt(buyer.money)} ECU` }),
+            remaining.length > 1 ? el('div', { class: 'rapid-cards' }, ...remaining.map((annex, idx) => { const count = idx + 1; const cost = remaining.slice(0, count).reduce((sum, item) => sum + item.price, 0); return el('div', { class: 'rapid-card' }, el('strong', { text: `${count} ${count === 1 ? 'anexă' : 'anexe'}` }), el('span', { text: `${fmt(cost)} ECU` }), el('span', { text: `Rămân: ${buyer.money >= cost ? fmt(buyer.money - cost) + ' ECU' : 'fonduri insuficiente'}` }), el('span', { text: `Chirie: ${fmt(calculateRent(prop, annex.index))} ECU` })); })) : null,
+            remaining.length > 1 ? el('p', { class: 'rapid-offer', text: `Mod rapid: ${remaining.length} anexe rămase, în total ${fmt(allPrice)} ECU.` }) : null,
+            el('div', { class: 'purchase-summary' },
+              el('p', { text: `Bani disponibili: ${fmt(buyer.money)} ECU` }),
+              el('p', { text: `După această achiziție: ${canAfford ? fmt(buyer.money - price) + ' ECU' : 'fonduri insuficiente'}` }),
+              el('p', { text: `Chirie după cumpărare: ${fmt(calculateRent(prop, isTitle ? 0 : d.offer.option.annex.index))} ECU` }),
+            ),
             isTitle ? el('p', { class: 'muted', text: `Atenție: dacă nu cumperi, achiți Băncii taxa de ${fmt(prop.titleTax)} ECU.` }) : null,
             !canAfford ? el('p', { class: 'error', text: 'Fonduri insuficiente pentru cumpărare.' }) : null,
           ],
           actions: [
             btn('NU', 'ghost', () => this.game.refuseOffer()),
-            btn('DA, CUMPĂR', 'primary', () => this.game.acceptOffer(), !canAfford),
+            ...remaining.slice(1).map((_, index) => {
+              const count = index + 2;
+              const cost = remaining.slice(0, count).reduce((sum, annex) => sum + annex.price, 0);
+              const label = count === remaining.length ? 'TOATE ANEXELE' : `${count} ANEXE`;
+              return btn(`${label} · ${fmt(cost)} ECU`, 'rapid', () => { if (this.game.buyAnnexes(count)) this.showPurchaseStamp(); }, buyer.money < cost);
+            }),
+            btn('DA, CUMPĂR', 'primary', () => { this.game.acceptOffer(); this.showPurchaseStamp(); }, !canAfford),
           ],
         });
       }
@@ -807,6 +986,29 @@ export class GameScreen {
     }
   }
 
+  propertyAnimation(propertyId, story, className) {
+    if (propertyId !== 'continental') return el('span', { class: className, 'aria-hidden': 'true', text: story[0] });
+    return el('span', { class: `${className} continental-animation`, 'aria-hidden': 'true' },
+      el('span', { class: 'continental-hotel', text: '🏨' }),
+      el('span', { class: 'continental-waves', text: '🌊' }),
+      el('span', { class: 'continental-sparkle', text: '✨' }),
+    );
+  }
+
+  propertyInfo(prop) {
+    const story = PROPERTY_STORIES[prop.id];
+    if (!story) return null;
+    return el('section', { class: 'purchase-story' },
+      el('div', { class: 'purchase-story-heading' },
+        this.propertyAnimation(prop.id, story, 'landing-motion'),
+        el('strong', { text: 'Despre această acțiune' }),
+      ),
+      el('p', { text: story[1] }),
+      el('p', { class: 'purchase-annexes', text: `În joc: ${prop.annexes.map((a) => a.name).join(' • ')}` }),
+      story[2] ? el('a', { href: story[2], target: '_blank', rel: 'noopener noreferrer', text: 'Citește sursa' }) : null,
+    );
+  }
+
   dialogBox({ title, icon, fallbackIcon, accent, body, actions }) {
     const head = el('h3', null,
       icon ? el('img', { class: 'ico-sm', alt: '', src: icon, onerror: (e) => e.target.replaceWith(el('span', { class: 'emoji-ico', style: { '--accent': accent ?? '#555' }, text: fallbackIcon ?? '🏢' })) }) : null,
@@ -827,12 +1029,18 @@ export class GameScreen {
       : el('div', { class: 'card-text-only', text: card.text });
     const result = amountTxt ? el('p', { class: `card-result ${outcomeCls}`, text: amountTxt }) : null;
     const dest = card.destination ? el('p', { class: 'card-note', text: card.destination }) : null;
+    const mood = this.effectsEnabled && card.amount > 0 && (card.outcome === CardOutcome.GAIN || card.outcome === CardOutcome.LOSS)
+      ? el('div', { class: 'card-mood', 'aria-hidden': 'true' },
+          ...(card.outcome === CardOutcome.GAIN ? ['💸', '🤑', '💰', '🤑', '💸'] : ['😂', '🤣', '😂', '🤣', '😂'])
+            .map((face, i) => el('span', { style: { '--mood-index': i }, text: face })))
+      : null;
     // cartonașul robotului se închide la atingere: nu mai aștepți timpul afișării
     const skip = byBot ? { onclick: () => this.game.dismissCard() } : {};
     return el('div', { class: 'modal wide', role: 'dialog', 'aria-modal': 'true', ...skip },
       el('h3', { text: card.kind === 'LOTO' ? 'Cartonaș LOTO' : 'Cartonaș TELEX' }),
       visual,
       result,
+      mood,
       dest,
       byBot
         ? el('p', { class: 'muted', text: 'Robotul a tras cartonașul și îl citește…' })
@@ -888,40 +1096,77 @@ export class GameScreen {
     }
     if (this.modalKey === 'winner' || this.winVideoPlaying) return;
     if (!this.winVideoWatched) {
-      this.playWinVideo();
+      if (!g.abandonedBy && this.resultPlayerName && this.resultPlayerName !== g.winnerName) {
+        this.winVideoWatched = true;
+        this.showDefeat();
+      } else {
+        this.playWinVideo();
+      }
       return;
     }
     sound.buy();
     const node = el('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true' },
-      el('h3', { text: 'Joc terminat' }),
+      el('h3', { text: g.abandonedBy ? 'Ai pierdut prin abandon' : 'Joc terminat' }),
       el('p', { html: `<strong>Câștigător: ${escapeHtml(g.winnerName)}</strong>` }),
       g.finalRanking.length
         ? el('div', null, el('p', { class: 'muted', text: 'Clasament (bani + acțiuni la 80%):' }), ...g.finalRanking.map((line, i) => el('p', { text: `${i + 1}. ${line}` })))
         : null,
+      el('div', { class: 'final-stats' },
+        el('h4', { text: 'Statistici la final' }),
+        ...g.game.players.map((p) => el('p', { text: `${p.name}: ${fmt(p.money)} ECU lichid + ${fmt(holdingsValue(p, this.catalog.actions))} ECU acțiuni (valoare de răscumpărare)` })),
+        (() => { const top = Object.entries(g.game.stats ?? {}).sort((a,b) => b[1].collected - a[1].collected)[0]; return top && top[1].collected > 0 ? el('p', { text: `Cea mai profitabilă proprietate: ${this.catalog.actions[top[0]]?.name ?? top[0]} · ${fmt(top[1].collected)} ECU încasați` }) : null; })(),
+      ),
       el('div', { class: 'actions' }, el('button', { class: 'btn primary', type: 'button', text: 'Meniu', onclick: () => this.exitToMenu() })),
     );
     this.openModal('winner', node);
   }
 
   /** Clipul de victorie se redă pe tot ecranul; apoi apare fereastra cu câștigătorul. */
+  showDefeat() {
+    this.closeModal();
+    const node = el('div', { class: 'modal defeat-modal', role: 'dialog', 'aria-modal': 'true' },
+      el('h3', { text: 'De data aceasta ai pierdut' }),
+      el('p', { text: `Câștigător: ${this.game.winnerName}` }),
+      el('p', { text: 'O nouă partidă, o nouă șansă!' }),
+      el('div', { class: 'actions' }, el('button', { class: 'btn primary', type: 'button', text: 'Continuă', onclick: () => { this.closeModal(); this.renderWinner(); } })),
+    );
+    this.openModal('defeat', node);
+  }
+
   playWinVideo() {
     const overlay = this.$('win-overlay');
     const video = this.$('win-video');
+    const retry = this.$('win-play');
+    this.closeModal();
     this.winVideoPlaying = true;
     overlay.hidden = false;
+    retry.hidden = true;
+    video.muted = localStorage.getItem('privatizare.videoSound') === 'off';
     const finish = () => {
       if (!this.winVideoPlaying) return;
       this.winVideoPlaying = false;
       this.winVideoWatched = true;
       video.onended = null;
+      video.onerror = null;
       video.pause();
       overlay.hidden = true;
       this.renderWinner();
     };
     video.onended = finish;
+    video.onerror = finish;
     this.$('win-skip').onclick = finish;
+    retry.onclick = () => {
+      retry.hidden = true;
+      video.muted = localStorage.getItem('privatizare.videoSound') === 'off';
+      video.play().catch(() => { retry.hidden = false; });
+    };
     video.currentTime = 0;
-    video.play().catch(finish);
+    // Browserele pot bloca redarea cu sunet fara o atingere recenta.
+    video.play().catch(() => {
+      if (!this.winVideoPlaying) return;
+      video.muted = true;
+      video.play().catch(() => { if (this.winVideoPlaying) retry.hidden = false; });
+    });
   }
 
   /* ---------- fișa acțiunii ---------- */
@@ -1073,7 +1318,17 @@ export class GameScreen {
     const float = this.$('money-float');
     const rent = this.game.lastRent;
     const rentNew = !!rent && rent.n !== this.lastRentN;
-    if (rentNew) this.lastRentN = rent.n;
+    if (rentNew) {
+      this.lastRentN = rent.n;
+      if (this.effectsEnabled) {
+        const from = players.find((p) => p.id === rent.payerId)?.name ?? 'Jucător';
+        const to = players.find((p) => p.id === rent.ownerId)?.name ?? 'Jucător';
+        this.flyMoney(this.playerPoint(players.find((p) => p.id === rent.payerId)), this.playerPoint(players.find((p) => p.id === rent.ownerId)));
+        const note = el('span', { class: 'rent-transfer', text: `${from} → ${to} · ${fmt(rent.amount)} ECU` });
+        float.append(note);
+        setTimeout(() => note.remove(), 3500);
+      }
+    }
     const robotRent = rentNew ? this.robotRentParties(rent, players) : null;
     if (robotRent) this.showRentBalloon(robotRent, rent.amount, float);
     for (const p of players) {
@@ -1086,7 +1341,11 @@ export class GameScreen {
       const chip = el('span', { class: diff > 0 ? 'plus' : 'minus', text: `${p.name} ${diff > 0 ? '+' : '−'}${fmt(Math.abs(diff))}` });
       float.append(chip);
       setTimeout(() => chip.remove(), 3000);
-      if (diff > 0) sound.coin();
+      if (diff > 0) {
+        const bankCredit = this.game.game.history.slice(-5).some((line) => line.includes(p.name) && line.includes('de la bancă'));
+        if (!rentNew && bankCredit) this.flyMoney(this.bankPoint(), this.playerPoint(p));
+        sound.coin();
+      }
     }
     for (const id of [...this.prevMoney.keys()]) if (!players.some((p) => p.id === id)) this.prevMoney.delete(id);
   }
@@ -1165,6 +1424,38 @@ export class GameScreen {
 
   exitToMenu() {
     this.onExit();
+  }
+
+  openAbandon() {
+    const game = this.game;
+    if (game.isOver || this.modalKey === 'abandon') return;
+    const humans = (game.game?.players ?? []).filter((player) => !player.isBot);
+    let playerId = humans.some((player) => player.id === game.currentPlayer?.id)
+      ? game.currentPlayer.id : humans[0]?.id;
+    const choose = !game.isOnline && humans.length > 1
+      ? el('label', {}, 'Jucătorul care renunță',
+        el('select', { onchange: (event) => { playerId = event.target.value; } },
+          ...humans.map((player) => el('option', { value: player.id, selected: player.id === playerId, text: player.name }))))
+      : null;
+    const close = () => { this.closeModal(); this.render(); };
+    const confirm = () => {
+      this.closeModal();
+      if (game.isOnline) this.exitToMenu();
+      else {
+        this.cancelPendingRoll();
+        if (!game.abandon(playerId)) this.render();
+      }
+    };
+    this.sheetProperty = null;
+    this.openModal('abandon', el('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true' },
+      el('h3', { text: 'Ești sigur că vrei să renunți?' }),
+      game.isOnline ? el('p', { text: 'Un robot îți va prelua locul cât timp mai rămân jucători la masă.' }) : choose,
+      el('div', { class: 'actions' },
+        el('button', { class: 'btn primary', type: 'button', text: 'Continuă jocul', onclick: close }),
+        el('button', { class: 'btn danger', type: 'button', text: 'Abandon', onclick: confirm }),
+      ),
+    ));
+    this.$('btn-abandon').hidden = true;
   }
 }
 
