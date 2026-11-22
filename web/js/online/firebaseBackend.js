@@ -6,10 +6,11 @@
 
 import { initializeApp } from 'https://cdn.jsdelivr.net/npm/@firebase/app@0.10.3/+esm';   // aceeași instanță ca @firebase/database@1.0.5
 import {
-  getDatabase, ref, get, set, push, remove, onValue, onChildAdded, runTransaction,
+  getDatabase, ref, get, push, onValue, onChildAdded, runTransaction,
 } from 'https://cdn.jsdelivr.net/npm/firebase@10.12.2/database/+esm';
 import { FIREBASE_CONFIG, ONLINE_DATABASE_URL } from '../config.js';
 import { RoomException, RoomRole, RoomRules, RoomStage } from './protocol.js';
+import { roomAfterLeave, roomWithState } from './controller.js';
 
 export class FirebaseRoomBackend {
   constructor(db) {
@@ -63,11 +64,11 @@ export class FirebaseRoomBackend {
   }
 
   /** Gazda adaugă un robot pe primul loc liber, cu prima culoare liberă. */
-  async addBot(code) {
+  async addBot(code, hostId) {
     const res = await runTransaction(this.infoRef(code), (cur) => {
       if (cur === null) return null;
       const info = RoomRules.fromMap(cur);
-      if (!info || info.stage !== RoomStage.LOBBY) return undefined;
+      if (!info || info.stage !== RoomStage.LOBBY || (hostId && info.hostId !== hostId)) return undefined;
       const seat = RoomRules.freeSeat(info.players);
       const color = RoomRules.freeColor(info.players);
       if (!seat || !color) return undefined;
@@ -78,8 +79,12 @@ export class FirebaseRoomBackend {
     if (!res.committed) throw new RoomException('Nu se mai poate adăuga un robot (masa e plină).');
   }
 
-  async setStage(code, stage) {
-    await set(ref(this.db, `rooms/${code}/info/stage`), stage);
+  async leaveRoom(code, playerId, finalState) {
+    const result = await runTransaction(this.room(code), (cur) =>
+      roomAfterLeave(cur, playerId, finalState), { applyLocally: false });
+    if (!result.committed && RoomRules.fromMap(result.snapshot.val()?.info)?.players.some(
+      (p) => p.id === playerId && p.role !== RoomRole.BOT,
+    )) throw new RoomException('Ieșirea din cameră nu a fost confirmată.');
   }
 
   async peekInfo(code) {
@@ -91,23 +96,19 @@ export class FirebaseRoomBackend {
     }
   }
 
-  /** Ascultă camera. Returnează funcția care oprește ascultarea. */
+  /** Rolurile și starea vin din aceeași citire, inclusiv la transferul gazdei. */
   listenInfo(code, onInfo) {
     return onValue(
-      this.infoRef(code),
-      (snap) => onInfo(RoomRules.fromMap(snap.val())),
+      this.room(code),
+      (snap) => onInfo(RoomRules.fromMap(snap.child('info').val()), snap.child('state').val()),
       () => onInfo(null),
     );
   }
 
-  publishState(code, json) {
-    return set(ref(this.db, `rooms/${code}/state`), json);
-  }
-
-  listenState(code, onState) {
-    return onValue(ref(this.db, `rooms/${code}/state`), (snap) => {
-      if (typeof snap.val() === 'string') onState(snap.val());
-    });
+  async publishState(code, json, hostId, startingPlayers) {
+    const result = await runTransaction(this.room(code), (cur) =>
+      roomWithState(cur, hostId, json, startingPlayers), { applyLocally: false });
+    return result.committed && result.snapshot.exists();
   }
 
   sendIntent(code, json) {
@@ -115,12 +116,25 @@ export class FirebaseRoomBackend {
   }
 
   /** Gazda primește fiecare intenție o singură dată; se șterge după livrare. */
-  listenIntents(code, onIntent) {
+  listenIntents(code, onIntent, hostId) {
     const intents = ref(this.db, `rooms/${code}/intents`);
-    return onChildAdded(intents, (snap) => {
+    let listening = true;
+    const close = onChildAdded(intents, (snap) => {
+      if (!listening) return;
       const json = snap.val();
-      remove(snap.ref);
       if (typeof json === 'string') onIntent(json);
+      // O scriere directă aici ar anula tranzacțiile locale de pe cameră.
+      runTransaction(this.room(code), (cur) => {
+        if (cur === null) return null;
+        if (cur.info?.hostId !== hostId || cur.intents?.[snap.key] !== json) return undefined;
+        const queued = { ...cur.intents };
+        delete queued[snap.key];
+        return { ...cur, intents: queued };
+      }, { applyLocally: false }).catch((e) => console.error('Confirmare intenție eșuată', e));
     });
+    return () => {
+      listening = false;
+      close();
+    };
   }
 }

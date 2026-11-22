@@ -132,6 +132,7 @@ const app = {
     }
     if (this.screen === 'lobby') this.show('home');
     else if (this.screen === 'online') this.onlineView.render();
+    else if (this.screen === 'home' && c.error) this.toast(c.error);
   },
 
   /* ---------- partide ---------- */

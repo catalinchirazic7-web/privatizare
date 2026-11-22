@@ -1,7 +1,7 @@
 // Date de bază: culorile pionilor, tipurile de căsuțe și încărcarea catalogului din JSON.
 // Port din data/model/*.kt și GameRepository.kt.
 
-/** Cele 8 culori. `img` e sprite-ul pionului din img/. Cheia coincide cu numele din Kotlin (persistă în multiplayer). */
+/** Culorile afișate la alegerea pionului în web. */
 export const PAWN_COLORS = Object.freeze([
   { key: 'ROSU', name: 'Roșu', hex: '#D32F2F', img: 'img/pawn_rosu.webp', dark: false },
   { key: 'ALBASTRU', name: 'Albastru', hex: '#1976D2', img: 'img/pawn_albastru.webp', dark: false },
@@ -11,7 +11,12 @@ export const PAWN_COLORS = Object.freeze([
   { key: 'NEGRU', name: 'Negru', hex: '#263238', img: 'img/pawn_negru.webp', dark: false },
 ]);
 
-export const PAWN_BY_KEY = Object.freeze(Object.fromEntries(PAWN_COLORS.map((c) => [c.key, c])));
+/** Culorile suplimentare din Android sunt acceptate în camerele mixte. */
+export const PAWN_BY_KEY = Object.freeze(Object.fromEntries([
+  ...PAWN_COLORS,
+  { key: 'VERDE', name: 'Verde', hex: '#388E3C', img: 'img/pawn_verde.webp', dark: false },
+  { key: 'ALB_ARGINTIU', name: 'Alb/Argintiu', hex: '#ECEFF1', img: 'img/pawn_alb.webp', dark: false },
+].map((c) => [c.key, c])));
 
 export const TILE = Object.freeze({
   START: 'START',

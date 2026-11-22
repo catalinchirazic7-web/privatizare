@@ -67,12 +67,16 @@ class DieView {
     this.iv = setInterval(() => this.setFace(1 + Math.floor(Math.random() * 6)), 70);
   }
 
-  /** @param {string|null} badgeText  ce scrie insigna; null = zarul nu are insignă (al doilea zar) */
-  stopRolling(value, badgeText = String(value)) {
+  cancelRoll() {
     clearInterval(this.iv);
     this.iv = null;
     this.rolling = false;
     this.root.classList.remove('is-rolling');
+  }
+
+  /** @param {string|null} badgeText  ce scrie insigna; null = zarul nu are insignă (al doilea zar) */
+  stopRolling(value, badgeText = String(value)) {
+    this.cancelRoll();
     this.setFace(value);
     this.root.classList.remove('is-pop', 'is-flash');
     void this.root.offsetWidth;   // repornește animația
@@ -128,6 +132,7 @@ export class GameScreen {
     this.lastRentN = 0;          // ultima chirie deja arătată (balonul apare o singură dată)
     this.rerollTimer = null;     // fereastra în care zarul stă la dispoziția omului (modul ușor)
     this.rollHold = null;        // zarul așteptat: { values, commit } (al omului sau al robotului ușor)
+    this.rollTimers = new Set();
     this.rentIns = [];           // încasările de la robot, afișate în sertar: { pid, amount, until }
     this.botKey = null;
     this.endKey = null;
@@ -185,6 +190,7 @@ export class GameScreen {
       this.render();
     });
     $('btn-game-exit').addEventListener('click', () => this.exitToMenu());
+    $('btn-abandon').addEventListener('click', () => this.openAbandon());
     $('drawer').addEventListener('pointerdown', () => this.touchDrawer());
     $('landing-card').addEventListener('mouseenter', () => this.hideLanding());
     document.addEventListener('click', () => {
@@ -255,6 +261,9 @@ export class GameScreen {
     clearInterval(this.clockTimer);
     clearTimeout(this.botTimer);
     clearTimeout(this.endTimer);
+    this.botKey = null;
+    this.endKey = null;
+    this.cancelPendingRoll();
     clearTimeout(this.landingTimer);
     this.closeModal();
     if (this.winVideoPlaying) {
@@ -265,7 +274,25 @@ export class GameScreen {
     this.sheetProperty = null;
   }
 
+  cancelPendingRoll() {
+    clearTimeout(this.rerollTimer);
+    this.rerollTimer = null;
+    this.rollHold = null;
+    for (const timer of this.rollTimers) clearTimeout(timer);
+    this.rollTimers.clear();
+    this.die.cancelRoll();
+    this.die2.cancelRoll();
+  }
+
   /* ---------- utilitare ---------- */
+
+  scheduleRoll(action, delay) {
+    const timer = setTimeout(() => {
+      this.rollTimers.delete(timer);
+      if (this.active) action();
+    }, delay);
+    this.rollTimers.add(timer);
+  }
 
   get myId() {
     return this.online && this.game.isOnline ? this.game.myPlayerId : null;
@@ -392,7 +419,8 @@ export class GameScreen {
 
     // --- drawer ---
     this.renderDrawer(viewed, me, current, dialog);
-    this.renderDialog(dialog);
+    this.$('btn-abandon').hidden = g.isOver || this.modalKey === 'abandon';
+    if (this.modalKey !== 'abandon') this.renderDialog(dialog);
     this.renderWinner();
     if (this.sheetProperty && !dialog && !g.winnerName) this.renderSheet(false);
     else if (this.sheetProperty) this.closeSheet();
@@ -532,7 +560,7 @@ export class GameScreen {
     } else {
       this.die.startRolling();
       if (values[1] != null) this.die2.startRolling();
-      setTimeout(() => this.settleDice(values), ROLL_ANIM_MS);
+      this.scheduleRoll(() => this.settleDice(values), ROLL_ANIM_MS);
     }
     this.pump();
   }
@@ -551,7 +579,7 @@ export class GameScreen {
     if (g.isGuest) {
       // oaspetele așteaptă zarul oficial de la gazdă: rostogolirea ține până sosește starea
       g.roll(values[0]);
-      setTimeout(() => {
+      this.scheduleRoll(() => {
         if (this.die.busy && g.rollNonce === this.lastShownNonce) {
           this.settleDice([g.lastDice[0] ?? values[0]]);
           this.pump();
@@ -559,7 +587,7 @@ export class GameScreen {
       }, 6000);
       return;
     }
-    setTimeout(() => {
+    this.scheduleRoll(() => {
       this.settleDice(values);
       if (g.easyMode) this.holdRoll(values, 'Nu-ți place? Atinge zarul ca să rearunci');
       else this.commitRoll(values);
@@ -597,7 +625,7 @@ export class GameScreen {
     const two = g.diceCount === 2;
     if (two) this.die2.startRolling();
     const values = Array.from({ length: two ? 2 : 1 }, () => rollDie());
-    setTimeout(() => {
+    this.scheduleRoll(() => {
       this.settleDice(values);
       this.holdRoll(values, 'Rearuncat. Atinge din nou dacă nu-ți place');
     }, ROLL_ANIM_MS);
@@ -611,7 +639,7 @@ export class GameScreen {
     sound.dice();
     this.die.startRolling();
     if (values[1] != null) this.die2.startRolling();
-    setTimeout(() => {
+    this.scheduleRoll(() => {
       this.settleDice(values);
       this.holdRoll(values, 'Robotul a dat. Nu-ți place? Atinge zarul ca să-l rearunci');
     }, ROLL_ANIM_MS);
@@ -635,7 +663,7 @@ export class GameScreen {
   /** Aruncarea oficială: pionul pornește după ce zarul a fost citit. */
   commitRoll(values) {
     this.lastShownNonce = this.game.rollNonce + 1;   // aruncarea locală nu se mai animă a doua oară
-    setTimeout(() => this.game.roll(values), 300);
+    this.scheduleRoll(() => this.game.roll(values), 300);
   }
 
   dieEnabled() {
@@ -1068,7 +1096,7 @@ export class GameScreen {
     }
     if (this.modalKey === 'winner' || this.winVideoPlaying) return;
     if (!this.winVideoWatched) {
-      if (this.resultPlayerName && this.resultPlayerName !== g.winnerName) {
+      if (!g.abandonedBy && this.resultPlayerName && this.resultPlayerName !== g.winnerName) {
         this.winVideoWatched = true;
         this.showDefeat();
       } else {
@@ -1078,7 +1106,7 @@ export class GameScreen {
     }
     sound.buy();
     const node = el('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true' },
-      el('h3', { text: 'Joc terminat' }),
+      el('h3', { text: g.abandonedBy ? 'Ai pierdut prin abandon' : 'Joc terminat' }),
       el('p', { html: `<strong>Câștigător: ${escapeHtml(g.winnerName)}</strong>` }),
       g.finalRanking.length
         ? el('div', null, el('p', { class: 'muted', text: 'Clasament (bani + acțiuni la 80%):' }), ...g.finalRanking.map((line, i) => el('p', { text: `${i + 1}. ${line}` })))
@@ -1396,6 +1424,38 @@ export class GameScreen {
 
   exitToMenu() {
     this.onExit();
+  }
+
+  openAbandon() {
+    const game = this.game;
+    if (game.isOver || this.modalKey === 'abandon') return;
+    const humans = (game.game?.players ?? []).filter((player) => !player.isBot);
+    let playerId = humans.some((player) => player.id === game.currentPlayer?.id)
+      ? game.currentPlayer.id : humans[0]?.id;
+    const choose = !game.isOnline && humans.length > 1
+      ? el('label', {}, 'Jucătorul care renunță',
+        el('select', { onchange: (event) => { playerId = event.target.value; } },
+          ...humans.map((player) => el('option', { value: player.id, selected: player.id === playerId, text: player.name }))))
+      : null;
+    const close = () => { this.closeModal(); this.render(); };
+    const confirm = () => {
+      this.closeModal();
+      if (game.isOnline) this.exitToMenu();
+      else {
+        this.cancelPendingRoll();
+        if (!game.abandon(playerId)) this.render();
+      }
+    };
+    this.sheetProperty = null;
+    this.openModal('abandon', el('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true' },
+      el('h3', { text: 'Ești sigur că vrei să renunți?' }),
+      game.isOnline ? el('p', { text: 'Un robot îți va prelua locul cât timp mai rămân jucători la masă.' }) : choose,
+      el('div', { class: 'actions' },
+        el('button', { class: 'btn primary', type: 'button', text: 'Continuă jocul', onclick: close }),
+        el('button', { class: 'btn danger', type: 'button', text: 'Abandon', onclick: confirm }),
+      ),
+    ));
+    this.$('btn-abandon').hidden = true;
   }
 }
 

@@ -1,5 +1,6 @@
 // Backend în memorie cu aceeași interfață ca FirebaseRoomBackend (fără rețea), pentru teste.
 import { RoomException, RoomRole, RoomRules, RoomStage } from '../js/online/protocol.js';
+import { roomAfterLeave, roomWithState } from '../js/online/controller.js';
 
 export class MemoryDb {
   constructor() {
@@ -49,10 +50,12 @@ export class MemoryBackend {
     return me;
   }
 
-  async addBot(code) {
+  async addBot(code, hostId) {
     const r = this.db.room(code);
     const info = RoomRules.fromMap(r.info);
-    if (!info || info.stage !== RoomStage.LOBBY) throw new RoomException('Nu se mai poate adăuga un robot (masa e plină).');
+    if (!info || info.stage !== RoomStage.LOBBY || (hostId && info.hostId !== hostId)) {
+      throw new RoomException('Nu se mai poate adăuga un robot (masa e plină).');
+    }
     const seat = RoomRules.freeSeat(info.players);
     const color = RoomRules.freeColor(info.players);
     if (!seat || !color) throw new RoomException('Nu se mai poate adăuga un robot (masa e plină).');
@@ -61,9 +64,17 @@ export class MemoryBackend {
     this.db.fire(`info:${code}`);
   }
 
-  async setStage(code, stage) {
-    const r = this.db.room(code);
-    r.info = { ...r.info, stage };
+  async leaveRoom(code, playerId, finalState) {
+    const room = this.db.rooms.get(code) ?? null;
+    const next = roomAfterLeave(room, playerId, finalState);
+    if (next === undefined) {
+      if (RoomRules.fromMap(room.info)?.players.some((p) => p.id === playerId && p.role !== RoomRole.BOT)) {
+        throw new RoomException('Ieșirea din cameră nu a fost confirmată.');
+      }
+      return;
+    }
+    if (next === null) this.db.rooms.delete(code);
+    else Object.assign(room, next);
     this.db.fire(`info:${code}`);
   }
 
@@ -72,28 +83,23 @@ export class MemoryBackend {
   }
 
   listenInfo(code, cb) {
-    const r = this.db.room(code);
     const key = `info:${code}`;
-    const fn = () => cb(RoomRules.fromMap(r.info));
+    const fn = () => {
+      const room = this.db.rooms.get(code);
+      cb(RoomRules.fromMap(room?.info), room?.state);
+    };
     const off = this.db.subscribe(key, fn);
     fn();
     return off;
   }
 
-  publishState(code, json) {
-    this.db.room(code).state = json;
-    this.db.fire(`state:${code}`);
-    return Promise.resolve();
-  }
-
-  listenState(code, cb) {
-    const r = this.db.room(code);
-    const fn = () => {
-      if (typeof r.state === 'string') cb(r.state);
-    };
-    const off = this.db.subscribe(`state:${code}`, fn);
-    fn();
-    return off;
+  async publishState(code, json, hostId, startingPlayers) {
+    const room = this.db.rooms.get(code) ?? null;
+    const next = roomWithState(room, hostId, json, startingPlayers);
+    if (!next) return false;
+    Object.assign(room, next);
+    this.db.fire(`info:${code}`);
+    return true;
   }
 
   sendIntent(code, json) {
@@ -103,10 +109,10 @@ export class MemoryBackend {
   }
 
   /** Livrează fiecare intenție o singură dată, în ordine. */
-  listenIntents(code, cb) {
+  listenIntents(code, cb, hostId) {
     const r = this.db.room(code);
     const drain = () => {
-      while (r.intents.length) cb(r.intents.shift());
+      while (r.info?.hostId === hostId && r.intents.length) cb(r.intents.shift());
     };
     const off = this.db.subscribe(`intents:${code}`, drain);
     drain();

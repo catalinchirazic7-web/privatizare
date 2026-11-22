@@ -4,7 +4,7 @@
 // - videourile și Firebase nu se cache-uiesc (sunt mari sau sunt live).
 // La o schimbare de cod, mărește VERSION.
 
-const VERSION = 'privatizare-web-v1.45';
+const VERSION = 'privatizare-web-v1.47';
 
 const SHELL = [
   './',
@@ -39,7 +39,6 @@ const SHELL = [
   './img/deck_back_loto.webp',
   './img/deck_back_telex.webp',
   './img/regulament.jpg',
-  './img/donate_qr.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-180.png',

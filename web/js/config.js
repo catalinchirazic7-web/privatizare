@@ -17,6 +17,3 @@ export const ONLINE_DATABASE_URL = FIREBASE_CONFIG.databaseURL;
 
 /** Cât așteptăm răspunsul bazei de date înainte să afișăm o eroare de conectare (ms). */
 export const CONNECT_TIMEOUT_MS = 10_000;
-
-/** Donații (aceeași adresă ca în aplicația Android). */
-export const DONATE = { url: 'https://revolut.me/catalidl7u', label: 'Donează' };

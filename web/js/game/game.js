@@ -39,6 +39,7 @@ export class Game {
     this.rapidMode = false;
     this.boardLayout = 'old';  // tabla: 'old' (veche) sau 'new' (nouă)
     this.winnerName = null;
+    this.abandonedBy = null;
 
     this.offer = null;           // { playerId, propertyId, option }
     this.feeOffer = null;
@@ -206,7 +207,9 @@ export class Game {
       rentDue: this.rentDue,
       debt: this.debt,
       card: this.shownCard,
+      pendingMove: this.pendingMove,
       pendingDraw: this.pendingDraw,
+      decks: { loto: this.engine.lotoDeck.snapshot(), telex: this.engine.telexDeck.snapshot() },
     };
   }
 
@@ -233,6 +236,7 @@ export class Game {
     if (!sameDice(s.lastDice, this.lastDice)) this.rollNonce++;
     this.lastDice = s.lastDice;
     this.winnerName = s.winnerName;
+    this.abandonedBy = null;
     this.turnAwaitingEnd = s.turnAwaitingEnd;
     this.skipBanner = s.skipBanner;
     this.offer = toOffer(s.offer);
@@ -241,6 +245,9 @@ export class Game {
     this.debt = s.debt;
     this.pendingDraw = s.pendingDraw;
     this.shownCard = s.card;
+    this.pendingMove = s.pendingMove ?? null;
+    this.engine.lotoDeck.restore(s.decks?.loto, this.catalog.loto);
+    this.engine.telexDeck.restore(s.decks?.telex, this.catalog.telex);
     this.handoverTo = null;
     this.debtAcknowledged = null;
     this.emit();
@@ -269,7 +276,7 @@ export class Game {
   }
 
   /**
-   * @param {{name, colorKey, isBot}[]} setup
+   * @param {{id?: string, name: string, colorKey: string, isBot?: boolean}[]} setup
    * @param {number|null} moneyPerPlayer  null = împărțire egală a tirajului
    * @param {number|null} timeLimitMinutes
    */
@@ -285,7 +292,7 @@ export class Game {
     if (!setup.some((s) => !s.isBot)) throw new Error('Cel puțin un jucător trebuie să fie om');
     const dist = moneyPerPlayer == null ? distributeStartingMoney(setup.length) : distributeStartingMoney(setup.length, moneyPerPlayer);
     const players = setup.map((s, i) => ({
-      id: `p${i}`,
+      id: s.id ?? `p${i}`,
       name: s.name,
       color: s.colorKey,
       money: dist.playerMoney,
@@ -310,6 +317,7 @@ export class Game {
     this.pendingDraw = null;
     this.turnAwaitingEnd = false;
     this.winnerName = null;
+    this.abandonedBy = null;
     this.lastDice = [];
     this.skipBanner = null;
     this.handoverTo = null;
@@ -549,16 +557,23 @@ export class Game {
     const res = this.engine.settleDebt(g, d, sales);
     this.game = res.state;
     if (res.pending === null) {
-      this.debt = null;
+      const [nextDebt = null, ...next] = d.next ?? [];
+      this.debt = nextDebt ? { ...nextDebt, next } : null;
       this.debtAcknowledged = null;
       if (res.bankrupt) {
-        // Jucătorul a fost eliminat: următorul jucător e deja la index.
-        const size = this.game.players.length;
-        if (size > 0) this.currentIndex %= size;
-        this.turnAwaitingEnd = false;
-        this.skipBanner = null;
-        this.prepareHandover();
-        this.beginTurnIfSkipping();
+        const activeId = g.players[this.currentIndex]?.id;
+        const players = this.game.players;
+        if (d.debtorId === activeId) {
+          if (players.length > 0) this.currentIndex %= players.length;
+          this.turnAwaitingEnd = false;
+          this.skipBanner = null;
+          this.shownCard = null;
+          this.pendingMove = null;
+          this.prepareHandover();
+          this.beginTurnIfSkipping();
+        } else {
+          this.currentIndex = players.findIndex((p) => p.id === activeId);
+        }
       } else {
         this.turnAwaitingEnd = true;
       }
@@ -669,6 +684,71 @@ export class Game {
   checkWinner() {
     const players = this.game?.players;
     if (players && players.length === 1) this.winnerName = players[0].name;
+  }
+
+  abandon(playerId) {
+    const game = this.game;
+    if (!game || this.isOnline || this.isOver) return false;
+    const leaving = game.players.find((player) => player.id === playerId && !player.isBot);
+    if (!leaving) return false;
+    const players = game.players.filter((player) => player.id !== playerId);
+    if (!players.length) return false;
+
+    const current = this.currentPlayer;
+    this.game = {
+      ...game,
+      players,
+      bankMoney: game.bankMoney + leaving.money,
+      history: [...game.history, `${leaving.name} a abandonat partida.`],
+    };
+    if (current?.id === playerId) {
+      this.currentIndex %= players.length;
+      this.offer = null;
+      this.feeOffer = null;
+      this.rentDue = null;
+      this.shownCard = null;
+      this.pendingMove = null;
+      this.pendingDraw = null;
+      this.turnAwaitingEnd = false;
+      this.rerolled = false;
+      this.skipBanner = null;
+    } else {
+      this.currentIndex = players.findIndex((player) => player.id === current?.id);
+      if (this.rentDue?.ownerId === playerId) this.rentDue = null;
+    }
+
+    if (this.debt) {
+      const [first, ...next] = [this.debt, ...(this.debt.next ?? [])]
+        .filter((debt) => debt.debtorId !== playerId && debt.creditorId !== playerId);
+      this.debt = first ? { ...first, next } : null;
+      this.debtAcknowledged = null;
+    }
+    if (players.length === 1 || players.every((player) => player.isBot)) {
+      this.abandonedBy = leaving.name;
+      this.winnerName = rankPlayers(players, this.catalog.actions)[0].name;
+      this.deadlineMs = null;
+      this.debt = null;
+      this.rentDue = null;
+    } else if (current?.id === playerId) {
+      this.prepareHandover();
+      this.beginTurnIfSkipping();
+    }
+    this.emit();
+    return true;
+  }
+
+  replaceOnlinePlayersWithBots(ids) {
+    if (!this.game) return;
+    const seats = new Set(ids);
+    let changed = false;
+    const players = this.game.players.map((player) => {
+      if (player.isBot || !seats.has(player.id)) return player;
+      changed = true;
+      return { ...player, isBot: true };
+    });
+    if (!changed) return;
+    this.game = { ...this.game, players };
+    this.emit();
   }
 }
 

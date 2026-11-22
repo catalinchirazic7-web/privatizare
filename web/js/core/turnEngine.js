@@ -393,11 +393,23 @@ export class TurnEngine {
       case 'receive_bank':
         ctx.bankPays(idx, effect.amount, 'TELEX');
         break;
-      case 'receive_from_each_player':
+      case 'receive_from_each_player': {
+        const debts = [];
         ctx.players.forEach((_, i) => {
-          if (i !== idx) ctx.transfer(i, idx, effect.amount, 'TELEX (contribuție)');
+          if (i === idx) return;
+          try {
+            ctx.transfer(i, idx, effect.amount, 'TELEX (contribuție)');
+          } catch (e) {
+            if (!(e instanceof DebtException)) throw e;
+            debts.push(e.debt);
+          }
         });
+        if (debts.length) {
+          const [first, ...next] = debts;
+          throw new DebtException({ ...first, next });
+        }
         break;
+      }
       case 'move':
         // Pionul rămâne pe TELEX cât se vede cartonașul; mutarea se face după confirmare (moveBy).
         ctx.pendingMove = effect.steps;

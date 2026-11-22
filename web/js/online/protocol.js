@@ -133,6 +133,7 @@ export const SnapshotCodec = {
 
   encode(s) {
     const offer = (o) => (o ? { pl: o.playerId, pr: o.propertyId, ax: o.annexIndex ?? null } : null);
+    const debt = (d) => ({ de: d.debtorId, am: d.amount, cr: d.creditorId ?? null, re: d.reason });
     return JSON.stringify({
       turn: s.state.turn,
       bank: s.state.bankMoney,
@@ -152,7 +153,9 @@ export const SnapshotCodec = {
       offer: offer(s.offer),
       fee: offer(s.feeOffer),
       rent: s.rentDue ? { pa: s.rentDue.payerId, ow: s.rentDue.ownerId, pr: s.rentDue.propertyId, am: s.rentDue.amount } : null,
-      debt: s.debt ? { de: s.debt.debtorId, am: s.debt.amount, cr: s.debt.creditorId ?? null, re: s.debt.reason } : null,
+      debt: s.debt ? { ...debt(s.debt), ...(s.debt.next?.length ? { next: s.debt.next.map(debt) } : {}) } : null,
+      move: s.pendingMove ?? null,
+      ...(s.decks ? { decks: s.decks } : {}),
       draw: s.pendingDraw ?? null,
       card: s.card
         ? { k: s.card.kind, t: s.card.text, o: s.card.outcome, a: s.card.amount ?? null, d: s.card.destination ?? null, i: s.card.cardId ?? null }
@@ -163,13 +166,17 @@ export const SnapshotCodec = {
   decode(json) {
     const o = JSON.parse(json);
     const offer = (x) => (x ? { playerId: x.pl, propertyId: x.pr, annexIndex: x.ax ?? null } : null);
+    const debt = (d) => ({ debtorId: d.de, amount: d.am, creditorId: d.cr ?? null, reason: d.re });
     return {
       state: {
         turn: o.turn,
         players: o.players.map(decodePlayer),
         bankMoney: o.bank,
         history: [...o.history],
-        stats: o.st ?? {},
+        stats: Object.fromEntries(Object.entries(o.st ?? {}).map(([id, stats]) => [id, {
+          visits: stats.visits ?? stats.v ?? {},
+          collected: stats.collected ?? stats.c ?? 0,
+        }])),
       },
       currentIndex: o.cur,
       lastDice: [...o.dice],
@@ -184,7 +191,9 @@ export const SnapshotCodec = {
       offer: offer(o.offer),
       feeOffer: offer(o.fee),
       rentDue: o.rent ? { payerId: o.rent.pa, ownerId: o.rent.ow, propertyId: o.rent.pr, amount: o.rent.am } : null,
-      debt: o.debt ? { debtorId: o.debt.de, amount: o.debt.am, creditorId: o.debt.cr ?? null, reason: o.debt.re } : null,
+      debt: o.debt ? { ...debt(o.debt), ...(Array.isArray(o.debt.next) ? { next: o.debt.next.map(debt) } : {}) } : null,
+      pendingMove: Number.isInteger(o.move) ? o.move : null,
+      decks: o.decks,
       pendingDraw: o.draw || null,
       card: o.card
         ? {
@@ -201,7 +210,10 @@ export const SnapshotCodec = {
 };
 
 function encodePlayer(p) {
-  return { id: p.id, n: p.name, c: p.color, m: p.money, pos: p.position, sk: p.skipTurns, bot: p.isBot, hs: p.houseSince, own: { ...p.ownedProperties } };
+  return {
+    id: p.id, n: p.name, c: p.color, m: p.money, pos: p.position, sk: p.skipTurns, bot: p.isBot,
+    cat: !!p.catalin, easy: !!p.easy, ar: !!p.annexRecovery, hs: p.houseSince, own: { ...p.ownedProperties },
+  };
 }
 
 function decodePlayer(o) {
@@ -213,6 +225,9 @@ function decodePlayer(o) {
     position: o.pos,
     skipTurns: o.sk,
     isBot: o.bot === true,
+    catalin: o.cat === true,
+    easy: o.easy === true,
+    annexRecovery: o.ar === true,
     houseSince: o.hs ?? 0,
     ownedProperties: { ...o.own },
   };
