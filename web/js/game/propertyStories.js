@@ -1,137 +1,113 @@
 export const PROPERTY_STORIES = {
   "poli": [
     "⚽",
-    "Politehnica Timișoara: clubul studențesc își are rădăcinile în 1920, iar Societatea Sportivă Politehnica s-a constituit oficial la 4 decembrie 1921. Echipa de fotbal a devenit unul dintre simbolurile orașului.",
-    "https://arhiva.upt.ro/Informatii_UPT_1632_ro.html"
+    "În joc: O bază sportivă cu sală de gimnastică și terenuri de tenis și fotbal."
   ],
   "electromotor": [
     "⚙️",
-    "Electromotor Timișoara: uzină cu rădăcini în fabricile Friedrich și Britania, reunite în 1944. A produs motoare electrice, echipamente industriale și ventilatoare; în anii 1990 a funcționat ca societate pe acțiuni.",
-    "https://legislatie.just.ro/Public/FormaPrintabila/00000G0GRX6FNF08YRY0VPPBT9C3VKPD"
+    "Electromotor Timișoara a produs motoare electrice; originile sale includ fabricile Friedrich și Britania.",
+    "https://www.researchgate.net/publication/350558849_O_istorie_a_masinilor_electrice_in_Romania"
   ],
   "helicon": [
     "📰",
-    "Helicon Banat, Timișoara, a editat și imprimat jocul Privatizare. Fosta Întreprindere Poligrafică „Banatul”, unde s-au tipărit și Piticot sau Dacii și Romanii, a devenit Helicon Banat S.A. în 1991.",
-    "https://legislatie.just.ro/public/DetaliiDocument/1656"
+    "În joc: O tipografie cu tipar ofset și rotativă de ziare."
   ],
   "televiziune": [
     "📺",
-    "Televiziunea Liberă Timișoara a fost înființată la 22 decembrie 1989, pentru a prezenta imagini ale evenimentelor din oraș. În joc, Televiziune dezvoltă studiouri locale, teritoriale și prin satelit.",
-    "https://www.g4media.ro/povestea-primei-televiziuni-libere-din-romania-infiintata-la-timisoara-chiar-in-decembrie-1989-fiecare-a-adus-de-acasa-ce-credea-ca-e-necesar-casete-aparate-video-cabluri-trepieduri-lumini-be.html"
+    "În joc: Studiouri locale, teritoriale și de televiziune prin satelit."
   ],
   "timisoreana": [
     "🧥",
-    "Timișoara are o tradiție a berii din 1718, când este atestată o fabrică de bere în oraș. Pe cartonașul Timișoreana din joc apar sectoare de îmbrăcăminte, aparate electrice și bijuterii.",
-    "https://spotlight-timisoara.eu/pf/fabrica-de-bere/"
+    "În joc: Confecții, aparate electrice și bijuterii. Acțiunea nu este identificată cu fabrica de bere."
   ],
   "unirii": [
     "💊",
-    "Piața Unirii din Timișoara, numită odinioară Domplatz, apare pe un plan din 1733 și este cunoscută pentru clădirile sale baroce. În joc, Unirii cuprinde o farmacie și o cofetărie.",
-    "https://spotlight-timisoara.eu/pf/piata-unirii-sf-treime/"
+    "În joc: O farmacie și o cofetărie."
   ],
   "padurea_verde": [
     "🌳",
-    "Pădurea Verde este un loc îndrăgit de agrement din Timișoara, lângă Muzeul Satului Bănățean, deschis în aer liber în 1971. Restaurantul „La Pădurea Verde” a găzduit mese și evenimente în oraș.",
-    "https://www.timisoreni.ro/despre/restaurant-la-padurea-verde/"
+    "În joc: Cabane, bufet și băi termale, într-un decor de pădure."
   ],
   "lipscani": [
     "🍽️",
-    "Lipscani evocă vechiul centru negustoresc al Bucureștiului, cunoscut pentru prăvălii și comerț. Numele vine de la negustorii legați de târgurile din Leipzig, numit odinioară Lipsca. În joc găsim un bar și un restaurant.",
-    "https://www.pmb.ro/"
+    "În joc: Un bar de zi și un restaurant."
   ],
   "maria": [
     "🏙️",
-    "Piața Sfânta Maria din Timișoara este un nod de tramvaie și un loc important al Revoluției din decembrie 1989. Monumentul Sfânta Maria din piață a fost ridicat în 1906.",
-    "https://heritageoftimisoara.ro/ro/cladiri/Elisabetin/adresa/Sf%C3%A2nta%2BMaria/%28monum.%29"
+    "În joc: Locuințe, birouri și o discotecă."
   ],
   "circumvalatiunii": [
     "🏨",
-    "Circumvalațiunii este o arteră cunoscută a Timișoarei, în apropierea unor foste zone industriale și comerciale. Pe tabla jocului, acțiunea include un complex de fizioterapie și un hotel.",
-    "https://www.primariatm.ro/anunturi/etapa1/2026/07/07/puz-elaborare-puz---restructurarea-zonelor-cu-caracter-industrial-centrale-zona-mixta---dezvoltare-proiect-imobiliar-mixt-incluzand-locuinte-colective-si-servicii-str--circumvalatiunii-nr--35"
+    "În joc: Un complex de fizioterapie și un hotel."
   ],
   "ohm": [
     "🔌",
-    "OHM poartă numele unității de măsură a rezistenței electrice. În joc, firma dezvoltă micromotoare, prototipuri și aparate de măsură, evocând tradiția electrotehnică a Timișoarei.",
-    "https://www.bipm.org/en/si-base-units/ohm"
+    "În joc: Micromotoare, prototipuri și aparate de măsură."
   ],
   "atelier_cfr": [
     "🚂",
-    "Atelierele feroviare din Timișoara reparau locomotive, vagoane și alte materiale rulante. O istorie a tehnicii românești datează atelierul de reparații din 1858.",
-    "https://academiaromana.ro/sectii/sectia08_tehnica/doc2020/IstoriaTehnicii/24IstoriaTehnicii-Vol1.pdf"
+    "În joc: Ateliere de revizie și reparații feroviare: arcuri, osii și boghiuri."
   ],
   "calea_sagului": [
     "⛸️",
-    "Calea Șagului este una dintre arterele importante ale Timișoarei, asociată cu un cartier de locuințe, fabrici și spații comerciale. În joc, acțiunea cuprinde un bloc pentru turiști și o sală de patinaj.",
-    "https://www.primariatm.ro/hcl/2025/715"
+    "În joc: Un bloc pentru turiști și o sală de patinaj."
   ],
   "piata_romana": [
     "🧵",
-    "Piața Romană este un nume cunoscut atât în București, cât și în Timișoara, unde se află un corp al Liceului William Shakespeare. În joc, acțiunea include o casă, o agenție de turism și o croitorie de lux.",
-    "https://www.primariatm.ro/hcl/2018/116"
+    "În joc: O casă, o agenție de turism și o croitorie de lux."
   ],
   "metalo_tim": [
     "🔨",
-    "METALTIM S.A., înmatriculată în Timișoara în 1991, are rădăcini în comerțul cu produse industriale; ulterior s-a orientat și către spații comerciale. În joc, Metalo-Tim dezvoltă construcții pentru sere și containere.",
-    "https://cceuro.ro/termeni-si-conditii/"
+    "În joc: Construcții pentru sere și containere."
   ],
   "piata_victoriei": [
     "🛍️",
-    "Piața Victoriei, între Operă și Catedrală, este inima Timișoarei și un loc emblematic al Revoluției: la 20 decembrie 1989, orașul a fost proclamat liber de la balconul Operei.",
-    "https://spotlight-timisoara.eu/pf/cladirea-operei-a-teatrelor/"
+    "În joc: Un supermarket și un hotel într-un bloc turn."
   ],
   "taberei": [
     "🌷",
-    "Drumul Taberei este un cartier bucureștean dezvoltat în special în anii 1960–1970, cu magazine și piețe de cartier. În joc, Taberei cuprinde o casă cu grădină, locuințe și o casă de odihnă.",
-    "https://ro.wikipedia.org/wiki/Drumul_Taberei"
+    "În joc: O casă cu grădină, locuințe și o casă de odihnă."
   ],
   "aviatica": [
     "✈️",
-    "Aviatica aduce pe tablă zborurile cu elicopterul, avionul particular și transportul aerian. Timișoara are o istorie aeronautică bogată: aeroportul provizoriu al orașului a fost inaugurat în 1935.",
-    "https://www.radiotimisoara.ro/fara-categorie/foto-spectacol-aviatic-la-aniversarea-aeroportului-international-traian-vuia-din-timisoara-56108.html"
+    "În joc: Zboruri cu elicopterul, avion particular și transport aerian."
   ],
   "memorii": [
     "💾",
-    "Fabrica de Memorii din Timișoara producea componente pentru calculatoare, inclusiv memorii cu ferite pentru FELIX. Devenită fabrică autonomă în 1976, a făcut parte din istoria industriei românești de calculatoare.",
-    "https://cronica-it.github.io/evenimente/1976/fabrica-de-memorii-timisoara/"
+    "În joc: Plăci cu circuite, blocuri de memorii și microprocesoare."
   ],
   "prichindel": [
     "🧸",
-    "Prichindel amintește de lumea copiilor: la Timișoara, un complex cu acest nume vindea încă din 1961 îmbrăcăminte, încălțăminte și tricotaje pentru cei mici.",
-    "https://www.bibliotecadeva.ro/periodice/scinteiapi/1961/04/scinteia_pionierului_1961_04_17.pdf"
+    "În joc: Confecții realizate manual și mecanizat."
   ],
   "lahovary": [
     "🏡",
-    "Piața Lahovary din cartierul Elisabetin, Timișoara, se numește astăzi Piața Nicolae Bălcescu. Biserica romano-catolică din piață a fost construită între 1912 și 1919. În joc, Lahovary are o pensiune și o mezelărie.",
-    "https://cjraetm.ro/alemele/cli/moisil.pdf"
+    "În joc: O pensiune și o mezelărie."
   ],
   "guban": [
     "👞",
-    "Guban, Timișoara: Blaziu Guban a pornit cu produse pentru îngrijirea încălțămintei și a înființat societatea în 1937. În 1952 a donat-o statului, iar din 1959 fabrica a produs pantofii eleganți deveniți renumiți.",
+    "Guban a început la Timișoara cu cremă de ghete; societatea a fost înființată în 1937 și a produs ulterior încălțăminte.",
     "https://guban.ro/pages/despre-noi"
   ],
   "telefoane": [
     "☎️",
-    "Rețeaua și prima centrală telefonică din Timișoara au fost instalate în 1881. În joc, Telefoane dezvoltă centrale urbane și interurbane.",
-    "https://www.timisoara-info.ro/infocentru/premiereletimi%C8%99oarei"
+    "În joc: Centrale telefonice urbane și interurbane."
   ],
   "continental": [
-    "🏨🌊✨",
-    "Continental Hotels S.A., lanț hotelier românesc, a fost înființat în 1991 și privatizat în 1995. Grand Hotel Continental București se află pe Calea Victoriei, într-o clădire din 1886. La Cluj, fostul Continental a fost inițial Hotel New York. Hotelul Continental din Timișoara (1971) nu a intrat efectiv în rețea.",
-    "https://continentalhotels.ro/corporate"
+    "🎮",
+    "În joc: Jocuri electronice, piscină cu bar și hotel-restaurant."
   ],
   "celuloza": [
     "📜",
-    "În joc, Celuloza produce hârtie și carton. La Timișoara, Celuloză și Oțel a fost înființată în 1992 și colectează materiale reciclabile, inclusiv hârtie, carton și metale.",
-    "https://celulozasiotel.ro/despre-noi/"
+    "În joc: Secții pentru fabricarea hârtiei și a cartonului."
   ],
   "dura": [
     "🔋",
-    "Dura, Timișoara: fabrica de baterii și produse electrotehnice datează din 1920–1921, potrivit unor surse diferite. În 1930 a fuzionat cu Lumina; naționalizată în 1948, a devenit Electrobanat, iar din 1990 ELBA. Secția de baterii a revenit ulterior la numele Dura.",
-    "https://www.elba.ro/companie/istoric/"
+    "Fabrica de baterii Dura a fost înființată în 1920, la Timișoara.",
+    "https://assets.primariatm.ro/507d5ace-c36f-4a54-9fd9-bbae2cc041d9/ANEXA%20FISE%20E3%20monumente%20propuse%20prin%20PUG.pdf"
   ],
   "ambasador": [
     "🛎️",
-    "Hotelul Ambasador din București este o clădire interbelică de pe bulevardul Magheru. În 2024, hotelul a anunțat întreruperea activității pentru modernizare. În joc, Ambasador include hotel, restaurant, bar și club.",
-    "https://www.ambasador.ro/hotel-4-stele-confort-la-hotel-ambasador-2024/"
+    "În joc: Un hotel, restaurant, bar și club de noapte."
   ]
 };
