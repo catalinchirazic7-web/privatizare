@@ -172,7 +172,7 @@ export class GameScreen {
     $('zoom-1').addEventListener('click', () => this.setZoom(1));
     $('zoom-2').addEventListener('click', () => this.setZoom(2));
     $('toggle-stretch').addEventListener('click', () => {
-      this.stretch = !this.stretch;
+      this.stretch = !this.stretch && (this.mareaView ? 'adaptive' : true);
       this.render();
     });
     $('toggle-tilt').addEventListener('click', () => {
@@ -242,7 +242,7 @@ export class GameScreen {
     const marea = this.game.boardLayout === 'marea';
     if (this.mareaView !== marea) {
       this.mareaView = marea;
-      this.stretch = !marea;
+      this.stretch = marea ? 'adaptive' : true;
       this.tilt = !marea;
     }
     const humans = (this.game.game?.players ?? []).filter((p) => !p.isBot);
@@ -445,7 +445,9 @@ export class GameScreen {
       for (const r of this.rentIns) if (r.pid === p.id && r.until > Date.now()) row.append(el('b', { class: 'rent-in', text: `+${fmt(r.amount)}` }));
       dp.append(row);
     }
-    this.$('toggle-stretch').textContent = this.stretch ? 'Tablă: pe tot ecranul' : 'Tablă: proporțională';
+    const boardSizing = this.stretch === 'adaptive' ? 'adaptată ecranului'
+      : this.stretch ? 'pe tot ecranul' : 'proporțională';
+    this.$('toggle-stretch').textContent = `Tablă: ${boardSizing}`;
     this.$('toggle-tilt').textContent = this.tilt ? 'Înclinare: pornit' : 'Înclinare: oprit';
     this.$('toggle-sound').textContent = sound.enabled ? 'Sunet: pornit' : 'Sunet: oprit';
     this.$('zoom-1').classList.toggle('chip-on', this.zoomPreset === 1);

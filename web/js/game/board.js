@@ -166,17 +166,12 @@ export class BoardView {
       this.canvas.width = Math.round(cssW * dpr);
       this.canvas.height = Math.round(cssH * dpr);
     }
-    let bw;
-    let bh;
-    const BOARD_ASPECT = this.catalog.boardAspect;
-    if (this.model.stretch || cssW / cssH > BOARD_ASPECT) {
-      // tabla umple lățimea (sau tot ecranul, când e întinsă)
-      bw = this.model.stretch ? cssW : cssH * BOARD_ASPECT;
-      bh = cssH;
-    } else {
-      bw = cssW;
-      bh = cssW / BOARD_ASPECT;
-    }
+    const aspect = this.catalog.boardAspect;
+    const stretch = this.model.stretch;
+    const bh = stretch === true ? cssH : Math.min(cssH, cssW / aspect);
+    // Pe ecrane late, tabla Marea folosește mai mult spațiu fără să taie traseul.
+    const horizontalLimit = stretch === 'adaptive' ? 1.18 : 1;
+    const bw = stretch === true ? cssW : Math.min(cssW, bh * aspect * horizontalLimit);
     const bx = (cssW - bw) / 2;
     const by = (cssH - bh) / 2;
     this.layout = { bx, by, bw, bh, cssW, cssH, dpr };

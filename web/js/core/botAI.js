@@ -159,7 +159,9 @@ export function utilityScore({ state, botIdx, board, actions, propertyId, option
   const reasons = [];
 
   // Randament: câștigul de la fiecare adversar care trece pe căsuță, în orizontul de câteva ture.
-  const gainPerVisit = option.type === 'TITLE' ? prop.titleTax : option.annex.profit;
+  const level = option.type === 'TITLE' ? 0 : option.annex.index;
+  const currentRent = level === 0 ? 0 : calculateRent(prop, level - 1);
+  const gainPerVisit = calculateRent(prop, level) - currentRent;
   const rate = visitRate(state, botIdx, board, propertyId, diceCount);
   const roi = (gainPerVisit * rate * HORIZON_TURNS) / price;
   let score = BASE_SCORE + ROI_WEIGHT * Math.min(1, roi);
