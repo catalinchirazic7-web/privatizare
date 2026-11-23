@@ -575,6 +575,15 @@ input { -webkit-user-select: text; user-select: text; }
 .continental-animation span { display: inline-block; }
 .continental-waves { margin-left: -.25em; animation: continental-wave 1s ease-in-out infinite alternate; }
 .continental-sparkle { font-size: .55em; align-self: start; margin-left: -.2em; animation: continental-sparkle 1.2s ease-in-out infinite alternate; }
+.factory-animation { display: inline-flex; align-items: end; white-space: nowrap; }
+.factory-animation span { display: inline-block; }
+.factory-motion { margin-left: -.22em; animation: factory-work .9s ease-in-out infinite alternate; }
+.factory-gear { animation: factory-turn 2.4s linear infinite; }
+.factory-accent { font-size: .62em; align-self: start; margin-left: -.18em; animation: continental-sparkle 1.2s ease-in-out infinite alternate; }
+@keyframes factory-work { from { transform: translateY(2px) rotate(-9deg); } to { transform: translateY(-4px) rotate(7deg); } }
+@keyframes factory-turn { to { transform: rotate(1turn); } }
+.effects-off .factory-animation span { animation: none; }
+@media (prefers-reduced-motion: reduce) { .factory-animation span { animation: none; } }
 @keyframes continental-wave { from { transform: translate(-2px, 2px); } to { transform: translate(3px, -2px); } }
 @keyframes continental-sparkle { from { opacity: .45; transform: scale(.8); } to { opacity: 1; transform: scale(1.2); } }
 .effects-off .continental-animation span { animation: none; }

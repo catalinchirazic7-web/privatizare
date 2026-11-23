@@ -12,7 +12,7 @@ import { rollDie } from '../core/dice.js';
 import { tileVisual, tileHint, propertyVisual } from './visuals.js';
 import { actionArtPath, propertyIconPath } from '../core/model.js';
 import { CardOutcome } from '../core/cards.js';
-import { PROPERTY_STORIES } from './propertyStories.js';
+import { FACTORY_MOTIONS, PROPERTY_STORIES } from './propertyStories.js';
 
 const DECISION_DIALOGS = ['BUY', 'BANK_FEE', 'RENT', 'DEBT', 'LIQUIDATION_HANDOVER', 'HANDOVER'];
 const DIE_PIPS = {
@@ -27,6 +27,7 @@ const DIE_POS = { fx: 0.63, fy: 0.34 };   // zarul stă în zona liberă din cen
 const DIE2_DX = 0.075;                     // al doilea zar (mod cu două zaruri), lângă primul
 const LANDING_MS = 6500;
 const BOT_DELAY_MS = 600;
+const PLAYER_CARD_SHOW_MS = 8000;
 const CARD_SHOW_MS = 2200;   // cât stă pe ecran cartonașul tras de un robot (apăsat = se închide imediat)
 const SKIP_SHOW_MS = 1600;   // cât stă vizibil bannerul „staționează” al unui robot, ca să-l vezi
 const END_DELAY_MS = 600;
@@ -113,6 +114,7 @@ export class GameScreen {
 
     this.$ = (id) => document.getElementById(id);
     this.modalRoot = this.$('modal-root');
+    this.cardTimer = null;
     this.toastEl = this.$('toast');
 
     this.viewedId = null;
@@ -890,7 +892,11 @@ export class GameScreen {
     const key = this.dialogKey(d);
     if (key === this.modalKey) return;
     this.sheetProperty = null;   // fișa se închide când apare un dialog de joc
-    this.openModal(key, this.buildDialog(d), d.type === 'CARD');
+    const tapToDismiss = d.type === 'CARD' && this.game.boardLayout === 'marea';
+    this.openModal(key, this.buildDialog(d), {
+      dismiss: tapToDismiss ? () => this.game.dismissCard() : null,
+      delay: tapToDismiss && !this.game.currentPlayer?.isBot ? PLAYER_CARD_SHOW_MS : 0,
+    });
     if (d.type === 'CARD') sound.card();
     if (d.type === 'BUY') sound.coin();
     if (d.type === 'DEBT') sound.alert();
@@ -930,9 +936,6 @@ export class GameScreen {
           accent: v.accent,
           body: [
             this.propertyInfo(prop),
-            prop.textOnly && isTitle ? el('p', { class: 'purchase-annexes',
-              text: `${prop.annexes.length} anexe · ${prop.annexes.map((annex) => annex.name).join(' • ')}`,
-            }) : null,
             el('p', { text: `Cost achiziție: ${fmt(price)} ECU` }),
             remaining.length > 1 ? el('div', { class: 'rapid-cards' }, ...remaining.map((annex, idx) => { const count = idx + 1; const cost = remaining.slice(0, count).reduce((sum, item) => sum + item.price, 0); return el('div', { class: 'rapid-card' }, el('strong', { text: `${count} ${count === 1 ? 'anexă' : 'anexe'}` }), el('span', { text: `${fmt(cost)} ECU` }), el('span', { text: `Rămân: ${buyer.money >= cost ? fmt(buyer.money - cost) + ' ECU' : 'fonduri insuficiente'}` }), el('span', { text: `Chirie: ${fmt(calculateRent(prop, annex.index))} ECU` })); })) : null,
             remaining.length > 1 ? el('p', { class: 'rapid-offer', text: `Mod rapid: ${remaining.length} anexe rămase, în total ${fmt(allPrice)} ECU.` }) : null,
@@ -1001,6 +1004,14 @@ export class GameScreen {
   }
 
   propertyAnimation(propertyId, story, className) {
+    const motion = FACTORY_MOTIONS[propertyId];
+    if (motion) {
+      return el('span', { class: `${className} factory-animation`, 'aria-hidden': 'true' },
+        el('span', { text: motion[0] }),
+        el('span', { class: `factory-motion ${propertyId === 'umt' ? 'factory-gear' : ''}`, text: motion[1] }),
+        el('span', { class: 'factory-accent', text: motion[2] }),
+      );
+    }
     if (propertyId !== 'continental') return el('span', { class: className, 'aria-hidden': 'true', text: story[0] });
     return el('span', { class: `${className} continental-animation`, 'aria-hidden': 'true' },
       el('span', { class: 'continental-hotel', text: '🏨' }),
@@ -1018,7 +1029,9 @@ export class GameScreen {
         el('strong', { text: 'Despre această acțiune' }),
       ),
       el('p', { text: story[1] }),
-      el('p', { class: 'purchase-annexes', text: `În joc: ${prop.annexes.map((a) => a.name).join(' • ')}` }),
+      el('p', { class: 'purchase-annexes',
+        text: `${prop.textOnly ? `${prop.annexes.length} anexe ·` : 'În joc:'} ${prop.annexes.map((a) => a.name).join(' • ')}`,
+      }),
       story[2] ? el('a', { href: story[2], target: '_blank', rel: 'noopener noreferrer', text: 'Citește sursa' }) : null,
     );
   }
@@ -1049,7 +1062,8 @@ export class GameScreen {
             .map((face, i) => el('span', { style: { '--mood-index': i }, text: face })))
       : null;
     // cartonașul robotului se închide la atingere: nu mai aștepți timpul afișării
-    const skip = byBot ? { onclick: () => this.game.dismissCard() } : {};
+    const tapAnywhere = this.game.boardLayout === 'marea';
+    const skip = byBot && !tapAnywhere ? { onclick: () => this.game.dismissCard() } : {};
     return el('div', { class: 'modal wide', role: 'dialog', 'aria-modal': 'true', ...skip },
       el('h3', { text: card.kind === 'LOTO' ? 'Cartonaș LOTO' : 'Cartonaș TELEX' }),
       visual,
@@ -1058,7 +1072,13 @@ export class GameScreen {
       dest,
       byBot
         ? el('p', { class: 'muted', text: 'Robotul a tras cartonașul și îl citește…' })
-        : el('div', { class: 'actions' }, el('button', { class: 'btn primary', type: 'button', text: 'Am înțeles', onclick: () => this.game.dismissCard() })),
+        : tapAnywhere
+          ? el('p', { class: 'muted', text: 'Atinge oriunde pentru a continua.' })
+          : null,
+      !byBot ? el('div', { class: 'actions' },
+        el('button', { class: 'btn primary', type: 'button', text: 'Am înțeles',
+          onclick: tapAnywhere ? null : () => this.game.dismissCard() }),
+      ) : null,
     );
   }
 
@@ -1228,6 +1248,7 @@ export class GameScreen {
         el('div', { class: 'sheet-pages' }, art),
         el('div', { class: 'sheet-nav' }, prev, dots, nextBtn),
         info,
+        this.propertyInfo(prop),
         el('div', { class: 'actions' }, buy),
       );
       this.openModal(`sheet:${id}`, node);
@@ -1277,19 +1298,28 @@ export class GameScreen {
 
   /* ---------- modal comun ---------- */
 
-  openModal(key, node) {
+  openModal(key, node, { dismiss = null, delay = 0 } = {}) {
     if (this.modalKey === key) return;
+    clearTimeout(this.cardTimer);
+    this.cardTimer = null;
     this.modalKey = key;
     clear(this.modalRoot);
     this.modalRoot.append(node);
     this.modalRoot.hidden = false;
-    // atingerea fundalului închide doar fișa; dialogurile de joc rămân până se rezolvă
-    this.modalRoot.onclick = (e) => {
-      if (e.target === this.modalRoot && key.startsWith('sheet:')) this.closeSheet();
+    const dismissCurrent = () => {
+      if (this.modalKey === key) dismiss?.();
     };
+    this.modalRoot.onclick = (e) => {
+      if (dismiss) dismissCurrent();
+      else if (e.target === this.modalRoot && key.startsWith('sheet:')) this.closeSheet();
+    };
+    if (dismiss && delay > 0) this.cardTimer = setTimeout(dismissCurrent, delay);
   }
 
   closeModal() {
+    clearTimeout(this.cardTimer);
+    this.cardTimer = null;
+    this.modalRoot.onclick = null;
     this.modalKey = null;
     this.modalRoot.hidden = true;
     clear(this.modalRoot);

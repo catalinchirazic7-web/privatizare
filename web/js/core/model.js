@@ -91,6 +91,9 @@ function mareaLayout(json) {
     ...BOARD_LAYOUTS.marea,
     aspect: width / height,
     positions: json.centers.map(([x, y]) => [x / width, y / height]),
+    tileOutlines: Object.fromEntries(Object.entries(json.tileOutlines ?? {}).map(([index, points]) => [
+      index, points.map(([x, y]) => [x / width, y / height]),
+    ])),
     startMarker: [json.start.x / width, json.start.y / height],
     decks: Object.fromEntries(Object.entries(json.decks).map(([kind, { x, y, w, h }]) => [
       kind, { x: x / width, y: y / height, w: w / width, h: h / height },
@@ -113,6 +116,7 @@ export function applyLayout(catalog, name) {
   const layout = catalog.layouts[L];
   catalog.layout = L;
   catalog.positions = layout.positions;
+  catalog.tileOutlines = layout.tileOutlines ?? {};
   catalog.decks = layout.decks;
   catalog.startMarker = layout.startMarker;
   catalog.boardImage = layout.image;

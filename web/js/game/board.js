@@ -639,12 +639,27 @@ export class BoardView {
     }
   }
 
+  traceTileOutline(ctx, outline, bx, by, bw, bh) {
+    ctx.beginPath();
+    const [first, ...rest] = outline;
+    ctx.moveTo(bx + bw * first[0], by + bh * first[1]);
+    for (const [x, y] of rest) ctx.lineTo(bx + bw * x, by + bh * y);
+    ctx.closePath();
+  }
+
   drawHighlight(ctx, bx, by, bw, bh) {
     const idx = this.model.landedTile;
     if (idx == null) return;
     const pos = this.catalog.positions[idx];
     if (!pos) return;
     const tt = (performance.now() % 1100) / 1100;
+    const outline = this.catalog.tileOutlines?.[idx];
+    if (outline) {
+      this.traceTileOutline(ctx, outline, bx, by, bw, bh);
+      ctx.fillStyle = withAlpha(this.model.highlightColor, 0.35 + 0.25 * Math.sin(tt * Math.PI));
+      ctx.fill();
+      return;
+    }
     const cx = bx + bw * pos[0];
     const cy = by + bh * pos[1];
     const W = bw * 0.11;
@@ -678,18 +693,30 @@ export class BoardView {
         const h = bh * 0.075;
         const cx = bx + bw * pos[0];
         const cy = by + bh * pos[1];
-        ctx.beginPath();
-        ctx.ellipse(cx, cy, w / 2, h / 2, 0, 0, Math.PI * 2);
+        const outline = this.catalog.tileOutlines?.[tile];
+        if (outline) {
+          this.traceTileOutline(ctx, outline, bx, by, bw, bh);
+        } else {
+          ctx.beginPath();
+          ctx.ellipse(cx, cy, w / 2, h / 2, 0, 0, Math.PI * 2);
+        }
         ctx.fillStyle = color;
         ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = color;
-        ctx.stroke();
+        if (outline && this.model.landedTile === tile) {
+          const pulse = (1 + Math.sin(performance.now() * Math.PI / 550)) / 2;
+          ctx.fillStyle = withAlpha(this.model.highlightColor, 0.32 * pulse);
+          ctx.fill();
+        }
+        if (!outline) {
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = color;
+          ctx.stroke();
+        }
         const label = `${p.ownedProperties[propId]}/${this.catalog.actions[propId]?.annexes?.length ?? 0}`;
         // fontul cât mai mare care încape în elipsă: lățimea textului ≤ 80% din lățime, înălțimea ≤ 50% din înălțime
         ctx.font = '900 100px system-ui, sans-serif';
         const unit = ctx.measureText(label).width / 100;
-        const fs = Math.min(h * 0.5, (w * 0.8) / unit);
+        const fs = Math.min(h * (outline ? 0.38 : 0.5), (w * 0.8) / unit);
         ctx.font = `900 ${fs}px system-ui, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';

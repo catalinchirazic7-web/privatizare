@@ -1,4 +1,37 @@
+export const FACTORY_MOTIONS = {
+  kandia: ['🏭', '🍫', '🍬'],
+  unu_iunie: ['🧵', '🪡', '👕'],
+  comtim: ['🏭', '🐖', '🌾'],
+  azur: ['🎨', '🖌️', '💧'],
+  umt: ['🏗️', '⚙️', '🔩'],
+  solventul: ['🏭', '🧪', '💨'],
+};
+
 export const PROPERTY_STORIES = {
+  "kandia": [
+    "🍫",
+    "Fondată în 1890 ca prima fabrică de bomboane din Timișoara și redenumită Kandia în 1917, a devenit cel mai celebru producător de ciocolată și produse zaharoase din vestul țării, fiind privatizată și modernizată în anii '90."
+  ],
+  "unu_iunie": [
+    "🧵",
+    "Întreprindere de tradiție a industriei textile timișorene, specializată în tricotaje și confecții de serie mare pentru piața internă și export, reorganizată ca societate pe acțiuni în perioada tranziției din anii '90."
+  ],
+  "comtim": [
+    "🐖",
+    "Cel mai mare complex agroindustrial și combinat de prelucrare a cărnii din România și Europa de Sud-Est, adevărat gigant economic al Timișoarei cu rețea proprie de ferme, abatoare și export masiv în anii '90."
+  ],
+  "azur": [
+    "🎨",
+    "Cu rădăcini industriale din perioada interbelică (1922), uzina chimică din Timișoara s-a impus ca lider național în producția de lacuri, vopsele, rășini sintetice și detergenți pe parcursul anilor '90."
+  ],
+  "umt": [
+    "⚙️",
+    "Uzinele Mecanice Timișoara, unul dintre cei mai mari coloși ai industriei grele bănățene, producător de utilaje metalurgice, macarale și echipamente industriale complexe, intrat în proces de restructurare în anii '90."
+  ],
+  "solventul": [
+    "🧪",
+    "Fondată în 1869 ca rafinărie de spirt și transformată ulterior în combinat petrochimic major al Timișoarei, a fost un pilon al industriei chimice românești până la declinul industrial de la finalul anilor '90."
+  ],
   "poli": [
     "⚽",
     "Politehnica Timișoara: clubul studențesc își are rădăcinile în 1920, iar Societatea Sportivă Politehnica s-a constituit oficial la 4 decembrie 1921. Echipa de fotbal a devenit unul dintre simbolurile orașului.",
