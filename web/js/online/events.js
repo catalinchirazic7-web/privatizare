@@ -71,7 +71,7 @@ export function applyEvent(vm, event, dieFor = (e) => e.value) {
       return true;
     }
     case EV.DRAW: {
-      if (dialog?.type !== 'DRAW') return false;
+      if (vm.autoDrawReady || dialog?.type !== 'DRAW') return false;
       vm.drawCard();
       return true;
     }

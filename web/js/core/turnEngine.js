@@ -306,11 +306,14 @@ export class TurnEngine {
         break;
       case TILE.BANK:
         ctx.bankPays(idx, GameRules.BANK_INTEREST, 'dobândă de la BANCA');
+        ctx.pendingDraw = tile.drawOnLanding ?? null;
         break;
       case TILE.BANK_DIVIDEND:
         ctx.bankPays(idx, GameRules.DIVIDEND, 'dividende de la BANCA');
         break;
       case TILE.SALA:
+        // Păstrează extragerea în așteptare și dacă taxa declanșează lichidarea.
+        ctx.pendingDraw = tile.drawOnLanding ?? null;
         ctx.playerPaysBank(idx, GameRules.SALA_CONSFATUIRI_FEE, 'SALA CONSFĂTUIRI');
         break;
       case TILE.CASA:

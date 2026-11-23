@@ -1,0 +1,180 @@
+{
+  "centers": [
+    [351.5, 896.5],
+    [465, 917],
+    [588, 917],
+    [678.5, 917],
+    [769.5, 918],
+    [863.5, 918],
+    [955.5, 918],
+    [1057, 923.5],
+    [1152.5, 917.5],
+    [1252, 918],
+    [1367.5, 890],
+    [1401.5, 767],
+    [1401.5, 676.5],
+    [1401, 586.5],
+    [1401, 466.5],
+    [1400, 347.5],
+    [1400, 258.5],
+    [1378, 134],
+    [1255.5, 104],
+    [1161.5, 104],
+    [1040, 103],
+    [921.5, 103],
+    [828.5, 102.5],
+    [737.5, 102],
+    [647, 102.5],
+    [551, 102.5],
+    [458.5, 102.5],
+    [370, 102.5],
+    [278.5, 102],
+    [156, 133],
+    [133.5, 251.5],
+    [133.5, 338.5],
+    [133, 427],
+    [133.5, 514],
+    [134, 602.5],
+    [147.5, 704],
+    [222, 793]
+  ],
+  "start": {
+    "x": 206,
+    "y": 911
+  },
+  "decks": {
+    "loto": {
+      "x": 378,
+      "y": 318,
+      "w": 320,
+      "h": 187
+    },
+    "telex": {
+      "x": 809,
+      "y": 522,
+      "w": 341,
+      "h": 191
+    }
+  },
+  "properties": [
+    {
+      "index": 1,
+      "id": "kandia",
+      "name": "KANDIA S.A.",
+      "titlePrice": 2000,
+      "titleTax": 450,
+      "anexe": [
+        {
+          "name": "Linie de Ambalare Bomboane",
+          "price": 3000,
+          "profit": 1000
+        },
+        {
+          "name": "Secție Ciocolaterie Fină",
+          "price": 4000,
+          "profit": 1250
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "id": "unu_iunie",
+      "name": "1 IUNIE S.A.",
+      "titlePrice": 1800,
+      "titleTax": 250,
+      "anexe": [
+        {
+          "name": "Atelier Croitorie și Tipare",
+          "price": 2500,
+          "profit": 550
+        },
+        {
+          "name": "Secție Tricotaje Automate",
+          "price": 3000,
+          "profit": 1000
+        }
+      ]
+    },
+    {
+      "index": 20,
+      "id": "comtim",
+      "name": "COMTIM S.A.",
+      "titlePrice": 5000,
+      "titleTax": 1000,
+      "anexe": [
+        {
+          "name": "Complex Zootehnic și Furaje",
+          "price": 8000,
+          "profit": 2000
+        },
+        {
+          "name": "Abator și Linie Frigorifică",
+          "price": 14000,
+          "profit": 3500
+        }
+      ]
+    },
+    {
+      "index": 25,
+      "id": "azur",
+      "name": "AZUR S.A.",
+      "titlePrice": 2500,
+      "titleTax": 500,
+      "anexe": [
+        {
+          "name": "Secție Lacuri și Grunduri",
+          "price": 2500,
+          "profit": 600
+        },
+        {
+          "name": "Linie Îmbuteliere Detergenți",
+          "price": 4000,
+          "profit": 1000
+        }
+      ]
+    },
+    {
+      "index": 34,
+      "id": "umt",
+      "name": "UMT S.A.",
+      "titlePrice": 4500,
+      "titleTax": 650,
+      "anexe": [
+        {
+          "name": "Turnătorie Oțel și Fontă",
+          "price": 6000,
+          "profit": 850
+        },
+        {
+          "name": "Hală Utilaje Grele și Macarale",
+          "price": 8000,
+          "profit": 1200
+        },
+        {
+          "name": "Secție Export Mașini-Unelte",
+          "price": 12000,
+          "profit": 2000
+        }
+      ]
+    },
+    {
+      "index": 36,
+      "id": "solventul",
+      "name": "SOLVENTUL S.A.",
+      "titlePrice": 2500,
+      "titleTax": 500,
+      "anexe": [
+        {
+          "name": "Stație Distilare și Rafinare",
+          "price": 3500,
+          "profit": 600
+        },
+        {
+          "name": "Parc Rezervoare Petrochimice",
+          "price": 4000,
+          "profit": 900
+        }
+      ]
+    }
+  ]
+}

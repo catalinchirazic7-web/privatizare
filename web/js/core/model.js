@@ -34,24 +34,26 @@ export const TILE = Object.freeze({
  * Încarcă cele trei fișiere JSON și le transformă în structuri folosite de motor.
  * @returns {Promise<{board, positions, decks, startMarker, actions, loto, telex, cardArt}>}
  */
-/** Cele două table: aceleași căsuțe și reguli, altă fotografie și alte poziții. */
+/** Fotografiile disponibile și proporțiile lor. */
 export const BOARD_LAYOUTS = Object.freeze({
   old: { image: 'img/tabla_privatizare.webp', aspect: 1600 / 1131 },
   new: { image: 'img/tabla_noua.webp', aspect: 1600 / 1073 },
+  marea: { image: 'assets/tabla-marea-privatizare.png', aspect: 1531 / 1027 },
 });
 
 export async function loadCatalog(baseUrl = './data/') {
-  const [boardJson, boardNewJson, actionsJson, cardsJson] = await Promise.all([
+  const [boardJson, boardNewJson, actionsJson, cardsJson, mareaJson] = await Promise.all([
     fetchJson(`${baseUrl}board.json`),
     fetchJson(`${baseUrl}board_new.json`),
     fetchJson(`${baseUrl}actions.json`),
     fetchJson(`${baseUrl}cards.json`),
+    fetchJson(`${baseUrl}marea.json`),
   ]);
-  return buildCatalog(boardJson, actionsJson, cardsJson, boardNewJson);
+  return buildCatalog(boardJson, actionsJson, cardsJson, boardNewJson, mareaJson);
 }
 
 /** Transformă JSON-urile (deja citite) în catalogul folosit de motor. Funcție pură. */
-export function buildCatalog(boardJson, actionsJson, cardsJson, boardNewJson = null) {
+export function buildCatalog(boardJson, actionsJson, cardsJson, boardNewJson = null, mareaJson = null) {
   const loto = parseLoto(cardsJson.loto);
   const telex = parseTelex(cardsJson.telex);
   const catalog = {
@@ -65,8 +67,34 @@ export function buildCatalog(boardJson, actionsJson, cardsJson, boardNewJson = n
       new: boardNewJson ? layoutOf(boardNewJson, 'new') : layoutOf(boardJson, 'old'),
     },
   };
+  if (mareaJson) {
+    const properties = new Map(mareaJson.properties.map((p) => [p.index, p]));
+    const board = catalog.board.map((tile) => {
+      const property = properties.get(tile.index);
+      if (property) return { ...tile, type: TILE.PROPERTY, name: property.name, propertyId: property.id };
+      if (tile.type === TILE.SALA) return { ...tile, drawOnLanding: 'TELEX' };
+      if (tile.type === TILE.BANK) return { ...tile, drawOnLanding: 'LOTO' };
+      return tile;
+    });
+    const addedActions = parseActions(mareaJson.properties);
+    for (const action of Object.values(addedActions)) action.textOnly = true;
+    catalog.marea = { board, actions: { ...catalog.actions, ...addedActions } };
+    catalog.layouts.marea = mareaLayout(mareaJson);
+  }
   applyLayout(catalog, 'old');
   return catalog;
+}
+
+function mareaLayout(json) {
+  const width = 1531, height = 1027;
+  return {
+    ...BOARD_LAYOUTS.marea,
+    positions: json.centers.map(([x, y]) => [x / width, y / height]),
+    startMarker: [json.start.x / width, json.start.y / height],
+    decks: Object.fromEntries(Object.entries(json.decks).map(([kind, { x, y, w, h }]) => [
+      kind, { x: x / width, y: y / height, w: w / width, h: h / height },
+    ])),
+  };
 }
 
 function layoutOf(json, name) {
@@ -144,7 +172,7 @@ export function parseActions(properties) {
       name: o.name,
       titlePrice: o.titlePrice,
       titleTax: o.titleTax,
-      annexes: o.anexe.map((a, j) => ({ index: j + 1, price: a.price, profit: a.profit })),
+      annexes: o.anexe.map((a, j) => ({ index: j + 1, name: a.name, price: a.price, profit: a.profit })),
     };
   }
   return out;

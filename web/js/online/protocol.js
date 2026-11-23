@@ -182,7 +182,7 @@ export const SnapshotCodec = {
       lastDice: [...o.dice],
       diceCount: o.dc === 2 ? 2 : 1,
       rapidMode: !!o.rapid,
-      boardLayout: o.bl === 'new' ? 'new' : 'old',
+      boardLayout: o.bl === 'new' || o.bl === 'marea' ? o.bl : 'old',
       easyMode: !!o.easy,
       rerolled: !!o.rerolled,
       winnerName: o.winner ?? null,

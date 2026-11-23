@@ -5,7 +5,7 @@ import { GameRules, distributeStartingMoney } from '../core/rules.js';
 import { TurnEngine, debtEquals } from '../core/turnEngine.js';
 import { TILE } from '../core/model.js';
 import { netWorth, rankPlayers } from '../core/actions.js';
-import { botLiquidationSales, ANNEX_KEEP } from '../core/botAI.js';
+import { botLiquidationSales, ANNEX_KEEP, safetyBuffer } from '../core/botAI.js';
 import { catalinDecideBuy, catalinDice } from '../core/catalinAI.js';
 import { rollBotDie, isLowRoll } from '../core/dice.js';
 import { EV } from '../online/protocol.js';
@@ -16,10 +16,11 @@ export class Game {
    * @param {{botDie?: (luck: number) => number, rng?: () => number}} opts
    */
   constructor(catalog, opts = {}) {
-    this.catalog = catalog;
+    this.catalog = { ...catalog };
+    this.classic = { board: catalog.board, actions: catalog.actions };
     this.botDie = opts.botDie ?? ((luck = 0) => rollBotDie(Math.random, luck));
     this.rng = opts.rng ?? Math.random;
-    this.engine = new TurnEngine(catalog, this.rng);
+    this.engine = new TurnEngine(this.catalog, this.rng);
     this.listeners = new Set();
     this.version = 0;
 
@@ -125,6 +126,20 @@ export class Game {
     return this.winnerName !== null;
   }
 
+  get autoDrawReady() {
+    return this.boardLayout === 'marea' && !this.isGuest && !this.winnerName &&
+      this.activeDialog?.type === 'DRAW';
+  }
+
+  selectBoard(layout) {
+    const marea = layout === 'marea' ? this.catalog.marea : null;
+    const { board, actions } = marea ?? this.classic;
+    this.boardLayout = marea ? 'marea' : layout === 'new' ? 'new' : 'old';
+    if (this.catalog.board === board) return;
+    Object.assign(this.catalog, { board, actions });
+    this.engine = new TurnEngine(this.catalog, this.rng);
+  }
+
   /** Dialogul activ, sau null dacă tura poate continua. */
   get activeDialog() {
     const g = this.game;
@@ -215,6 +230,7 @@ export class Game {
 
   /** Oaspete: înlocuiește starea locală cu cea oficială de la gazdă. */
   applySnapshot(s) {
+    this.selectBoard(s.boardLayout);
     const actions = this.catalog.actions;
     const toOffer = (o) => {
       if (!o) return null;
@@ -232,7 +248,6 @@ export class Game {
     this.easyMode = !!s.easyMode;                 // salvările vechi nu au mod ușor
     this.rerolled = !!s.rerolled;
     this.rapidMode = !!s.rapidMode;
-    this.boardLayout = s.boardLayout === 'new' ? 'new' : 'old';   // salvările vechi sunt pe tabla veche
     if (!sameDice(s.lastDice, this.lastDice)) this.rollNonce++;
     this.lastDice = s.lastDice;
     this.winnerName = s.winnerName;
@@ -284,7 +299,7 @@ export class Game {
     if (diceCount !== 1 && diceCount !== 2) throw new Error('Un zar sau două');
     this.diceCount = diceCount;
     this.rapidMode = !!rapidMode;
-    this.boardLayout = boardLayout === 'new' ? 'new' : 'old';
+    this.selectBoard(boardLayout);
     this.deadlineMs = timeLimitMinutes ? Date.now() + timeLimitMinutes * 60_000 : null;
     this.finalRanking = [];
     if (!(setup.length >= 2 && setup.length <= 4)) throw new Error('Între 2 și 4 jucători');
@@ -427,6 +442,8 @@ export class Game {
     const buyer = this.game.players.find((p) => p.id === offer.playerId);
     const total = annexes.reduce((sum, a) => sum + a.price, 0);
     if (buyer.money < total) return false;
+    if (this.boardLayout === 'marea' && buyer.isBot &&
+        buyer.money - total < this.annexReserve(this.game.players.indexOf(buyer))) return false;
     let state = this.game;
     for (const annex of annexes) {
       state = this.engine.applyBuy(state, { playerId: offer.playerId, propertyId: offer.propertyId, option: { type: 'ANNEX', annex } });
@@ -437,6 +454,10 @@ export class Game {
     this.checkWinner();
     this.emit();
     return true;
+  }
+
+  annexReserve(playerIndex) {
+    return safetyBuffer(this.game, playerIndex, this.catalog.board, this.catalog.actions, this.diceCount);
   }
 
   buyAllAnnexes() {
@@ -494,7 +515,7 @@ export class Game {
   drawCard() {
     if (this.guestSend((id) => ({ t: EV.DRAW, playerId: id }))) return;
     const kind = this.pendingDraw;
-    if (!kind || !this.game) return;
+    if (!kind || !this.game || this.activeDialog?.type !== 'DRAW' || this.winnerName) return;
     const r = this.engine.drawCard(this.game, this.currentIndex, kind);
     this.game = r.state;
     this.pendingDraw = null;
@@ -569,6 +590,7 @@ export class Game {
           this.skipBanner = null;
           this.shownCard = null;
           this.pendingMove = null;
+          this.pendingDraw = null;
           this.prepareHandover();
           this.beginTurnIfSkipping();
         } else {
@@ -647,7 +669,9 @@ export class Game {
           state: this.game, botIdx: this.game.players.indexOf(p), board: this.catalog.board,
           actions: this.catalog.actions, propertyId: d.offer.propertyId, option: opt, diceCount: this.diceCount,
         });
-        if (accept) {
+        const coversRent = this.boardLayout !== 'marea' || opt.type !== 'ANNEX' ||
+          p.money - opt.annex.price >= this.annexReserve(this.currentIndex);
+        if (accept && coversRent) {
           if (!this.buyAllAnnexes()) this.acceptOffer();
         }
         else this.refuseOffer();

@@ -49,6 +49,7 @@
         <nav class="home-menu">
           <button id="btn-resume" class="btn primary wide" type="button" hidden>Continuă jocul</button>
           <button id="btn-new" class="btn primary wide" type="button">Joc nou</button>
+          <button id="btn-marea" class="btn primary wide" type="button">MAREA PRIVATIZARE</button>
           <button id="btn-rapid" class="btn rapid wide" type="button">MOD RAPID</button>
           <button id="btn-new-dice" class="btn yellow wide" type="button">Joc nou cu 2 zaruri</button>
           <button id="btn-online" class="btn yellow wide" type="button">JOC ONLINE</button>
@@ -96,7 +97,7 @@
     <section id="scr-online" class="screen" data-screen="online">
       <header class="subbar">
         <button class="btn ghost small" type="button" data-back="home">← Înapoi</button>
-        <h2>JOC ONLINE</h2>
+        <h2 id="online-title">JOC ONLINE</h2>
       </header>
       <div class="online-layout scroll">
         <div class="online-form">
@@ -124,9 +125,10 @@
     <!-- LOBBY -->
     <section id="scr-lobby" class="screen" data-screen="lobby">
       <div class="lobby scroll">
+        <p id="lobby-mode" class="label" hidden>MAREA PRIVATIZARE</p>
         <p class="label">Cod cameră</p>
         <p id="lobby-code" class="room-code">----</p>
-        <p class="hint">Spune-le prietenilor acest cod ca să intre la masă.</p>
+        <p id="lobby-invite" class="hint">Spune-le prietenilor acest cod ca să intre la masă.</p>
         <div id="lobby-seats" class="lobby-seats"></div>
         <div class="lobby-actions">
           <button id="btn-add-bot" class="btn ghost" type="button">+ ROBOT</button>

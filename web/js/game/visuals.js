@@ -11,6 +11,12 @@ const C = {
 
 /** Firma: iconița emoji, culoarea de brand și numele scurt (fără S.C./S.A./S.R.L.). */
 const PROPERTY = {
+  kandia: ['🍫', C.MAGENTA, 'KANDIA'],
+  unu_iunie: ['🧵', C.MAGENTA, '1 IUNIE'],
+  comtim: ['🐖', C.MAGENTA, 'COMTIM'],
+  azur: ['🖌', C.MAGENTA, 'AZUR'],
+  umt: ['⚙', C.MAGENTA, 'UMT'],
+  solventul: ['🧪', C.MAGENTA, 'SOLVENTUL'],
   continental: ['🏨', C.NAVY, 'CONTINENTAL'],
   ambasador: ['🛎', C.CRIMSON, 'AMBASADOR'],
   maria: ['🍽', C.MAGENTA, 'MARIA'],

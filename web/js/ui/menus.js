@@ -31,6 +31,7 @@ function cycleSeat(seat) {
 
 export function initHome(app) {
   $('btn-new').addEventListener('click', () => app.openSetup(1));
+  $('btn-marea').addEventListener('click', () => openMarea(app));
   $('btn-rapid').addEventListener('click', () => app.openSetup(1, true));
   $('btn-new-dice').addEventListener('click', () => app.openSetup(2));
   $('btn-online').addEventListener('click', () => app.openOnline());
@@ -59,6 +60,22 @@ export function closeModal() {
   root.hidden = true;
   clear(root);
   root.onclick = null;
+}
+
+function openMarea(app) {
+  const choices = [
+    ['Joc normal', 'primary', () => app.openSetup(1, false, true)],
+    ['Mod rapid', 'rapid', () => app.openSetup(1, true, true)],
+    ['Joc cu două zaruri', 'yellow', () => app.openSetup(2, false, true)],
+    ['Joc online', 'yellow', () => app.openOnline(true)],
+  ];
+  openModal(app, el('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'marea-title' },
+    el('h3', { id: 'marea-title', text: 'MAREA PRIVATIZARE' }),
+    el('div', { class: 'mode-options' }, choices.map(([label, style, choose]) =>
+      el('button', { class: `btn ${style} wide`, type: 'button', text: label, onclick: () => { closeModal(); choose(); } }),
+    )),
+    el('div', { class: 'actions' }, el('button', { class: 'btn ghost', type: 'button', text: 'Înapoi', onclick: closeModal })),
+  ));
 }
 
 function openAbout(app) {
@@ -128,18 +145,21 @@ export class SetupView {
 
     const dice = $('setup-dice');
     clear(dice);
-    for (const n of [1, 2]) {
+    for (const n of this.marea ? [this.dice] : [1, 2]) {
       dice.append(el('button', {
         class: `btn chip ${n === this.dice ? 'chip-on' : ''}`, type: 'button', text: n === 1 ? '1 zar' : '2 zaruri',
+        disabled: this.marea || undefined,
         onclick: () => { this.dice = n; this.render(); },
       }));
     }
 
     const board = $('setup-board');
     clear(board);
-    for (const [key, label] of [['old', 'Tablă veche'], ['new', 'Tablă nouă']]) {
+    const layouts = this.marea ? [['marea', 'MAREA PRIVATIZARE']] : [['old', 'Tablă veche'], ['new', 'Tablă nouă']];
+    for (const [key, label] of layouts) {
       board.append(el('button', {
-        class: `btn chip ${key === this.layout ? 'chip-on' : ''}`, type: 'button', text: label,
+        class: `btn chip ${this.marea || key === this.layout ? 'chip-on' : ''}`, type: 'button', text: label,
+        disabled: this.marea || undefined,
         onclick: () => { this.layout = key; this.render(); },
       }));
     }
@@ -207,7 +227,7 @@ export class SetupView {
     const config = { count: this.count, money: this.money, time: this.time, dice: this.dice, layout: this.layout, seats: this.seats.map((s) => ({ ...s })) };
     storage.saveSetup(config);
     const setup = this.active().map((s) => ({ name: s.name.trim(), colorKey: s.colorKey, isBot: s.isBot, catalin: s.catalin, easy: s.easy }));
-    this.app.startLocal(setup, this.money, this.time, this.dice, this.layout, !!this.rapidMode);
+    this.app.startLocal(setup, this.money, this.time, this.dice, this.marea ? 'marea' : this.layout, !!this.rapidMode);
   }
 }
 
@@ -301,6 +321,10 @@ export function renderLobby(app) {
   if (!ctl) return;
   const info = ctl.info;
   $('lobby-code').textContent = ctl.code ?? '----';
+  $('lobby-mode').hidden = ctl.boardLayout !== 'marea';
+  $('lobby-invite').textContent = ctl.boardLayout === 'marea'
+    ? 'Prietenii intră cu acest cod din MAREA PRIVATIZARE → Joc online.'
+    : 'Spune-le prietenilor acest cod ca să intre la masă.';
   const seats = $('lobby-seats');
   clear(seats);
   for (let i = 0; i < 4; i++) {

@@ -403,6 +403,10 @@ input { -webkit-user-select: text; user-select: text; }
 
 /* fișa acțiunii */
 .sheet-pages { position: relative; display: flex; align-items: center; justify-content: center; min-height: 240px; }
+.mode-options { display: grid; gap: 8px; margin-block: 12px; }
+.sheet-text { width: min(100%, 22rem); padding: 1rem; border: 1px solid var(--line, #9b7970); border-radius: 12px; text-align: center; }
+.sheet-text p { margin: .5rem 0 0; }
+.sheet-pages:has(.sheet-text) { min-height: 0; }
 .sheet-pages img { max-width: 100%; max-height: 62dvh; border-radius: 12px; box-shadow: 0 10px 24px rgba(0,0,0,.5); }
 .sheet-nav { display: flex; align-items: center; gap: 10px; justify-content: space-between; margin-top: 8px; }
 .dots { display: flex; gap: 6px; justify-content: center; }

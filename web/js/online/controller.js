@@ -58,11 +58,12 @@ export class OnlineController {
    * @param {object} backend  FirebaseRoomBackend sau un backend în memorie (teste)
    * @param {import('../game/game.js').Game} game
    */
-  constructor(backend, game, { hostDie = () => rollDie(), newCode = () => RoomCode.generate() } = {}) {
+  constructor(backend, game, { hostDie = () => rollDie(), newCode = () => RoomCode.generate(), boardLayout = 'old' } = {}) {
     this.backend = backend;
     this.game = game;
     this.hostDie = hostDie;
     this.newCode = newCode;
+    this.boardLayout = boardLayout;
 
     this.code = null;
     this.me = null;
@@ -99,6 +100,11 @@ export class OnlineController {
     return this.code !== null && this.me !== null;
   }
 
+  /** Codurile afișate rămân scurte. Cheile Marea sunt separate de camerele compatibile Android. */
+  roomKey(code) {
+    return this.boardLayout === 'marea' ? `MP-${code}` : code;
+  }
+
   /** Apelat după un timp fără răspuns: oprește așteptarea și explică posibila cauză. */
   timeoutIfBusy() {
     if (!this.busy) return;
@@ -119,7 +125,7 @@ export class OnlineController {
       return;
     }
     this.peekedCode = c;
-    this.backend.peekInfo(c).then((room) => {
+    this.backend.peekInfo(this.roomKey(c)).then((room) => {
       if (this.peekedCode !== c) return;
       this.takenColors = new Set((room?.players ?? []).map((p) => p.color));
       this.emit();
@@ -142,7 +148,7 @@ export class OnlineController {
   async tryCreate(name, color, attemptsLeft) {
     const c = this.newCode();
     try {
-      const player = await this.backend.createRoom(c, name, color);
+      const player = await this.backend.createRoom(this.roomKey(c), name, color);
       this.code = c;
       this.me = player;
       this.busy = false;
@@ -166,7 +172,7 @@ export class OnlineController {
     this.error = null;
     this.emit();
     try {
-      const player = await this.backend.joinRoom(c, name.trim(), color);
+      const player = await this.backend.joinRoom(this.roomKey(c), name.trim(), color);
       this.code = c;
       this.me = player;
       this.busy = false;
@@ -180,7 +186,7 @@ export class OnlineController {
   addBot() {
     const c = this.code;
     if (!c || !this.isHost || this.starting) return;
-    this.backend.addBot(c, this.me.id).catch((e) => {
+    this.backend.addBot(this.roomKey(c), this.me.id).catch((e) => {
       this.error = e.message;
       this.emit();
     });
@@ -192,12 +198,12 @@ export class OnlineController {
     const room = this.info;
     if (!c || !room || !this.isHost || this.starting || room.stage !== RoomStage.LOBBY || !RoomRules.canStart(room)) return;
     const setup = room.players.map((p) => ({ id: p.id, name: p.name, colorKey: p.color, isBot: p.role === RoomRole.BOT }));
-    this.game.startGame(setup);
+    this.game.startGame(setup, null, null, 1, this.boardLayout);
     this.game.enterOnlineHost(this.me.id);
     this.starting = true;
     this.lastPublished = SnapshotCodec.encode(this.game.snapshot());
     const id = this.me.id;
-    return this.backend.publishState(c, this.lastPublished, id, room.players).then((committed) => {
+    return this.backend.publishState(this.roomKey(c), this.lastPublished, id, room.players).then((committed) => {
       if (!committed) throw new RoomException('Camera s-a schimbat. Încearcă din nou.');
     }).catch((e) => {
       if (this.code !== c || this.me?.id !== id || !this.starting) return;
@@ -217,7 +223,7 @@ export class OnlineController {
     const json = SnapshotCodec.encode(snap);
     if (json === this.lastPublished) return;
     this.lastPublished = json;
-    this.backend.publishState(c, json, this.me.id).catch((e) => {
+    this.backend.publishState(this.roomKey(c), json, this.me.id).catch((e) => {
       if (this.code === c && this.lastPublished === json) this.lastPublished = null;
       console.error('Publicare eșuată', e);
     });
@@ -234,7 +240,7 @@ export class OnlineController {
     let infoKey;
     let appliedState;
     this.closers.push(
-      this.backend.listenInfo(c, (room, json) => {
+      this.backend.listenInfo(this.roomKey(c), (room, json) => {
         if (this.code !== c || this.leaving) return;
         const nextInfoKey = JSON.stringify(room);
         const changed = infoKey !== nextInfoKey;
@@ -263,7 +269,7 @@ export class OnlineController {
             this.game.enterOnlineHost(seat.id);
             this.unsubGame = this.game.onChange(() => this.publishNow());
             this.publishNow();
-            this.unsubIntents = this.backend.listenIntents(c, (intent) => this.onIntent(intent), seat.id);
+            this.unsubIntents = this.backend.listenIntents(this.roomKey(c), (intent) => this.onIntent(intent), seat.id);
             this.emit();
           } else if (changed) {
             this.syncBots();
@@ -276,7 +282,7 @@ export class OnlineController {
           if (typeof json !== 'string' || !this.applyState(json)) return;
           appliedState = json;
           this.me = seat;
-          this.game.enterOnlineGuest(seat.id, (event) => this.backend.sendIntent(c, IntentCodec.encode(event)));
+          this.game.enterOnlineGuest(seat.id, (event) => this.backend.sendIntent(this.roomKey(c), IntentCodec.encode(event)));
           this.inGame = true;
           this.emit();
         } else if (json !== appliedState && typeof json === 'string' && this.applyState(json)) {
@@ -331,7 +337,7 @@ export class OnlineController {
     this.lastPublished = null;
     this.emit();
     try {
-      await this.backend.leaveRoom(code, me.id, finalState);
+      await this.backend.leaveRoom(this.roomKey(code), me.id, finalState);
     } catch (e) {
       this.error = e.message || 'Ieșirea din cameră nu a fost confirmată.';
     } finally {

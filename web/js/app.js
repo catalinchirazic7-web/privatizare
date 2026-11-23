@@ -33,6 +33,7 @@ const app = {
   game: null,
   gameScreen: null,
   online: null,
+  onlineControllers: new Map(),
   screen: null,
   setupView: null,
   onlineView: null,
@@ -97,26 +98,36 @@ const app = {
   /* ---------- meniuri ---------- */
 
   /** @param {1|2} dice  modul de joc ales din meniu: un zar sau două zaruri */
-  openSetup(dice = 1, rapid = false) {
+  openSetup(dice = 1, rapid = false, marea = false) {
     this.requestLandscape();
     this.setupView.dice = dice;
     this.setupView.rapidMode = rapid;
+    this.setupView.marea = marea;
     this.show('setup');
   },
 
-  async openOnline() {
-    if (!this.online) {
-      try {
-        const { FirebaseRoomBackend } = await import('./online/firebaseBackend.js');
-        this.online = new OnlineController(FirebaseRoomBackend.connect(), this.game);
-        this.online.onChange(() => this.onOnlineChange());
-      } catch (e) {
-        this.toast(`Serviciul online nu a putut porni: ${e.message}`);
-        return;
-      }
+  async openOnline(marea = false) {
+    const layout = marea ? 'marea' : 'old';
+    if (this.online?.boardLayout !== layout && (this.online?.busy || this.online?.isInRoom || this.online?.leaving)) {
+      this.toast('Așteaptă închiderea conexiunii la masa anterioară.');
+      return;
     }
+    try {
+      const { FirebaseRoomBackend } = await import('./online/firebaseBackend.js');
+      if (!this.onlineControllers.has(layout)) {
+        const ctl = new OnlineController(FirebaseRoomBackend.connect(), this.game, { boardLayout: layout });
+        ctl.onChange(() => { if (this.online === ctl) this.onOnlineChange(); });
+        this.onlineControllers.set(layout, ctl);
+      }
+      this.online = this.onlineControllers.get(layout);
+    } catch (e) {
+      this.toast(`Serviciul online nu a putut porni: ${e.message}`);
+      return;
+    }
+    $('online-title').textContent = marea ? 'MAREA PRIVATIZARE · JOC ONLINE' : 'JOC ONLINE';
     this.requestLandscape();
     this.show('online');
+    this.online.peekRoom($('online-code').value);
   },
 
   onOnlineChange() {
@@ -140,8 +151,8 @@ const app = {
   startLocal(setup, money, time, diceCount = 1, boardLayout = 'old', rapidMode = false) {
     sound.unlock();
     this.requestLandscape();
-    this.gameScreen.setLayout(boardLayout);
     this.game.startGame(setup, money, time, diceCount, boardLayout, rapidMode);
+    this.gameScreen.setLayout(this.game.boardLayout);
     this.gameScreen.board.resetPawns();   // joc nou: pionii pornesc instant de la start
     this.enterGame(false, true);
   },
@@ -239,7 +250,7 @@ async function boot() {
   app.game = new Game(app.catalog, { botDie: (luck = 0) => rollBotDie(Math.random, luck) });
   app.gameScreen = new GameScreen({
     root: $('scr-game'),
-    catalog: app.catalog,
+    catalog: app.game.catalog,
     game: app.game,
     onExit: () => app.exitGame(),
   });

@@ -363,7 +363,7 @@ export class GameScreen {
     skip.textContent = g.skipBanner ?? '';
 
     const wait = this.$('wait-banner');
-    const drawHint = g.pendingDraw && myTurn && !g.winnerName
+    const drawHint = dialog?.type === 'DRAW' && g.boardLayout !== 'marea' && myTurn && !g.winnerName
       ? `Atinge pachetul ${g.pendingDraw} de pe tablă ca să tragi un cartonaș`
       : null;
     const waitText = g.isOnline && !myTurn ? `Așteaptă: ${current?.name ?? ''} își joacă tura…` : drawHint;
@@ -400,7 +400,7 @@ export class GameScreen {
       activePlayerId: current?.id ?? null,
       landedTile: previewTile ?? this.landedTile,
       highlightColor: current ? PAWN_BY_KEY[current.color].hex : '#ffd54f',
-      drawKind: dialog?.type === 'DRAW' && myTurn && !current?.isBot ? dialog.kind.toLowerCase() : null,
+      drawKind: dialog?.type === 'DRAW' && g.boardLayout !== 'marea' && myTurn && !current?.isBot ? dialog.kind.toLowerCase() : null,
       propertyTiles,
       stretch: this.stretch,
       tilt: this.tilt,
@@ -493,7 +493,7 @@ export class GameScreen {
     for (const [propId, level] of owned) {
       const prop = actions[propId];
       const v = propertyVisual(propId, prop.name);
-      const iconImg = el('img', { alt: '', src: propertyIconPath(propId), onerror: (e) => e.target.replaceWith(el('span', { class: 'ico-emoji', text: v.icon })) });
+      const iconImg = prop.textOnly ? el('span', { class: 'ico-emoji', text: v.icon }) : el('img', { alt: '', src: propertyIconPath(propId), onerror: (e) => e.target.replaceWith(el('span', { class: 'ico-emoji', text: v.icon })) });
       const row = el('div', { class: 'prop-row' },
         iconImg,
         el('div', { class: 'grow' },
@@ -506,8 +506,9 @@ export class GameScreen {
       if (detailed) {
         for (const annex of prop.annexes) {
           const owned2 = annex.index <= level;
+          const label = annex.name ? `Anexa ${annex.index} · ${annex.name}` : `Anexa ${annex.index}`;
           box.append(el('div', { class: 'annex-line' },
-            owned2 ? `Anexa ${annex.index}: profit +${fmt(annex.profit)} ECU (deținută)` : `Anexa ${annex.index}: de cumpărat (${fmt(annex.price)} ECU)`));
+            owned2 ? `${label}: profit +${fmt(annex.profit)} ECU (deținută)` : `${label}: de cumpărat (${fmt(annex.price)} ECU)`));
         }
         if (canBuyAnnexFor === propId) {
           const next = nextAnnex(prop, level);
@@ -776,7 +777,9 @@ export class GameScreen {
       info = tileHint(tile) ?? '';
     }
     const story = prop ? PROPERTY_STORIES[prop.id] : null;
-    const iconImg = prop ? el('img', { alt: '', src: propertyIconPath(prop.id), onerror: (e) => e.target.replaceWith(el('span', { text: v.icon })) }) : null;
+    const iconImg = prop?.textOnly ? el('span', { text: v.icon })
+      : prop ? el('img', { alt: '', src: propertyIconPath(prop.id), onerror: (e) => e.target.replaceWith(el('span', { text: v.icon })) })
+        : null;
     box.classList.toggle('effects-off', !this.effectsEnabled);
     box.style.setProperty('--accent', v.accent);
     clear(box);
@@ -913,12 +916,15 @@ export class GameScreen {
         const allPrice = remaining.reduce((sum, annex) => sum + annex.price, 0);
         const v = propertyVisual(prop.id, prop.name);
         return this.dialogBox({
-          title: isTitle ? prop.name : `Anexa ${d.offer.option.annex.index} — ${prop.name}`,
-          icon: propertyIconPath(prop.id),
+          title: isTitle ? prop.name : `${d.offer.option.annex.name ?? `Anexa ${d.offer.option.annex.index}`} — ${prop.name}`,
+          icon: prop.textOnly ? null : propertyIconPath(prop.id),
           fallbackIcon: v.icon,
           accent: v.accent,
           body: [
             this.propertyInfo(prop),
+            prop.textOnly && isTitle ? el('p', { class: 'purchase-annexes',
+              text: `${prop.annexes.length} anexe · ${prop.annexes.map((annex) => annex.name).join(' • ')}`,
+            }) : null,
             el('p', { text: `Cost achiziție: ${fmt(price)} ECU` }),
             remaining.length > 1 ? el('div', { class: 'rapid-cards' }, ...remaining.map((annex, idx) => { const count = idx + 1; const cost = remaining.slice(0, count).reduce((sum, item) => sum + item.price, 0); return el('div', { class: 'rapid-card' }, el('strong', { text: `${count} ${count === 1 ? 'anexă' : 'anexe'}` }), el('span', { text: `${fmt(cost)} ECU` }), el('span', { text: `Rămân: ${buyer.money >= cost ? fmt(buyer.money - cost) + ' ECU' : 'fonduri insuficiente'}` }), el('span', { text: `Chirie: ${fmt(calculateRent(prop, annex.index))} ECU` })); })) : null,
             remaining.length > 1 ? el('p', { class: 'rapid-offer', text: `Mod rapid: ${remaining.length} anexe rămase, în total ${fmt(allPrice)} ECU.` }) : null,
@@ -958,7 +964,7 @@ export class GameScreen {
         const v = propertyVisual(d.property.id, d.property.name);
         return this.dialogBox({
           title: `Ai oprit la ${d.property.name}!`,
-          icon: propertyIconPath(d.property.id),
+          icon: d.property.textOnly ? null : propertyIconPath(d.property.id),
           fallbackIcon: v.icon,
           accent: v.accent,
           body: lines,
@@ -1198,7 +1204,9 @@ export class GameScreen {
     this.sheetPage = Math.min(Math.max(0, this.sheetPage), pages - 1);
 
     if (rebuild || this.modalKey !== `sheet:${id}`) {
-      const img = el('img', { alt: prop.name, src: actionArtPath(id, 0) });
+      const art = prop.textOnly
+        ? el('div', { class: 'sheet-text' }, el('strong'), el('p'))
+        : el('img', { alt: prop.name, src: actionArtPath(id, 0) });
       const dots = el('div', { class: 'dots' });
       const prev = el('button', { class: 'btn ghost small', type: 'button', text: '‹', onclick: () => this.turnSheet(-1) });
       const nextBtn = el('button', { class: 'btn ghost small', type: 'button', text: '›', onclick: () => this.turnSheet(1) });
@@ -1209,7 +1217,7 @@ export class GameScreen {
           el('span', { text: prop.name }),
           el('span', { class: 'spacer' }),
           el('button', { class: 'btn ghost small', type: 'button', text: '✕', onclick: () => this.closeSheet() })),
-        el('div', { class: 'sheet-pages' }, img),
+        el('div', { class: 'sheet-pages' }, art),
         el('div', { class: 'sheet-nav' }, prev, dots, nextBtn),
         info,
         el('div', { class: 'actions' }, buy),
@@ -1218,20 +1226,28 @@ export class GameScreen {
     }
     const modal = this.modalRoot.querySelector('.modal');
     if (!modal) return;
-    const img = modal.querySelector('.sheet-pages img');
-    img.src = actionArtPath(id, this.sheetPage);
-    img.alt = this.sheetPage === 0 ? `Titlu ${prop.name}` : `Anexa ${this.sheetPage}`;
+    const annex = this.sheetPage > 0 ? prop.annexes[this.sheetPage - 1] : null;
+    if (prop.textOnly) {
+      modal.querySelector('.sheet-text strong').textContent = annex?.name ?? 'Titlu de proprietate';
+      modal.querySelector('.sheet-text p').textContent = annex
+        ? `Anexa ${annex.index} din ${prop.annexes.length}`
+        : `${prop.annexes.length} anexe`;
+    } else {
+      const img = modal.querySelector('.sheet-pages img');
+      img.src = actionArtPath(id, this.sheetPage);
+      img.alt = annex?.name ?? (annex ? `Anexa ${annex.index}` : `Titlu ${prop.name}`);
+    }
     const dots = modal.querySelector('.dots');
     clear(dots);
     for (let i = 0; i < pages; i++) dots.append(el('i', { class: i === this.sheetPage ? 'on' : '' }));
     const info = modal.querySelector('#sheet-info');
-    info.textContent = this.sheetPage === 0
+    info.textContent = !annex
       ? `Titlu de proprietate · cost ${fmt(prop.titlePrice)} ECU · taxă ${fmt(prop.titleTax)} ECU` +
         (owner ? ` · proprietar: ${owner.name}` : ' · De vânzare')
       : (() => {
-          const a = prop.annexes[this.sheetPage - 1];
-          const own = owner && a.index <= level;
-          return `Anexa ${a.index}: ${fmt(a.price)} ECU · profit +${fmt(a.profit)} ECU${own ? ' · DEȚINUTĂ' : ''}`;
+          const own = owner && annex.index <= level;
+          const label = prop.textOnly ? 'Cost' : annex.name ?? `Anexa ${annex.index}`;
+          return `${label}: ${fmt(annex.price)} ECU · profit +${fmt(annex.profit)} ECU${own ? ' · DEȚINUTĂ' : ''}`;
         })();
     const buy = modal.querySelector('#sheet-buy');
     buy.hidden = !next;
@@ -1362,18 +1378,24 @@ export class GameScreen {
   pump() {
     if (!this.active) return;
     const g = this.game;
-    const botKey = `${g.version}|${this.pawnsBusy}|${this.die.busy}|${g.hasBotAction}`;
+    const needsAction = g.hasBotAction || g.autoDrawReady;
+    const botKey = `${g.version}|${this.pawnsBusy}|${this.die.busy}|${needsAction}`;
     if (botKey !== this.botKey) {
       this.botKey = botKey;
       clearTimeout(this.botTimer);
       this.botTimer = null;
-      if (g.hasBotAction && !this.pawnsBusy && !this.die.busy) {
+      if (needsAction && !this.pawnsBusy && !this.die.busy) {
         const delay = g.activeDialog?.type === 'CARD' ? CARD_SHOW_MS
           : g.skipBanner && g.currentPlayer?.isBot ? SKIP_SHOW_MS
           : BOT_DELAY_MS;
         this.botTimer = setTimeout(() => {
           this.botTimer = null;
-          if (!g.hasBotAction || this.pawnsBusy || this.die.busy || this.rollHold) return;
+          if (this.pawnsBusy || this.die.busy || this.rollHold) return;
+          if (g.autoDrawReady) {
+            g.drawCard();
+            return;
+          }
+          if (!g.hasBotAction) return;
           const bot = g.currentPlayer;
           // robotul ușor: aruncarea lui stă la dispoziția omului ca să o poată rearunca
           const botRolls = g.easyMode && !g.activeDialog && !g.turnAwaitingEnd && !g.isGuest && !!bot?.easy;
