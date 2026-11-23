@@ -4,7 +4,7 @@
 // - videourile și Firebase nu se cache-uiesc (sunt mari sau sunt live).
 // La o schimbare de cod, mărește VERSION.
 
-const VERSION = 'privatizare-web-v1.08';
+const VERSION = 'privatizare-web-v1.08-4k';
 
 const SHELL = [
   './',
@@ -36,7 +36,7 @@ const SHELL = [
   './data/board.json',
   './data/board_new.json',
   './data/marea.json',
-  './assets/tabla-marea-privatizare.png',
+  './assets/tabla-marea-privatizare-4k.webp',
   './data/actions.json',
   './data/cards.json',
   './img/logo_privatizare.webp',

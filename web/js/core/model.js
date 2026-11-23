@@ -38,7 +38,7 @@ export const TILE = Object.freeze({
 export const BOARD_LAYOUTS = Object.freeze({
   old: { image: 'img/tabla_privatizare.webp', aspect: 1600 / 1131 },
   new: { image: 'img/tabla_noua.webp', aspect: 1600 / 1073 },
-  marea: { image: 'assets/tabla-marea-privatizare.png', aspect: 1531 / 1027 },
+  marea: { image: 'assets/tabla-marea-privatizare-4k.webp', aspect: 3840 / 2576 },
 });
 
 export async function loadCatalog(baseUrl = './data/') {
@@ -86,7 +86,7 @@ export function buildCatalog(boardJson, actionsJson, cardsJson, boardNewJson = n
 }
 
 function mareaLayout(json) {
-  const width = 1531, height = 1027;
+  const { width, height } = json.coordinateSpace;
   return {
     ...BOARD_LAYOUTS.marea,
     positions: json.centers.map(([x, y]) => [x / width, y / height]),

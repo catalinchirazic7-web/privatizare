@@ -239,6 +239,12 @@ export class GameScreen {
   start({ online = null } = {}) {
     this.active = true;
     this.online = online;
+    const marea = this.game.boardLayout === 'marea';
+    if (this.mareaView !== marea) {
+      this.mareaView = marea;
+      this.stretch = !marea;
+      this.tilt = !marea;
+    }
     const humans = (this.game.game?.players ?? []).filter((p) => !p.isBot);
     this.resultPlayerName = this.game.isOnline
       ? humans.find((p) => p.id === this.game.myPlayerId)?.name ?? null

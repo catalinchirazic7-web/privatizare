@@ -132,7 +132,9 @@ export class BoardView {
 
   /** Model nou din starea jocului. Pionii care s-au mutat pornesc animația. */
   setModel(m) {
+    const stretchChanged = 'stretch' in m && m.stretch !== this.model.stretch;
     Object.assign(this.model, m);
+    if (stretchChanged) this.resize();
     const seen = new Set();
     for (const p of this.model.players) {
       seen.add(p.id);
@@ -454,9 +456,12 @@ export class BoardView {
   }
 
   draw() {
+    if (this.canvas.clientWidth &&
+        (this.canvas.clientWidth !== this.layout.cssW || this.canvas.clientHeight !== this.layout.cssH)) {
+      this.resize();
+    }
     const { ctx, layout } = this;
     const { dpr, cssW, cssH } = layout;
-    if (this.canvas.clientWidth && (this.canvas.clientWidth !== cssW || this.canvas.clientHeight !== cssH)) this.resize();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, cssW, cssH);
 
@@ -464,7 +469,13 @@ export class BoardView {
     ctx.setTransform(dpr * t.A, 0, 0, dpr * t.A, dpr * t.E, dpr * t.F);
     const { bx, by, bw, bh } = layout;
 
-    if (this.boardImg) {
+    if (this.boardImg && this.catalog.layout === 'marea') {
+      // Scanul 4K se prelevează direct, inclusiv la zoom, cu paleta originală.
+      ctx.save();
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(this.boardImg, bx, by, bw, bh);
+      ctx.restore();
+    } else if (this.boardImg) {
       // pânza tablei: culori mai vii, verdele mai natural (fără să se schimbe desenul)
       // Filtrul ?i umbra se calculeaza o singura data, nu la fiecare cadru.
       const margin = 32;
