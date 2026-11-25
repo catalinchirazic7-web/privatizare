@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://joc-privatizare.ro/sitemap.xml
