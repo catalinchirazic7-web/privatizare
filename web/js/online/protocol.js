@@ -10,6 +10,14 @@ export const MAX_PLAYERS = 4;
 export const MIN_PLAYERS = 2;
 const SEATS = ['p0', 'p1', 'p2', 'p3'];
 
+// Modul ales de gazdă la crearea camerei. Marea are chei de cameră separate (MP-).
+export const ROOM_MODES = Object.freeze({
+  classic: { label: 'Joc clasic', layout: 'new', dice: 1, rapid: false },
+  marea: { label: 'MAREA PRIVATIZARE', layout: 'marea', dice: 1, rapid: false },
+  rapid: { label: 'MOD RAPID', layout: 'new', dice: 1, rapid: true },
+  dice2: { label: 'Joc cu 2 zaruri', layout: 'new', dice: 2, rapid: false },
+});
+
 export class RoomException extends Error {}
 
 /* ---------- Cod de cameră ---------- */
@@ -55,7 +63,7 @@ export const RoomRules = {
   toMap(info) {
     const players = {};
     for (const p of info.players) players[p.id] = { name: p.name, color: p.color, role: p.role };
-    return { stage: info.stage, hostId: info.hostId, players };
+    return { stage: info.stage, hostId: info.hostId, players, mode: info.mode ?? 'classic' };
   },
   /** Citește info din valoarea returnată de baza de date. Null dacă lipsește sau e stricată. */
   fromMap(raw) {
@@ -71,7 +79,8 @@ export const RoomRules = {
       }
     }
     players.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-    return { stage: raw.stage, hostId: raw.hostId, players };
+    const mode = ROOM_MODES[raw.mode] ? raw.mode : 'classic';
+    return { stage: raw.stage, hostId: raw.hostId, players, mode };
   },
 };
 

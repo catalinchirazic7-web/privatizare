@@ -32,9 +32,9 @@ export class FirebaseRoomBackend {
   }
 
   /** Creează camera; gazda e pe locul p0. Eșuează dacă există deja. */
-  async createRoom(code, hostName, hostColor) {
+  async createRoom(code, hostName, hostColor, mode = 'classic') {
     const host = { id: 'p0', name: hostName, color: hostColor, role: RoomRole.HOST };
-    const info = { stage: RoomStage.LOBBY, hostId: 'p0', players: [host] };
+    const info = { stage: RoomStage.LOBBY, hostId: 'p0', players: [host], mode };
     const res = await runTransaction(this.infoRef(code), (cur) => {
       if (cur !== null) return undefined;      // abort: codul există deja
       return RoomRules.toMap(info);

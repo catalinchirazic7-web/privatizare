@@ -3,7 +3,7 @@
 //  - Gazda rulează motorul: primește intențiile, le aplică, apoi publică starea oficială.
 //  - Oaspetele trimite doar intenții și afișează starea primită.
 
-import { RoomCode, RoomException, RoomRole, RoomRules, RoomStage, IntentCodec, SnapshotCodec } from './protocol.js';
+import { ROOM_MODES, RoomCode, RoomException, RoomRole, RoomRules, RoomStage, IntentCodec, SnapshotCodec } from './protocol.js';
 import { applyEvent } from './events.js';
 import { rollDie } from '../core/dice.js';
 
@@ -64,6 +64,7 @@ export class OnlineController {
     this.hostDie = hostDie;
     this.newCode = newCode;
     this.boardLayout = boardLayout;
+    this.marea = false;   // camera curentă are cheia Marea (MP-); se află la creare sau la intrare
 
     this.code = null;
     this.me = null;
@@ -102,7 +103,15 @@ export class OnlineController {
 
   /** Codurile afișate rămân scurte. Cheile Marea sunt separate de camerele compatibile Android. */
   roomKey(code) {
-    return this.boardLayout === 'marea' ? `MP-${code}` : code;
+    return this.marea ? `MP-${code}` : code;
+  }
+
+  /** Caută camera după cod: întâi cheia obișnuită, apoi cea Marea. Null dacă nu există. */
+  async findRoom(code) {
+    const plain = await this.backend.peekInfo(code);
+    if (plain) return { marea: false, info: plain };
+    const marea = await this.backend.peekInfo(`MP-${code}`);
+    return marea ? { marea: true, info: marea } : null;
   }
 
   /** Apelat după un timp fără răspuns: oprește așteptarea și explică posibila cauză. */
@@ -125,9 +134,9 @@ export class OnlineController {
       return;
     }
     this.peekedCode = c;
-    this.backend.peekInfo(this.roomKey(c)).then((room) => {
+    this.findRoom(c).then((found) => {
       if (this.peekedCode !== c) return;
-      this.takenColors = new Set((room?.players ?? []).map((p) => p.color));
+      this.takenColors = new Set((found?.info.players ?? []).map((p) => p.color));
       this.emit();
     });
   }
@@ -137,25 +146,26 @@ export class OnlineController {
     this.emit();
   }
 
-  createRoom(name, color) {
+  createRoom(name, color, mode = this.boardLayout === 'marea' ? 'marea' : 'classic') {
     if (this.busy || this.leaving) return;
     this.busy = true;
     this.error = null;
     this.emit();
-    return this.tryCreate(name.trim(), color, 5);
+    return this.tryCreate(name.trim(), color, mode, 5);
   }
 
-  async tryCreate(name, color, attemptsLeft) {
+  async tryCreate(name, color, mode, attemptsLeft) {
     const c = this.newCode();
+    this.marea = mode === 'marea';
     try {
-      const player = await this.backend.createRoom(this.roomKey(c), name, color);
+      const player = await this.backend.createRoom(this.roomKey(c), name, color, mode);
       this.code = c;
       this.me = player;
       this.busy = false;
       this.listenInfo(c);
       this.emit();
     } catch (e) {
-      if (/deja folosit/.test(e.message) && attemptsLeft > 1) this.tryCreate(name, color, attemptsLeft - 1);
+      if (/deja folosit/.test(e.message) && attemptsLeft > 1) this.tryCreate(name, color, mode, attemptsLeft - 1);
       else this.fail(e);
     }
   }
@@ -172,6 +182,7 @@ export class OnlineController {
     this.error = null;
     this.emit();
     try {
+      this.marea = (await this.findRoom(c))?.marea ?? false;
       const player = await this.backend.joinRoom(this.roomKey(c), name.trim(), color);
       this.code = c;
       this.me = player;
@@ -198,7 +209,8 @@ export class OnlineController {
     const room = this.info;
     if (!c || !room || !this.isHost || this.starting || room.stage !== RoomStage.LOBBY || !RoomRules.canStart(room)) return;
     const setup = room.players.map((p) => ({ id: p.id, name: p.name, colorKey: p.color, isBot: p.role === RoomRole.BOT }));
-    this.game.startGame(setup, null, null, 1, this.boardLayout);
+    const mode = ROOM_MODES[room.mode];
+    this.game.startGame(setup, null, null, mode.dice, mode.layout, mode.rapid);
     this.game.enterOnlineHost(this.me.id);
     this.starting = true;
     this.lastPublished = SnapshotCodec.encode(this.game.snapshot());

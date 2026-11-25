@@ -29,11 +29,11 @@ export class MemoryBackend {
     this.db = db;
   }
 
-  async createRoom(code, hostName, hostColor) {
+  async createRoom(code, hostName, hostColor, mode = 'classic') {
     const r = this.db.room(code);
     if (r.info !== null) throw new RoomException(`Codul ${code} este deja folosit.`);
     const host = { id: 'p0', name: hostName, color: hostColor, role: RoomRole.HOST };
-    r.info = RoomRules.toMap({ stage: RoomStage.LOBBY, hostId: 'p0', players: [host] });
+    r.info = RoomRules.toMap({ stage: RoomStage.LOBBY, hostId: 'p0', players: [host], mode });
     this.db.fire(`info:${code}`);
     return host;
   }

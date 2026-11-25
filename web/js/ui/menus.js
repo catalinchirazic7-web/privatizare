@@ -7,7 +7,7 @@ import { storage } from '../storage.js';
 import { sound } from '../audio.js';
 import { PAWN_COLORS, PAWN_BY_KEY } from '../core/model.js';
 import { STARTING_MONEY_STEP, maxCustomStartingMoney } from '../core/rules.js';
-import { RoomRole } from '../online/protocol.js';
+import { ROOM_MODES, RoomRole } from '../online/protocol.js';
 import { CONNECT_TIMEOUT_MS } from '../config.js';
 
 const $ = (id) => document.getElementById(id);
@@ -237,6 +237,7 @@ export class OnlineMenuView {
   constructor(app) {
     this.app = app;
     this.color = PAWN_COLORS[0].key;
+    this.mode = 'classic';   // modul pe care îl alege gazda la crearea camerei
     this.timeout = null;
     this.lastBusy = false;
     $('online-name').addEventListener('input', () => this.update());
@@ -278,6 +279,14 @@ export class OnlineMenuView {
         onclick: () => { this.color = c.key; this.render(); this.update(); },
       }, el('img', { src: c.img, alt: '', style: { opacity: isTaken ? 0.25 : 1 } })));
     }
+    const modes = $('online-mode');
+    clear(modes);
+    for (const [key, m] of Object.entries(ROOM_MODES)) {
+      modes.append(el('button', {
+        class: `btn chip ${key === this.mode ? 'chip-on' : ''}`, type: 'button', text: m.label,
+        onclick: () => { this.mode = key; this.render(); },
+      }));
+    }
     $('online-error').textContent = ctl?.error ?? '';
     $('online-status').textContent = ctl?.busy ? 'Se conectează…' : '';
     if (ctl?.busy && !this.lastBusy) {
@@ -300,7 +309,7 @@ export class OnlineMenuView {
     sound.unlock();
     this.app.requestLandscape();
     this.error('');
-    this.controller.createRoom($('online-name').value, this.color);
+    this.controller.createRoom($('online-name').value, this.color, this.mode);
   }
 
   join() {
@@ -321,10 +330,9 @@ export function renderLobby(app) {
   if (!ctl) return;
   const info = ctl.info;
   $('lobby-code').textContent = ctl.code ?? '----';
-  $('lobby-mode').hidden = ctl.boardLayout !== 'marea';
-  $('lobby-invite').textContent = ctl.boardLayout === 'marea'
-    ? 'Prietenii intră cu acest cod din MAREA PRIVATIZARE → Joc online.'
-    : 'Spune-le prietenilor acest cod ca să intre la masă.';
+  $('lobby-mode').hidden = false;
+  $('lobby-mode').textContent = ROOM_MODES[info?.mode ?? 'classic'].label;
+  $('lobby-invite').textContent = 'Spune-le prietenilor acest cod ca să intre la masă.';
   const seats = $('lobby-seats');
   clear(seats);
   for (let i = 0; i < 4; i++) {

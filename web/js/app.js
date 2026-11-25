@@ -125,6 +125,7 @@ const app = {
       return;
     }
     $('online-title').textContent = marea ? 'MAREA PRIVATIZARE · JOC ONLINE' : 'JOC ONLINE';
+    this.onlineView.mode = marea ? 'marea' : 'classic';
     this.requestLandscape();
     this.show('online');
     this.online.peekRoom($('online-code').value);

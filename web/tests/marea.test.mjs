@@ -158,9 +158,9 @@ test('online: camerele Marea și clasice sunt separate și noua gazdă păstreaz
   const classicGame = createGame();
   const host = new OnlineController(new MemoryBackend(db), hostGame, { boardLayout: 'marea', newCode: () => 'ABCD' });
   const guest = new OnlineController(new MemoryBackend(db), guestGame, { boardLayout: 'marea' });
-  const classic = new OnlineController(new MemoryBackend(db), classicGame, { newCode: () => 'ABCD' });
+  const classic = new OnlineController(new MemoryBackend(db), classicGame, { newCode: () => 'EFGH' });
   await host.createRoom('Ana', 'ROSU');
-  await classic.joinRoom('ABCD', 'Dan', 'ALBASTRU');
+  await classic.joinRoom('EFGH', 'Dan', 'ALBASTRU');
   assert.equal(classic.error, 'Camera nu există.');
   await classic.createRoom('Maria', 'ROSU');
   await guest.joinRoom('ABCD', 'Dan', 'ALBASTRU');
