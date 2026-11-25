@@ -24,7 +24,8 @@ export function applyEvent(vm, event, dieFor = (e) => e.value) {
   switch (event.t) {
     case EV.ROLL: {
       if (dialog || vm.turnAwaitingEnd) return false;
-      vm.roll(dieFor(event));
+      // gazda aruncă singură zarurile: două, dacă jocul are 2 zaruri
+      vm.roll(vm.diceCount === 2 ? [dieFor(event), dieFor(event)] : dieFor(event));
       return true;
     }
     case EV.BUY: {

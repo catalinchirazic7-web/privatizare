@@ -172,13 +172,8 @@
       <header class="subbar">
         <button class="btn ghost small" type="button" data-back="home">← Înapoi</button>
         <h2>Regulamentul jocului</h2>
-        <span class="spacer"></span>
-        <button id="rules-reset" class="btn ghost small" type="button">Reset</button>
       </header>
-      <p class="hint pad">Mărește cu două degete (sau rotița mouse-ului) și trage pagina ca să citești detaliile.</p>
-      <div id="rules-viewport" class="rules-viewport">
-        <img id="rules-img" src="img/regulament.jpg" alt="Regulamentul jocului Privatizare" draggable="false">
-      </div>
+      <div id="rules-body" class="rules-body scroll"></div>
     </section>
 
     <!-- GAME -->
@@ -256,8 +251,9 @@
     <p>Varianta web este gratuită și se joacă direct în browser, fără instalare. Poți juca local, cu prietenii, sau single-player contra roboților. Modul online te lasă să creezi o masă cu un cod de cameră, la care intră prietenii tăi.</p>
     <p>Jocul are patru moduri: Joc clasic; MAREA PRIVATIZARE, cu cele șase fabrici din Timișoara (Kandia, 1 Iunie, Azur, Solventul, UMT și Comtim); Mod Rapid; și Joc cu 2 zaruri, în care pasul pionului este suma celor două zaruri.</p>
 
+    <div id="seo-rules">
     <h2>Regulamentul jocului</h2>
-    <p>Regulamentul de mai jos urmează textul original „Regula de joc Privatizare”. Ce nu apare în text este explicat la sfârșit.</p>
+    <p>Regulamentul de mai jos urmează textul original „Regula de joc Privatizare”, completat cu regulile din joc.</p>
 
     <h3>Scopul jocului</h3>
     <p>Jocul se joacă în 4 persoane. Jocul continuă până rămâne un singur jucător, care se declară cel mai bun manager. Jocul se poate termina și după un timp determinat: câștigă cel care are cele mai multe valori în bani, adunate cu valoarea acțiunilor pe care le deține.</p>
@@ -273,8 +269,8 @@
     <ul>
       <li>Tabla de joc, cu căsuțe pentru obiectivele pe acțiuni care pot fi cumpărate, precum și căsuțele TELEX, LOTO, SPITAL și altele.</li>
       <li>Cartonașe cu acțiuni: 27 de obiective privatizate și 71 de acțiuni pentru anexele lor.</li>
-      <li>30 de cartonașe TELEX, de culoare albastră, cu sarcini care se citesc și se rezolvă pe rând.</li>
-      <li>18 cartonașe LOTO, de culoare roșie, cu sume câștigate sau pierdute.</li>
+      <li>Cartonașe TELEX, de culoare albastră, cu sarcini care se citesc și se rezolvă pe rând.</li>
+      <li>Cartonașe LOTO, de culoare roșie, cu sume câștigate sau pierdute.</li>
     </ul>
 
     <h3>Cum se joacă</h3>
@@ -314,8 +310,26 @@
     <h3>MAREA PRIVATIZARE</h3>
     <p>Modul MAREA PRIVATIZARE folosește o tablă proprie, cu fabricile din Timișoara: Kandia, 1 Iunie, Comtim, Azur, UMT și Solventul. Regulile de bază sunt cele de mai sus. Regulile specifice acestei table nu apar în regulamentul scanat, deci nu sunt transcrise aici.</p>
 
-    <h3>Ce lipsește din acest text</h3>
-    <p>Regulamentul scanat se oprește la regula despre taxele datorate proprietarilor de acțiuni. Regulile pentru cartonașele LOTO și TELEX sunt în text doar ca descriere generală. Regulile detaliate ale acestor cartonașe, procedura exactă a falimentului și regulile specifice Mării Privatizări nu sunt transcrise aici.</p>
+    <h3>Cartonașele LOTO și TELEX</h3>
+    <ul>
+      <li>LOTO: câștigi o sumă de la bancă (de exemplu 500, 1 000 sau 10 000 ECU), pierzi o sumă plătită băncii, sau nu se întâmplă nimic.</li>
+      <li>TELEX: taxa se plătește proprietarului, dacă e alt jucător, altfel băncii. Unele cartonașe îți încasează suma de la bancă, unul îți aduce 2 000 ECU de la fiecare jucător, iar altele îți iau zile de joc (sări peste zaruri).</li>
+    </ul>
+
+    <h3>Faliment</h3>
+    <ul>
+      <li>Dacă ai bani pentru datorie, o plătești și nu vinzi nimic.</li>
+      <li>Dacă nu ai, vinzi băncii acțiuni, la 80% din valoarea lor. Anexele se vând în ordine inversă: întâi ultima anexă, apoi restul, până la titlu.</li>
+      <li>Dacă nu mai ai ce vinde și nu acoperi datoria, falimentezi: ce-ți rămâne merge la creditor (sau la bancă) și ieși din joc.</li>
+    </ul>
+
+    <h3>MAREA PRIVATIZARE</h3>
+    <ul>
+      <li>Tabla are cele șase fabrici din Timișoara și este altă tablă decât cea clasică.</li>
+      <li>Cartonașul LOTO sau TELEX se trage automat pentru jucătorul la rând.</li>
+      <li>Robotul nu cumpără o anexă dacă i-ar scădea prea mult rezerva pentru chiriile posibile. Jucătorii nu sunt limitați de această regulă.</li>
+    </ul>
+    </div>
   </section>
 
   <!-- Dialoguri de joc și informative -->

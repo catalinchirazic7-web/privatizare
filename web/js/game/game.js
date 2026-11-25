@@ -32,7 +32,7 @@ export class Game {
     this.currentIndex = 0;
     this.lastDice = [];
     this.rollNonce = 0;
-    this.diceCount = 1;       // 1 sau 2 zaruri (doar jocul local)
+    this.diceCount = 1;       // 1 sau 2 zaruri
     this.easyMode = false;    // în joc e un robot ușor: se poate rearunca zarul
     this.rerolled = false;    // s-a rearuncat deja în tura curentă (omul sau robotul)
     this.rentSeq = 0;
@@ -389,9 +389,9 @@ export class Game {
 
   /** Aruncă zarul și mută pionul. Blocat cât timp există un dialog activ. */
   roll(die) {
-    // un zar (număr) sau două (listă); online rămâne la un singur zar, ca în aplicația Android
+    // un zar (număr) sau două (listă); valoarea e totalul, ca în aplicația Android, iar zarurile vin în plus
     const dice = Array.isArray(die) ? die : [die];
-    if (this.guestSend((id) => ({ t: EV.ROLL, playerId: id, value: dice[0] }))) return;
+    if (this.guestSend((id) => ({ t: EV.ROLL, playerId: id, value: dice.reduce((a, b) => a + b, 0), dice: dice.length === 2 ? dice : null }))) return;
     const g = this.game;
     if (!g) return;
     if (this.activeDialog || this.turnAwaitingEnd || this.winnerName !== null) return;
@@ -425,7 +425,7 @@ export class Game {
 
   remainingAnnexes() {
     const o = this.offer;
-    if (!this.rapidMode || this.isOnline || o?.option.type !== 'ANNEX' || !this.game) return [];
+    if (!this.rapidMode || o?.option.type !== 'ANNEX' || !this.game) return [];
     const player = this.game.players.find((p) => p.id === o.playerId);
     const property = this.catalog.actions[o.propertyId];
     if (!player || !property || player.ownedProperties[o.propertyId] == null) return [];
@@ -439,6 +439,10 @@ export class Game {
     if (!Number.isInteger(count) || count < 1 || count > remaining.length) return false;
     const annexes = remaining.slice(0, count);
     const offer = this.offer;
+    if (this.isGuest) {   // oaspetele trimite câte o anexă; gazda o cumpără și publică rezultatul
+      for (let i = 0; i < count; i++) this.guestSend((id) => ({ t: EV.ANNEX, playerId: id, tile: this.tileOf(offer.propertyId) }));
+      return true;
+    }
     const buyer = this.game.players.find((p) => p.id === offer.playerId);
     const total = annexes.reduce((sum, a) => sum + a.price, 0);
     if (buyer.money < total) return false;

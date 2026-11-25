@@ -375,70 +375,7 @@ export function bindLobby(app) {
 /* ---------- Regulament ---------- */
 
 export function initRules() {
-  const vp = $('rules-viewport');
-  const img = $('rules-img');
-  const st = { scale: 1, x: 0, y: 0 };
-  const pointers = new Map();
-  let gesture = null;
-
-  const apply = () => {
-    img.style.transform = `translate(calc(-50% + ${st.x}px), calc(-50% + ${st.y}px)) scale(${st.scale})`;
-  };
-  // dimensiunile din layout (fără transformări): imaginea scalată nu iese din fereastră
-  const clamp = () => {
-    st.scale = Math.min(4, Math.max(1, st.scale));
-    const maxX = Math.max(0, (img.offsetWidth * st.scale - vp.clientWidth) / 2);
-    const maxY = Math.max(0, (img.offsetHeight * st.scale - vp.clientHeight) / 2);
-    st.x = Math.min(maxX, Math.max(-maxX, st.x));
-    st.y = Math.min(maxY, Math.max(-maxY, st.y));
-  };
-  const reset = () => {
-    st.scale = 1;
-    st.x = 0;
-    st.y = 0;
-    apply();
-  };
-  $('rules-reset').addEventListener('click', reset);
-
-  vp.addEventListener('pointerdown', (e) => {
-    vp.setPointerCapture?.(e.pointerId);
-    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (pointers.size === 2) {
-      const [a, b] = [...pointers.values()];
-      gesture = { dist: Math.hypot(a.x - b.x, a.y - b.y) || 1, scale: st.scale };
-    }
-  });
-  vp.addEventListener('pointermove', (e) => {
-    const p = pointers.get(e.pointerId);
-    if (!p) return;
-    const dx = e.clientX - p.x;
-    const dy = e.clientY - p.y;
-    p.x = e.clientX;
-    p.y = e.clientY;
-    if (pointers.size === 2 && gesture) {
-      const [a, b] = [...pointers.values()];
-      const dist = Math.hypot(a.x - b.x, a.y - b.y) || 1;
-      st.scale = gesture.scale * (dist / gesture.dist);
-    } else if (pointers.size === 1 && st.scale > 1) {
-      st.x += dx;
-      st.y += dy;
-    }
-    clamp();
-    apply();
-  });
-  const up = (e) => {
-    pointers.delete(e.pointerId);
-    if (pointers.size < 2) gesture = null;
-  };
-  vp.addEventListener('pointerup', up);
-  vp.addEventListener('pointercancel', up);
-  vp.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    st.scale *= e.deltaY < 0 ? 1.12 : 1 / 1.12;
-    clamp();
-    apply();
-  }, { passive: false });
-  apply();
-  return { reset };
+  // regulamentul e text HTML: copiem secțiunea de regulament din pagină (fără id-uri duplicate)
+  $('rules-body').replaceChildren(...$('seo-rules').cloneNode(true).childNodes);
 }
 

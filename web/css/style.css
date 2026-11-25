@@ -193,6 +193,10 @@ input { -webkit-user-select: text; user-select: text; }
 
 /* ---------- regulament ---------- */
 .rules-viewport { flex: 1; min-height: 0; overflow: hidden; position: relative; margin: 8px; border-radius: var(--radius); background: #1b1311; touch-action: none; }
+.rules-body { max-width: 760px; margin: 0 auto; line-height: 1.5; font-size: 1rem; }
+.rules-body h2 { font-size: 1.3rem; margin: 1.2em 0 .4em; }
+.rules-body h3 { font-size: 1.05rem; margin: 1em 0 .3em; }
+.rules-body ul { padding-left: 1.2em; }
 .rules-viewport img { position: absolute; left: 50%; top: 50%; max-width: none; height: 100%; transform-origin: center; object-fit: contain; }
 
 /* ---------- joc: tabla ---------- */

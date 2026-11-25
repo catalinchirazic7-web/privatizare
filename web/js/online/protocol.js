@@ -103,7 +103,7 @@ export const IntentCodec = {
   encode(e) {
     const o = { p: e.playerId, t: INTENT_KEY[e.t] };
     switch (e.t) {
-      case EV.ROLL: o.v = e.value; break;
+      case EV.ROLL: o.v = e.value; if (e.dice) o.d = e.dice; break;   // d: cele două zaruri, doar la jocul cu 2 zaruri
       case EV.BUY:
       case EV.DECLINE:
       case EV.ANNEX: o.tile = e.tile; break;
@@ -120,7 +120,11 @@ export const IntentCodec = {
       const t = INTENT_TYPE[o.t];
       if (typeof p !== 'string' || !t) return null;
       switch (t) {
-        case EV.ROLL: return { t, playerId: p, value: Number.isInteger(o.v) ? o.v : 1 };
+        case EV.ROLL: {
+          // mesajele vechi (fără d) rămân valide, ca la aplicația Android
+          const dice = Array.isArray(o.d) && o.d.length === 2 && o.d.every((d) => Number.isInteger(d) && d >= 1 && d <= 6) ? o.d : null;
+          return { t, playerId: p, value: Number.isInteger(o.v) ? o.v : 1, ...(dice ? { dice } : {}) };
+        }
         case EV.BUY:
         case EV.DECLINE:
         case EV.ANNEX:
