@@ -314,7 +314,8 @@ async function boot() {
   });
 
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js').catch((e) => console.warn('Service worker indisponibil', e));
+    // updateViaCache: 'none' — verificarea de versiune a service worker-ului ocolește cache-ul HTTP
+    navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' }).catch((e) => console.warn('Service worker indisponibil', e));
   }
 
   app.show('intro');

@@ -41,3 +41,10 @@ jobs:
       - name: Publică pe GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Golește cache-ul Cloudflare
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          curl -fsS -X POST "https://api.cloudflare.com/client/v4/zones/54aef7f92f233b712d668849195989f1/purge_cache" \
+            -H "Authorization: Bearer $CF_TOKEN" -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}'
