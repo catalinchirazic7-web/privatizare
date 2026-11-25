@@ -543,7 +543,8 @@ input { -webkit-user-select: text; user-select: text; }
 .purchase-annexes { color: #5b4639; }
 .final-stats { max-height: 34dvh; overflow-y: auto; padding: 8px 12px; background: #ffffff10; border-radius: 10px; }
 .final-stats h4 { margin: 3px 0; color: #ffda91; }
-.journal-button { pointer-events: auto; position: fixed; left: 12px; bottom: 12px; z-index: 20; background: #29231fdd; color: #fff; border: 1px solid #e2c573; border-radius: 10px; padding: 8px 12px; cursor: pointer; }
+/* .hud are transform, deci „fixed” s-ar raporta la HUD: îl ancorăm sub HUD (sub bară sau sub sertar) */
+.journal-button { pointer-events: auto; position: absolute; left: 0; top: 100%; margin-top: 8px; z-index: 20; background: #29231fdd; color: #fff; border: 1px solid #e2c573; border-radius: 10px; padding: 8px 12px; cursor: pointer; }
 .journal-list { max-height: 55dvh; overflow-y: auto; padding-left: 24px; line-height: 1.4; }
 .journal-list li { margin: 5px 0; }
 .rent-transfer { display: block; color: #ffe3a2; background: #34291cf0; padding: 8px 12px; border: 1px solid #d9bc70; border-radius: 9px; animation: rent-note 3.5s ease both; }
