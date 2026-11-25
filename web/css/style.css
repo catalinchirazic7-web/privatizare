@@ -619,3 +619,9 @@ input { -webkit-user-select: text; user-select: text; }
 #scr-home .cover-title span { flex: 1 1 0; min-height: 0; display: flex; align-items: center; justify-content: center; color: #f0c932; font-family: Georgia, serif; font-size: min(7.3dvh, 4.4vw); font-weight: 900; line-height: 1; -webkit-text-stroke: 1.5px #3b241a; text-shadow: 1px 2px 0 #3b241a; }
 
 .outro-message { position: absolute; inset: 0; z-index: 4; display: grid; place-items: center; padding: 24px; background: #141919; text-align: center; font-size: 1.2rem; }
+
+/* textul SEO rămâne în pagină pentru motoarele de căutare, dar nu se vede și nu ocupă loc în joc */
+.seo-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: normal; }
+
+/* butonul de sunet e fix în colțul stânga-sus: bara de sus pornește mai la dreapta */
+.subbar { padding-left: 66px; }
